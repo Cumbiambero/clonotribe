@@ -7,24 +7,26 @@
   "author": "Eduardo Hahn Paredes",
   "authorEmail": "cumbiamberos@gmail.com",
   "authorUrl": "",
-  "pluginUrl": "",
-  "manualUrl": "",
+  "pluginUrl": "https://github.com/Cumbiambero/clonotribe",
+  "manualUrl": "https://github.com/Cumbiambero/clonotribe/blob/main/README.md",
   "sourceUrl": "https://github.com/Cumbiambero/clonotribe",
   "donateUrl": "",
-  "changelogUrl": "",
+  "changelogUrl": "https://github.com/Cumbiambero/clonotribe/releases",
   "modules": [
     {
       "slug": "Clonotribe",
       "name": "Clonotribe",
-      "description": "A module inspired by KORG monotribe",
-      "manualUrl": "",
+      "description": "A module inspired by the KORG monotribe",
+      "manualUrl": "https://github.com/Cumbiambero/clonotribe/blob/main/README.md",
       "tags": [
         "Synth voice",
-        "Oscillator",
+        "Drum",
+        "Oscillator", 
         "Filter",
         "Envelope generator",
         "LFO",
-        "Sequencer"
+        "Sequencer",
+        "Controller"
       ]
     }
   ]

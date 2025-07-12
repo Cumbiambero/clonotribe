@@ -70,8 +70,6 @@ There are some differences to the original, specially the drum sounds.
 - **Audio Input**: External audio mixing capability
 - **Sync Input/Output**: External sync or internal sync generation
 
-## Firmware 2.1 Features
-
 ## Usage
 
 ### Basic Operation
