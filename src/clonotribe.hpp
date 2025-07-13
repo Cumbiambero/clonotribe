@@ -109,6 +109,11 @@ struct Clonotribe : Module {
     dsp::SchmittTrigger activeStepTrigger;
     dsp::SchmittTrigger gateTimeTrigger;
     
+    bool activeStepWasPressed = false;
+    bool activeStepActive = false;
+    bool activeStepsSequencerSteps[8];
+    bool activeStepsDrumPatterns[3][8];
+    
     // Sync output generation
     dsp::PulseGenerator syncPulse;
     
@@ -117,4 +122,13 @@ struct Clonotribe : Module {
 
     Clonotribe();
     void process(const ProcessArgs& args) override;
+    
+private:
+    // Helper methods for better code organization
+    void handleStepButtons();
+    void handleActiveStep();
+    void handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld);
+    void updateStepLights(const clonotribe::Sequencer::SequencerOutput& seqOutput);
+    bool isStepActiveInCurrentMode(int step);
+    void toggleStepInCurrentMode(int step);
 };

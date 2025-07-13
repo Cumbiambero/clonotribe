@@ -3,6 +3,8 @@
 
 using namespace rack;
 struct TransparentMomentaryButton : app::ParamWidget {
+    bool pressed = false;
+    
     TransparentMomentaryButton() {
         box.size = Vec(24, 18);
     }
@@ -19,16 +21,32 @@ struct TransparentMomentaryButton : app::ParamWidget {
     
     void onButton(const event::Button& e) override {
         if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
+            pressed = true;
             if (getParamQuantity()) {
                 getParamQuantity()->setValue(1.f);
             }
             e.consume(this);
-        } else if (e.action == GLFW_RELEASE && e.button == GLFW_MOUSE_BUTTON_LEFT) {
+        }
+        ParamWidget::onButton(e);
+    }
+    
+    void onDragStart(const event::DragStart& e) override {
+        if (e.button == GLFW_MOUSE_BUTTON_LEFT) {
+            pressed = true;
+            if (getParamQuantity()) {
+                getParamQuantity()->setValue(1.f);
+            }
+        }
+        ParamWidget::onDragStart(e);
+    }
+    
+    void onDragEnd(const event::DragEnd& e) override {
+        if (e.button == GLFW_MOUSE_BUTTON_LEFT && pressed) {
+            pressed = false;
             if (getParamQuantity()) {
                 getParamQuantity()->setValue(0.f);
             }
-            e.consume(this);
         }
-        ParamWidget::onButton(e);
+        ParamWidget::onDragEnd(e);
     }
 };

@@ -6,7 +6,7 @@ Clonotribe::Clonotribe() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
         
         for (int i = 0; i < 8; i++) {
-            sequencer.steps[i].active = (i == 0);
+            sequencer.steps[i].active = true; // All steps enabled by default
             sequencer.steps[i].pitch = 0.f;
             sequencer.steps[i].gate = 5.f;
             sequencer.steps[i].gateTime = 0.8f;
@@ -41,7 +41,7 @@ Clonotribe::Clonotribe() {
         configButton(PARAM_SYNTH_BUTTON, "Synth");
         configButton(PARAM_BASSDRUM_BUTTON, "Bass Drum");
         configButton(PARAM_HIGHHAT_BUTTON, "Hi-Hat");
-        configButton(PARAM_ACTIVE_STEP_BUTTON, "Active Step");
+        configButton(PARAM_ACTIVE_STEP_BUTTON, "Active Step (F7)");
         configButton(PARAM_SEQUENCER_1_BUTTON, "Sequencer 1");
         configButton(PARAM_SEQUENCER_2_BUTTON, "Sequencer 2");
         configButton(PARAM_SEQUENCER_3_BUTTON, "Sequencer 3");
@@ -51,7 +51,7 @@ Clonotribe::Clonotribe() {
         configButton(PARAM_SEQUENCER_7_BUTTON, "Sequencer 7");
         configButton(PARAM_SEQUENCER_8_BUTTON, "Sequencer 8");
         configButton(PARAM_PLAY_BUTTON, "Play");
-        configButton(PARAM_GATE_TIME_BUTTON, "Gate Time");
+        configButton(PARAM_GATE_TIME_BUTTON, "Gate Time (F8)");
         
         configInput(INPUT_CV_CONNECTOR, "CV");
         configInput(INPUT_GATE_CONNECTOR, "Gate");
@@ -148,95 +148,12 @@ void Clonotribe::process(const ProcessArgs& args) {
             sequencer.setExternalSync(true);
         }
         
-        // Handle step buttons based on selected part
-        for (int i = 0; i < 8; i++) {
-            bool stepPressed = stepTriggers[i].process(params[PARAM_SEQUENCER_1_BUTTON + i].getValue() > 0.5f);
-            if (stepPressed) {
-                selectedStepForEditing = i; // Track which step was last pressed for editing
-                
-                if (selectedDrumPart == 0) {
-                    // Synth mode - toggle sequencer steps on/off
-                    sequencer.setStepActive(i, !sequencer.isStepActive(i));
-                } else {
-                    // Drum mode - control drum patterns
-                    int drumIndex = selectedDrumPart - 1; // 0=kick, 1=snare, 2=hihat
-                    drumPatterns[drumIndex][i] = !drumPatterns[drumIndex][i];
-                }
-            }
-        }
+        handleStepButtons();
+        handleActiveStep();
         
-        // Handle ACTIVE STEP button - toggles active state of selected step for current part
-        bool activeStepPressed = activeStepTrigger.process(params[PARAM_ACTIVE_STEP_BUTTON].getValue() > 0.5f);
-        if (activeStepPressed) {
-            if (selectedDrumPart == 0) {
-                // Synth mode - toggle sequencer step
-                bool currentState = sequencer.isStepActive(selectedStepForEditing);
-                sequencer.setStepActive(selectedStepForEditing, !currentState);
-            } else {
-                // Drum mode - toggle drum pattern step
-                int drumIndex = selectedDrumPart - 1; // 0=kick, 1=snare, 2=hihat
-                drumPatterns[drumIndex][selectedStepForEditing] = !drumPatterns[drumIndex][selectedStepForEditing];
-            }
-        }
-        
-        // Handle GATE TIME button - cycles through gate time values OR triggers drum rolls
-        bool gateTimePressed = gateTimeTrigger.process(params[PARAM_GATE_TIME_BUTTON].getValue() > 0.5f);
-        if (gateTimePressed) {
-            if (selectedDrumPart == 0) {
-                // Synth mode - cycle through 25%, 50%, 75%, 100%
-                float currentGateTime = sequencer.getStepGateTime(selectedStepForEditing);
-                if (currentGateTime < 0.3f) {
-                    sequencer.setStepGateTime(selectedStepForEditing, 0.5f);
-                } else if (currentGateTime < 0.6f) {
-                    sequencer.setStepGateTime(selectedStepForEditing, 0.75f);
-                } else if (currentGateTime < 0.8f) {
-                    sequencer.setStepGateTime(selectedStepForEditing, 1.0f);
-                } else {
-                    sequencer.setStepGateTime(selectedStepForEditing, 0.25f);
-                }
-            }
-            // Note: In drum mode, drum rolls are handled by ribbon controller below
-        }
-        
-        // Handle drum rolls and gate time hold (firmware 2.1 feature)
-        static bool drumRollMode = false;
-        static bool gateTimeHoldMode = false;
-        static float rollTimer = 0.f;
-        
-        // Toggle modes when GATE TIME is pressed
-        if (gateTimePressed) {
-            if (selectedDrumPart > 0) {
-                drumRollMode = !drumRollMode;
-            } else {
-                gateTimeHoldMode = !gateTimeHoldMode;
-            }
-        }
-        
-        // Reset modes when switching parts
-        if (selectedDrumPart == 0) {
-            drumRollMode = false;
-        } else {
-            gateTimeHoldMode = false;
-        }
-        
-        // Process drum rolls when active
-        if (drumRollMode && ribbon.touching && selectedDrumPart > 0) {
-            float rollIntensity = ribbon.getDrumRollIntensity();
-            float rollRate = rollIntensity * 50.f + 1.f; // 1-51 Hz roll rate
-            rollTimer += args.sampleTime * rollRate;
-            
-            if (rollTimer >= 1.f) {
-                rollTimer -= 1.f;
-                // Trigger the selected drum part
-                switch (selectedDrumPart) {
-                    case 1: kickDrum.trigger(); break;
-                    case 2: snareDrum.trigger(); break;
-                    case 3: hiHat.trigger(); break;
-                }
-            }
-        } else {
-            rollTimer = 0.f; // Reset timer when not rolling
-        }
+        // GATE_TIME acts as momentary button for gate time modulation and drum rolls
+        bool gateTimeHeld = params[PARAM_GATE_TIME_BUTTON].getValue() > 0.5f;
+        handleDrumRolls(args, gateTimeHeld);
         
         float cvVoltage = inputs[INPUT_CV_CONNECTOR].getVoltage();
         float inputPitch = cvVoltage + octave; // CV is already in 1V/Oct
@@ -250,22 +167,39 @@ void Clonotribe::process(const ProcessArgs& args) {
         bool cvGateTriggered = gateTrigger.process(gate > 1.f); // Pure CV/Gate input
         bool combinedGateTriggered = cvGateTriggered;
         
+        // Ribbon controller behavior depends on GATE TIME button state
         if (ribbon.touching) {
-            finalInputPitch = ribbon.getCV();
-            finalGate = ribbon.getGate();
-            // For playing, use combined gate (CV/Gate OR ribbon)
-            combinedGateTriggered = cvGateTriggered || (finalGate > 1.f);
+            if (gateTimeHeld) {
+                // When GATE TIME is held, ribbon does NOT emit notes
+                // It only provides modulation for gate time (synth) or drum roll intensity (drums)
+                // Keep using CV/Gate input for notes
+                finalInputPitch = inputPitch;
+                finalGate = gate;
+                combinedGateTriggered = cvGateTriggered; // Only CV/Gate triggers notes
+            } else {
+                // Normal ribbon behavior - emit notes
+                finalInputPitch = ribbon.getCV();
+                finalGate = ribbon.getGate();
+                // For playing, use combined gate (CV/Gate OR ribbon)
+                combinedGateTriggered = cvGateTriggered || (finalGate > 1.f);
+            }
         }
         
         bool gateTriggered = combinedGateTriggered;
         
-        if (gateTriggered) {
-            envelope.trigger();
-            gateActive = true;
-            if (lfoMode == 0) {
-                lfo.trigger();
+        // Handle envelope triggering - avoid double triggers
+        if (!sequencer.playing) {
+            // When sequencer is not playing, respond to manual input triggers
+            if (gateTriggered) {
+                envelope.trigger();
+                gateActive = true;
+                if (lfoMode == 0) {
+                    lfo.trigger();
+                }
             }
         }
+        // When sequencer is playing, envelope triggering is handled later based on sequencer steps
+        
         if (finalGate < 0.5f && gateActive) {
             envelope.gateOff();
             gateActive = false;
@@ -274,10 +208,23 @@ void Clonotribe::process(const ProcessArgs& args) {
         float syncSignal = inputs[INPUT_SYNC_CONNECTOR].getVoltage();
         
         // Get ribbon controller modulations (firmware 2.1 features)
-        float ribbonGateTimeMod = gateTimeHoldMode && ribbon.touching ? ribbon.getGateTimeMod() : 0.5f; // Only apply gate time mod when in gate time hold mode
+        float ribbonGateTimeMod = gateTimeHeld && ribbon.touching ? ribbon.getGateTimeMod() : 0.5f; // Apply gate time mod when GATE TIME is held and ribbon is touched
         float ribbonVolumeAutomation = ribbon.getVolumeAutomation();
         
         auto seqOutput = sequencer.process(args.sampleTime, finalInputPitch, finalGate, syncSignal, ribbonGateTimeMod);
+
+        // Override sequencer output with active steps when ACTIVE STEP is active
+        if (activeStepActive && sequencer.playing) {
+            // Check if current step should be active in active steps sequence
+            int currentStep = seqOutput.step;
+            if (currentStep >= 0 && currentStep < 8) {
+                if (selectedDrumPart == 0) {
+                    if (!activeStepsSequencerSteps[currentStep]) {
+                        seqOutput.gate = 0.f;
+                    }
+                } 
+            }
+        }
         
         if (sequencer.recording && selectedDrumPart == 0) {
             if (sequencer.fluxMode) {
@@ -303,9 +250,15 @@ void Clonotribe::process(const ProcessArgs& args) {
         // Trigger drums on step changes and generate sync pulses
         if (sequencer.playing && seqOutput.stepChanged) {
             int currentStep = seqOutput.step;
-            if (drumPatterns[0][currentStep]) kickDrum.trigger();  // Kick
-            if (drumPatterns[1][currentStep]) snareDrum.trigger(); // Snare
-            if (drumPatterns[2][currentStep]) hiHat.trigger();     // Hi-hat
+            if (activeStepActive) {
+                if (activeStepsDrumPatterns[0][currentStep]) kickDrum.trigger();  // Kick
+                if (activeStepsDrumPatterns[1][currentStep]) snareDrum.trigger(); // Snare
+                if (activeStepsDrumPatterns[2][currentStep]) hiHat.trigger();     // Hi-hat
+            } else {
+                if (drumPatterns[0][currentStep]) kickDrum.trigger();  // Kick
+                if (drumPatterns[1][currentStep]) snareDrum.trigger(); // Snare
+                if (drumPatterns[2][currentStep]) hiHat.trigger();     // Hi-hat
+            }
             
             // Generate sync pulse on step change
             syncPulse.trigger(1e-3f); // 1ms pulse
@@ -316,7 +269,8 @@ void Clonotribe::process(const ProcessArgs& args) {
         
         if (sequencer.playing) {
             // Gate Time Hold feature: CV input or ribbon controller can override pitch during sequencer playback
-            if (ribbon.touching) {
+            if (ribbon.touching && !gateTimeHeld) {
+                // Normal ribbon behavior: override pitch (but not when GATE TIME is held)
                 finalPitch = ribbon.getCV(); // Use ribbon pitch
                 // When ribbon is touched, still use sequencer gate timing (Gate Time Hold)
                 finalSequencerGate = seqOutput.gate;
@@ -327,19 +281,20 @@ void Clonotribe::process(const ProcessArgs& args) {
             } else {
                 finalPitch = seqOutput.pitch; // Use sequencer pitch
                 finalSequencerGate = seqOutput.gate; // Use sequencer gate timing
+                
+                // ACTIVE STEP works by temporarily changing step patterns, no additional muting needed here
             }
         } 
         
+        // Handle envelope triggering for sequencer playback
         bool shouldTriggerEnv = false;
         if (sequencer.playing) {
+            // When sequencer is playing, trigger on new steps with active gates
             if (seqOutput.stepChanged && seqOutput.gate > 1.f) {
                 shouldTriggerEnv = true;
             }
-        } else {
-            if (gateTriggered) {
-                shouldTriggerEnv = true;
-            }
         }
+        // Note: Manual input triggering is handled above when sequencer is not playing
         
         if (shouldTriggerEnv) {
             envelope.trigger();
@@ -489,32 +444,7 @@ void Clonotribe::process(const ProcessArgs& args) {
         lights[LIGHT_SNARE].setBrightness(selectedDrumPart == 2 ? 1.f : 0.f);
         lights[LIGHT_HIGHHAT].setBrightness(selectedDrumPart == 3 ? 1.f : 0.f);
         
-        // Step lights show current step and pattern based on selected part
-        for (int i = 0; i < 8; i++) {
-            float brightness = 0.f;
-            
-            // Show current playing step bright
-            if (sequencer.playing && seqOutput.step == i) {
-                brightness = 1.f;
-            } else {
-                // Show pattern for selected part
-                bool stepActive = false;
-                if (selectedDrumPart == 0) {
-                    stepActive = sequencer.isStepActive(i); // Synth pattern
-                } else {
-                    int drumIndex = selectedDrumPart - 1;
-                    stepActive = drumPatterns[drumIndex][i]; // Drum pattern
-                }
-                brightness = stepActive ? 0.3f : 0.f;
-                
-                // Show recording step when recording and not playing
-                if (sequencer.recording && !sequencer.playing && selectedDrumPart == 0 && i == sequencer.recordingStep) {
-                    brightness = 0.6f; // Dimmer than current playing step
-                }
-            }
-            
-            lights[LIGHT_SEQUENCER_1 + i].setBrightness(brightness);
-        }
+        updateStepLights(seqOutput);
 }
 
 
@@ -598,7 +528,184 @@ struct ClonotribeWidget : ModuleWidget {
         ribbonWidget->box.pos = mm2px(Vec(73.8, 99.2)); 
         addChild(ribbonWidget);
     }
+    
+    void onHoverKey(const event::HoverKey& e) override {
+        if (e.action == GLFW_PRESS || e.action == GLFW_REPEAT) {
+            Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
+            if (!clonotribeModule) return;
+            
+            switch (e.key) {
+                case GLFW_KEY_F7: // ACTIVE STEP
+                    if (clonotribeModule->params[Clonotribe::PARAM_ACTIVE_STEP_BUTTON].getValue() < 0.5f) {
+                        clonotribeModule->params[Clonotribe::PARAM_ACTIVE_STEP_BUTTON].setValue(1.f);
+                        e.consume(this);
+                    }
+                    break;
+                    
+                case GLFW_KEY_F8: // GATE TIME - trigger press
+                    if (clonotribeModule->params[Clonotribe::PARAM_GATE_TIME_BUTTON].getValue() < 0.5f) {
+                        clonotribeModule->params[Clonotribe::PARAM_GATE_TIME_BUTTON].setValue(1.f);
+                        e.consume(this);
+                    }
+                    break;
+            }
+        }
+        else if (e.action == GLFW_RELEASE) {
+            Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
+            if (!clonotribeModule) return;
+            
+            switch (e.key) {
+                case GLFW_KEY_F7: // ACTIVE STEP release
+                    clonotribeModule->params[Clonotribe::PARAM_ACTIVE_STEP_BUTTON].setValue(0.f);
+                    e.consume(this);
+                    break;
+                    
+                case GLFW_KEY_F8: // GATE TIME release
+                    clonotribeModule->params[Clonotribe::PARAM_GATE_TIME_BUTTON].setValue(0.f);
+                    e.consume(this);
+                    break;
+            }
+        }
+        
+        ModuleWidget::onHoverKey(e);
+    }
 };
 
 
 Model* modelClonotribe = createModel<Clonotribe, ClonotribeWidget>("Clonotribe");
+
+void Clonotribe::handleStepButtons() {
+    for (int i = 0; i < 8; i++) {
+        bool stepPressed = stepTriggers[i].process(params[PARAM_SEQUENCER_1_BUTTON + i].getValue() > 0.5f);
+        if (stepPressed) {
+            selectedStepForEditing = i;
+            toggleStepInCurrentMode(i);
+        }
+    }
+}
+
+void Clonotribe::handleActiveStep() {
+    bool activeStepHeld = params[PARAM_ACTIVE_STEP_BUTTON].getValue() > 0.5f;
+    
+    if (activeStepHeld && !activeStepWasPressed) {
+        activeStepWasPressed = true;
+        activeStepActive = true;
+        
+        // Copy current state
+        for (int i = 0; i < 8; i++) {
+            activeStepsSequencerSteps[i] = sequencer.isStepActive(i);
+        }
+        for (int d = 0; d < 3; d++) {
+            for (int i = 0; i < 8; i++) {
+                activeStepsDrumPatterns[d][i] = drumPatterns[d][i];
+            }
+        }
+        
+        // Toggle the selected step
+        if (selectedStepForEditing >= 0 && selectedStepForEditing < 8) {
+            if (selectedDrumPart == 0) {
+                activeStepsSequencerSteps[selectedStepForEditing] = !activeStepsSequencerSteps[selectedStepForEditing];
+            } else {
+                int drumIndex = selectedDrumPart - 1;
+                if (drumIndex >= 0 && drumIndex < 3) {
+                    activeStepsDrumPatterns[drumIndex][selectedStepForEditing] = !activeStepsDrumPatterns[drumIndex][selectedStepForEditing];
+                }
+            }
+        }
+    } else if (!activeStepHeld && activeStepWasPressed) {
+        // ACTIVE STEP released - return to original sequence
+        activeStepWasPressed = false;
+        activeStepActive = false;
+    }
+}
+
+void Clonotribe::handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld) {
+    static float rollTimer = 0.f;
+    
+    if (gateTimeHeld && ribbon.touching && selectedDrumPart > 0) {
+        float rollIntensity = ribbon.getDrumRollIntensity();
+        float rollRate = rollIntensity * 50.f + 1.f; // 1-51 Hz roll rate
+        rollTimer += args.sampleTime * rollRate;
+        
+        if (rollTimer >= 1.f) {
+            rollTimer -= 1.f;
+            switch (selectedDrumPart) {
+                case 1: kickDrum.trigger(); break;
+                case 2: snareDrum.trigger(); break;
+                case 3: hiHat.trigger(); break;
+            }
+        }
+    } else {
+        rollTimer = 0.f;
+    }
+}
+
+void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& seqOutput) {
+    for (int i = 0; i < 8; i++) {
+        float brightness = 0.f;
+        
+        // Current playing step gets full brightness
+        if (sequencer.playing && seqOutput.step == i) {
+            brightness = 1.f;
+        } else {
+            bool stepActive = isStepActiveInCurrentMode(i);
+            brightness = stepActive ? 0.3f : 0.f;
+            
+            // Recording step indicator
+            if (sequencer.recording && !sequencer.playing && selectedDrumPart == 0 && i == sequencer.recordingStep) {
+                brightness = 0.6f;
+            }
+            
+            // Active steps mode highlighting
+            if (activeStepActive) {
+                if (i == selectedStepForEditing) {
+                    brightness = stepActive ? 1.0f : 0.2f;
+                } else {
+                    brightness = stepActive ? 0.4f : 0.05f;
+                }
+            }
+        }
+        
+        lights[LIGHT_SEQUENCER_1 + i].setBrightness(brightness);
+    }
+}
+
+bool Clonotribe::isStepActiveInCurrentMode(int step) {
+    if (activeStepActive) {
+        if (selectedDrumPart == 0) {
+            return activeStepsSequencerSteps[step];
+        } else {
+            int drumIndex = selectedDrumPart - 1;
+            return (drumIndex >= 0 && drumIndex < 3) ? activeStepsDrumPatterns[drumIndex][step] : false;
+        }
+    } else {
+        if (selectedDrumPart == 0) {
+            return sequencer.isStepActive(step);
+        } else {
+            int drumIndex = selectedDrumPart - 1;
+            return (drumIndex >= 0 && drumIndex < 3) ? drumPatterns[drumIndex][step] : false;
+        }
+    }
+}
+
+void Clonotribe::toggleStepInCurrentMode(int step) {
+    if (activeStepActive) {
+        if (selectedDrumPart == 0) {
+            activeStepsSequencerSteps[step] = !activeStepsSequencerSteps[step];
+        } else {
+            int drumIndex = selectedDrumPart - 1;
+            if (drumIndex >= 0 && drumIndex < 3) {
+                activeStepsDrumPatterns[drumIndex][step] = !activeStepsDrumPatterns[drumIndex][step];
+            }
+        }
+    } else {
+        if (selectedDrumPart == 0) {
+            sequencer.setStepActive(step, !sequencer.isStepActive(step));
+        } else {
+            int drumIndex = selectedDrumPart - 1;
+            if (drumIndex >= 0 && drumIndex < 3) {
+                drumPatterns[drumIndex][step] = !drumPatterns[drumIndex][step];
+            }
+        }
+    }
+}
