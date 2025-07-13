@@ -1,6 +1,7 @@
 #include "clonotribe.hpp"
 #include "ui/transparentbutton.hpp"
 #include "ui/ribbonwidget.hpp"
+#include "ui/octaveknob.hpp"
 
 Clonotribe::Clonotribe() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -23,15 +24,11 @@ Clonotribe::Clonotribe() {
         getParamQuantity(PARAM_VCO_OCTAVE_KNOB)->snapEnabled = true;
 
         configParam(PARAM_NOISE_KNOB, 0.f, 1.f, 0.f, "Noise Level", "%", 0.f, 100.f);
-        
         configParam(PARAM_VCF_CUTOFF_KNOB, 0.f, 1.f, 0.7f, "VCF Cutoff");
         configParam(PARAM_VCF_PEAK_KNOB, 0.f, 1.f, 0.f, "VCF Peak (Resonance)");
-        
         configParam(PARAM_VCA_LEVEL_KNOB, 0.f, 1.f, 0.8f, "VCA Level");
-        
         configParam(PARAM_LFO_RATE_KNOB, 0.f, 1.f, 0.3f, "LFO Rate");
         configParam(PARAM_LFO_INTERVAL_KNOB, 0.f, 1.f, 0.f, "LFO Intensity");
-        
         configParam(PARAM_RHYTM_VOLUME_KNOB, 0.f, 1.f, 0.f, "Rhythm Volume");
         configParam(PARAM_SEQUENCER_TEMPO_KNOB, 0.f, 1.f, 0.5f, "Sequencer Tempo", " BPM", 0.f, 120.f, 60.f);
         
@@ -82,12 +79,10 @@ void Clonotribe::process(const ProcessArgs& args) {
         int ribbonMode = (int)params[PARAM_RIBBON_RANGE_SWITCH].getValue();
         float rhythmVolume = params[PARAM_RHYTM_VOLUME_KNOB].getValue();
 
-        // Conditional processing optimization: only process active components
         bool synthActive = (selectedDrumPart == 0) || (level > 0.01f && rhythmVolume < 0.99f);
         bool lfoActive = synthActive && (lfoIntensity > 0.01f);
         bool filterActive = synthActive;
         
-        // Set component active states
         lfo.active = lfoActive;
         vco.active = synthActive;
         vcf.setActive(filterActive);
@@ -469,7 +464,7 @@ struct ClonotribeWidget : ModuleWidget {
         addParam(createParamCentered<CKSSThree>(mm2px(Vec(109.0, 62.5)), module, Clonotribe::PARAM_LFO_MODE_SWITCH));
         addParam(createParamCentered<CKSSThree>(mm2px(Vec(123.0, 62.5)), module, Clonotribe::PARAM_LFO_WAVEFORM_SWITCH));
 
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.0, 42.0)), module, Clonotribe::PARAM_VCO_OCTAVE_KNOB));
+        addParam(createParamCentered<OctaveKnob>(mm2px(Vec(15.0, 42.0)), module, Clonotribe::PARAM_VCO_OCTAVE_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(56.5, 42.0)), module, Clonotribe::PARAM_VCF_CUTOFF_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(77.0, 42.0)), module, Clonotribe::PARAM_VCA_LEVEL_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(98.0, 42.0)), module, Clonotribe::PARAM_LFO_RATE_KNOB));
