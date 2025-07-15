@@ -157,16 +157,51 @@ void Clonotribe::process(const ProcessArgs& args) {
         bool gateTimeHeld = params[PARAM_GATE_TIME_BUTTON].getValue() > 0.5f;
         this->gateTimeHeld = gateTimeHeld; // Store for access in other methods
         
-        // Handle 16-step mode toggle (GATE_TIME + Sequencer 6)
         if (gateTimeHeld) {
-            bool seq6Pressed = sixteenStepTrigger.process(params[PARAM_SEQUENCER_6_BUTTON].getValue() > 0.5f);
+            bool seq6Pressed = gateTimeSeq6Trigger.process(params[PARAM_SEQUENCER_6_BUTTON].getValue() > 0.5f);
             if (seq6Pressed) {
-                // Toggle 16-step mode immediately
                 sequencer.setSixteenStepMode(!sequencer.isSixteenStepMode());
-                // Reset current step to stay within bounds
                 if (sequencer.currentStep >= sequencer.getStepCount()) {
                     sequencer.currentStep = 0;
                 }
+            }
+            
+            // Handle other GATE_TIME + button combinations
+            bool seq1Pressed = gateTimeSeq1Trigger.process(params[PARAM_SEQUENCER_1_BUTTON].getValue() > 0.5f);
+            bool seq2Pressed = gateTimeSeq2Trigger.process(params[PARAM_SEQUENCER_2_BUTTON].getValue() > 0.5f);
+            bool seq3Pressed = gateTimeSeq3Trigger.process(params[PARAM_SEQUENCER_3_BUTTON].getValue() > 0.5f);
+            bool seq4Pressed = gateTimeSeq4Trigger.process(params[PARAM_SEQUENCER_4_BUTTON].getValue() > 0.5f);
+            bool seq5Pressed = gateTimeSeq5Trigger.process(params[PARAM_SEQUENCER_5_BUTTON].getValue() > 0.5f);
+            bool seq7Pressed = gateTimeSeq7Trigger.process(params[PARAM_SEQUENCER_7_BUTTON].getValue() > 0.5f);
+            bool seq8Pressed = gateTimeSeq8Trigger.process(params[PARAM_SEQUENCER_8_BUTTON].getValue() > 0.5f);
+            
+            if (seq1Pressed) {
+                // Clear synth+drum sequence
+                clearAllSequences();
+            }
+            if (seq2Pressed) {
+                // Clear synth sequence only
+                clearSynthSequence();
+            }
+            if (seq3Pressed) {
+                // Clear drum sequence only
+                clearDrumSequence();
+            }
+            if (seq4Pressed) {
+                // Turn on all active steps
+                enableAllSteps();
+            }
+            if (seq5Pressed) {
+                // Toggle LFO 1SHOT to Sample & Hold
+                lfoSampleAndHoldMode = !lfoSampleAndHoldMode;
+            }
+            if (seq7Pressed) {
+                // Toggle gate time lock
+                gateTimesLocked = !gateTimesLocked;
+            }
+            if (seq8Pressed) {
+                // Toggle sync half tempo
+                syncHalfTempo = !syncHalfTempo;
             }
         }
         
@@ -224,11 +259,34 @@ void Clonotribe::process(const ProcessArgs& args) {
 
         float syncSignal = inputs[INPUT_SYNC_CONNECTOR].getVoltage();
         
+        // Handle sync half tempo (firmware 2.1 feature)
+        float effectiveSyncSignal = syncSignal;
+        if (syncHalfTempo && sequencer.externalSync) {
+            // Only trigger sequencer on every second sync pulse
+            static dsp::SchmittTrigger syncHalfTrigger;
+            bool syncTriggered = syncHalfTrigger.process(syncSignal > 1.f);
+            if (syncTriggered) {
+                syncDivideCounter++;
+                if (syncDivideCounter >= 2) {
+                    syncDivideCounter = 0;
+                    effectiveSyncSignal = 5.f; // Send trigger to sequencer
+                } else {
+                    effectiveSyncSignal = 0.f; // Skip this trigger
+                }
+            } else {
+                effectiveSyncSignal = 0.f;
+            }
+        }
+        
         // Get ribbon controller modulations (firmware 2.1 features)
-        float ribbonGateTimeMod = gateTimeHeld && ribbon.touching ? ribbon.getGateTimeMod() : 0.5f; // Apply gate time mod when GATE TIME is held and ribbon is touched
+        float ribbonGateTimeMod = 0.5f; // Default neutral value
+        if (!gateTimesLocked) {
+            // Only apply gate time modulation if not locked
+            ribbonGateTimeMod = gateTimeHeld && ribbon.touching ? ribbon.getGateTimeMod() : 0.5f;
+        }
         float ribbonVolumeAutomation = ribbon.getVolumeAutomation();
         
-        auto seqOutput = sequencer.process(args.sampleTime, finalInputPitch, finalGate, syncSignal, ribbonGateTimeMod);
+        auto seqOutput = sequencer.process(args.sampleTime, finalInputPitch, finalGate, effectiveSyncSignal, ribbonGateTimeMod);
 
         // Override sequencer output with active steps when ACTIVE STEP is active
         if (activeStepActive && sequencer.playing) {
@@ -338,10 +396,14 @@ void Clonotribe::process(const ProcessArgs& args) {
 
         float actualLfoRate = 1.f;
         bool isOneShot = false;
+        
+        // Override LFO mode if Sample & Hold is enabled (firmware 2.1 feature)
+        bool isSampleAndHold = lfoSampleAndHoldMode && (lfoMode == 0);
+        
         switch (lfoMode) {
-            case 0: // 1-Shot
+            case 0: // 1-Shot (or Sample & Hold when enabled)
                 actualLfoRate = rescale(lfoRate, 0.f, 1.f, 1.f, 5.f);
-                isOneShot = true;
+                isOneShot = !isSampleAndHold; // Disable one-shot if in Sample & Hold mode
                 break;
             case 1: // Slow
                 actualLfoRate = rescale(lfoRate, 0.f, 1.f, 0.05f, 18.f);
@@ -355,6 +417,7 @@ void Clonotribe::process(const ProcessArgs& args) {
         }
         lfo.setRate(actualLfoRate);
         lfo.setOneShot(isOneShot);
+        lfo.setSampleAndHold(isSampleAndHold); // New method for Sample & Hold mode
         
         float lfoValue = lfo.process(args.sampleTime, lfoWaveform);
         
@@ -849,6 +912,52 @@ void Clonotribe::toggleStepInCurrentMode(int step) {
             int drumIndex = selectedDrumPart - 1;
             if (drumIndex >= 0 && drumIndex < 3) {
                 drumPatterns[drumIndex][step] = !drumPatterns[drumIndex][step];
+            }
+        }
+    }
+}
+
+// GATE_TIME + button combination functions (firmware 2.1 features)
+void Clonotribe::clearAllSequences() {
+    // Clear synth sequence
+    clearSynthSequence();
+    // Clear drum sequences
+    clearDrumSequence();
+}
+
+void Clonotribe::clearSynthSequence() {
+    // Clear all synth steps
+    int stepCount = sequencer.getStepCount();
+    for (int i = 0; i < stepCount; i++) {
+        sequencer.setStepActive(i, false);
+        sequencer.steps[i].pitch = 0.f;
+        sequencer.steps[i].gate = 5.f;
+        sequencer.steps[i].gateTime = 0.8f;
+    }
+}
+
+void Clonotribe::clearDrumSequence() {
+    // Clear all drum patterns
+    for (int d = 0; d < 3; d++) {
+        for (int s = 0; s < 8; s++) {
+            drumPatterns[d][s] = false;
+        }
+    }
+}
+
+void Clonotribe::enableAllSteps() {
+    if (selectedDrumPart == 0) {
+        // Enable all synth steps
+        int stepCount = sequencer.getStepCount();
+        for (int i = 0; i < stepCount; i++) {
+            sequencer.setStepActive(i, true);
+        }
+    } else {
+        // Enable all steps for selected drum part
+        int drumIndex = selectedDrumPart - 1;
+        if (drumIndex >= 0 && drumIndex < 3) {
+            for (int s = 0; s < 8; s++) {
+                drumPatterns[drumIndex][s] = true;
             }
         }
     }

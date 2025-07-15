@@ -12,6 +12,7 @@ struct LFO {
     bool oneShot = false;
     bool triggered = false;
     bool active = true; // For conditional processing
+    bool sampleAndHold = false; // New: Sample & Hold mode
     
     // Sample & Hold variables
     float sampleHoldValue = 0.f;
@@ -26,6 +27,14 @@ struct LFO {
         oneShot = os;
         if (os && !triggered) {
             phase = 0.f;
+        }
+    }
+    
+    void setSampleAndHold(bool sh) {
+        sampleAndHold = sh;
+        if (sh) {
+            // Initialize sample hold value
+            sampleHoldValue = (rand() / (float)RAND_MAX) * 2.f - 1.f; // Random initial value
         }
     }
     
@@ -57,30 +66,41 @@ struct LFO {
         }
         
         float output = 0.f;
-        switch (waveform) {
-            case 0: // Square
-                output = (phase < 0.5f) ? 1.f : -1.f;
-                break;
-            case 1: // Triangle
-                if (phase < 0.5f) {
-                    output = 4.f * phase - 1.f;
-                } else {
-                    output = 3.f - 4.f * phase;
-                }
-                break;
-            case 2: // Sawtooth
-                output = 2.f * phase - 1.f;
-                break;
-            case 3: // Sample & Hold (new in firmware 2.1)
-                // Generate new random value when phase wraps
-                if (phase < lastPhase) {
-                    sampleHoldValue = (random::uniform() - 0.5f) * 2.f;
-                }
-                output = sampleHoldValue;
-                break;
-            default: // Sine using fast approximation
-                output = FastMath::fastSin(2.f * M_PI * phase);
-                break;
+        
+        // Handle Sample & Hold mode override
+        if (sampleAndHold) {
+            // In Sample & Hold mode, generate new random value at regular intervals
+            if (phase < lastPhase) { // Phase wrapped around
+                sampleHoldValue = (random::uniform() - 0.5f) * 2.f;
+            }
+            output = sampleHoldValue;
+        } else {
+            // Normal waveform processing
+            switch (waveform) {
+                case 0: // Square
+                    output = (phase < 0.5f) ? 1.f : -1.f;
+                    break;
+                case 1: // Triangle
+                    if (phase < 0.5f) {
+                        output = 4.f * phase - 1.f;
+                    } else {
+                        output = 3.f - 4.f * phase;
+                    }
+                    break;
+                case 2: // Sawtooth
+                    output = 2.f * phase - 1.f;
+                    break;
+                case 3: // Sample & Hold (new in firmware 2.1)
+                    // Generate new random value when phase wraps
+                    if (phase < lastPhase) {
+                        sampleHoldValue = (random::uniform() - 0.5f) * 2.f;
+                    }
+                    output = sampleHoldValue;
+                    break;
+                default: // Sine using fast approximation
+                    output = FastMath::fastSin(2.f * M_PI * phase);
+                    break;
+            }
         }
         
         lastPhase = phase;

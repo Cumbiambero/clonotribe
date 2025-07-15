@@ -104,7 +104,6 @@ struct Clonotribe : Module {
     int selectedDrumPart = 0; // 0=synth, 1=kick, 2=snare, 3=hihat
     dsp::SchmittTrigger drumTriggers[4]; // For the 4 part selection buttons
     
-    // Step editing
     int selectedStepForEditing = 0; // Which step is selected for ACTIVE STEP/GATE TIME editing
     dsp::SchmittTrigger activeStepTrigger;
     dsp::SchmittTrigger gateTimeTrigger;
@@ -114,12 +113,23 @@ struct Clonotribe : Module {
     bool activeStepsSequencerSteps[16]; // Expanded for 16-step mode
     bool activeStepsDrumPatterns[3][8]; // Drums stay at 8 steps
     
-    // 16-step mode support (firmware 2.1 feature)
     bool gateTimeHeld = false;
     bool sixteenStepModeTogglePending = false;
-    dsp::SchmittTrigger sixteenStepTrigger; // For sequencer button 6 when GATE_TIME is held
+        
+    dsp::SchmittTrigger gateTimeSeq1Trigger; // Clear synth+drum sequence
+    dsp::SchmittTrigger gateTimeSeq2Trigger; // Clear synth sequence
+    dsp::SchmittTrigger gateTimeSeq3Trigger; // Clear drum sequence
+    dsp::SchmittTrigger gateTimeSeq4Trigger; // Turn on all active steps
+    dsp::SchmittTrigger gateTimeSeq6Trigger; // 16 or 8 step mode toggle
+    dsp::SchmittTrigger gateTimeSeq5Trigger; // Change LFO 1SHOT to Sample & Hold
+    dsp::SchmittTrigger gateTimeSeq7Trigger; // Lock synth gate times
+    dsp::SchmittTrigger gateTimeSeq8Trigger; // SYNC INPUT half tempo
     
-    // Sync output generation
+    bool lfoSampleAndHoldMode = false; // When true, LFO is in Sample & Hold mode instead of 1SHOT
+    bool gateTimesLocked = false; // When true, gate times are locked and can't be modified by ribbon
+    bool syncHalfTempo = false; // When true, sync input runs at half tempo
+    int syncDivideCounter = 0; // Counter for sync half tempo feature
+    
     dsp::PulseGenerator syncPulse;
     
     std::default_random_engine noiseEngine;
@@ -136,4 +146,9 @@ private:
     void updateStepLights(const clonotribe::Sequencer::SequencerOutput& seqOutput);
     bool isStepActiveInCurrentMode(int step);
     void toggleStepInCurrentMode(int step);
+    
+    void clearAllSequences();
+    void clearSynthSequence();
+    void clearDrumSequence();
+    void enableAllSteps();
 };
