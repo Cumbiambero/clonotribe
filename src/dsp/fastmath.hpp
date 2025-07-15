@@ -5,7 +5,6 @@ using namespace rack;
 
 namespace clonotribe {
 
-// Fast approximations for performance-critical operations
 struct FastMath {
     
     // Fast sine approximation using polynomial (much faster than std::sin)

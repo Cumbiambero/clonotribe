@@ -77,9 +77,9 @@ struct Clonotribe : Module {
 
     // DSP components
     clonotribe::VCO vco;
-    clonotribe::MS20Filter vcf;
+    clonotribe::Filter vcf;
     clonotribe::LFO lfo;
-    clonotribe::ADSR envelope;
+    clonotribe::Envelope envelope;
     clonotribe::Sequencer sequencer;
     
     // Shared noise generator for performance
@@ -111,8 +111,13 @@ struct Clonotribe : Module {
     
     bool activeStepWasPressed = false;
     bool activeStepActive = false;
-    bool activeStepsSequencerSteps[8];
-    bool activeStepsDrumPatterns[3][8];
+    bool activeStepsSequencerSteps[16]; // Expanded for 16-step mode
+    bool activeStepsDrumPatterns[3][8]; // Drums stay at 8 steps
+    
+    // 16-step mode support (firmware 2.1 feature)
+    bool gateTimeHeld = false;
+    bool sixteenStepModeTogglePending = false;
+    dsp::SchmittTrigger sixteenStepTrigger; // For sequencer button 6 when GATE_TIME is held
     
     // Sync output generation
     dsp::PulseGenerator syncPulse;

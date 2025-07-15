@@ -6,7 +6,7 @@ using namespace rack;
 
 namespace clonotribe {
 
-struct MS20Filter {
+struct Filter {
     float cutoff = 1000.f;
     float resonance = 0.f;
     float x1 = 0.f, x2 = 0.f;

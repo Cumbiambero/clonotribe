@@ -5,7 +5,7 @@ using namespace rack;
 
 namespace clonotribe {
 
-struct ADSR {
+struct Envelope {
   enum Stage { ATTACK, DECAY, SUSTAIN, RELEASE, OFF };
   Stage stage = OFF;
   float value = 0.f;

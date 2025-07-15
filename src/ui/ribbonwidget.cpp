@@ -26,7 +26,7 @@ void RibbonWidget::onDragMove(const event::DragMove& e) {
 void RibbonWidget::updatePosition(Vec pos) {
     if (!module) return;
     
-    float margin = 6.0f; // Same as dot radius
+    float margin = 6.0f;
     float effectiveWidth = box.size.x - 2 * margin;
     float adjustedX = clamp(pos.x - margin, 0.f, effectiveWidth);
     
