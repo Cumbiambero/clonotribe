@@ -1,6 +1,6 @@
 #pragma once
 #include <rack.hpp>
-#include "dsp.hpp"
+#include "dsp/dsp.hpp"
 
 using namespace rack;
 

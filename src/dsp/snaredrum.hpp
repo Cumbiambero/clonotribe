@@ -1,7 +1,7 @@
 #pragma once
 #include <rack.hpp>
 #include "fastmath.hpp"
-#include "noisegenerator.hpp"
+#include "noise.hpp"
 
 using namespace rack;
 
@@ -34,7 +34,7 @@ struct SnareDrum {
     }
     
     float process(float sampleTime, NoiseGenerator& noise) {
-        if (!triggered) return 0.f; // Early exit for performance
+        if (!triggered) return 0.f;
         
         // Generate high-quality noise from shared source
         float noiseValue = noise.process();
@@ -44,8 +44,8 @@ struct SnareDrum {
         float coloredNoise = noiseValue - noiseFilter;
         
         // Drum body tone (fundamental frequencies)
-        float freq1 = 200.f * (1.f + toneEnv * toneEnv * 0.8f); // Main body frequency with pitch bend
-        float freq2 = 285.f * (1.f + toneEnv * 0.4f);          // Harmonic frequency
+        float freq1 = 200.f * (1.f + toneEnv * toneEnv * 0.8f); // main body frequency with pitch bend
+        float freq2 = 285.f * (1.f + toneEnv * 0.4f);           // harmonic frequency
         
         tonePhase1 += freq1 * sampleTime * 2.f * M_PI;
         if (tonePhase1 >= 2.f * M_PI) tonePhase1 -= 2.f * M_PI;
@@ -76,13 +76,13 @@ struct SnareDrum {
         float crackNoise = crackFilter1 - crackFilter2 * 0.3f;
         
         // Additional metallic noise component (higher frequency)
-        float metallicNoise = noiseValue * noiseValue * noiseValue; // Cube for more harmonic content
-        metallicNoise = FastMath::fastTanh(metallicNoise * 3.f); // Heavy saturation for metallic character
+        float metallicNoise = noiseValue * noiseValue * noiseValue; // cube for more harmonic content
+        metallicNoise = FastMath::fastTanh(metallicNoise * 3.f); // heavy saturation for metallic character
         
         // Different envelope shapes for different components
-        toneEnv -= sampleTime * 6.f;      // Medium decay for body tone
-        buzzEnv -= sampleTime * 4.f;      // Slower decay for buzz (characteristic snare sustain)
-        envelope -= sampleTime * 8.f;     // Fast decay for crack
+        toneEnv -= sampleTime * 6.f;      // medium decay for body tone
+        buzzEnv -= sampleTime * 4.f;      // slower decay for buzz (characteristic snare sustain)
+        envelope -= sampleTime * 8.f;     // fast decay for crack
         
         if (envelope <= 0.f) {
             envelope = 0.f;
@@ -96,18 +96,16 @@ struct SnareDrum {
         buzzEnv = clamp(buzzEnv, 0.f, 1.f);
         
         // Mix components with classic snare proportions
-        float bodyComponent = bodyTone * toneEnv * toneEnv * 0.4f;           // Punchy body
-        float buzzComponent = buzzNoise * buzzEnv * 0.8f;                    // Classic snare buzz
-        float crackComponent = crackNoise * envelope * envelope * 0.3f;       // Initial crack/attack
-        float metallicComponent = metallicNoise * envelope * 0.2f;           // Metallic character
-        
+        float bodyComponent = bodyTone * toneEnv * toneEnv * 0.4f;
+        float buzzComponent = buzzNoise * buzzEnv * 0.8f;
+        float crackComponent = crackNoise * envelope * envelope * 0.3f;
+        float metallicComponent = metallicNoise * envelope * 0.2f;
         float output = bodyComponent + buzzComponent + crackComponent + metallicComponent;
         
         // Gentle saturation for analog character
         output = FastMath::fastTanh(output * 1.8f) * 0.7f;
         
-        return output * 4.2f; // Final output level - slightly higher for snare prominence
+        return output * 4.2f;
     }
 };
-
 }

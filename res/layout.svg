@@ -24,11 +24,11 @@
    inkscape:pagecheckerboard="0"
    inkscape:deskcolor="#d1d1d1"
    inkscape:document-units="mm"
-   inkscape:zoom="5.6568543"
-   inkscape:cx="156.80093"
-   inkscape:cy="384.84286"
+   inkscape:zoom="1"
+   inkscape:cx="96"
+   inkscape:cy="124.5"
    inkscape:window-width="1718"
-   inkscape:window-height="1360"
+   inkscape:window-height="1161"
    inkscape:window-x="2092"
    inkscape:window-y="0"
    inkscape:window-maximized="0"
@@ -5438,7 +5438,7 @@
    style="display:inline">
       <path
    id="background"
-   style="fill:#1a1a1a;stroke-width:2.80359"
+   style="display:inline;fill:#1a1a1a;stroke-width:2.80359"
    inkscape:label="background"
    d="m -831.47356,5.9109533 h 575.9558 V 491.53117 h -575.9558 z" />
       <path

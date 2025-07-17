@@ -1,7 +1,7 @@
-#include "ribbonwidget.hpp"
+#include "ribbon.hpp"
 #include "../clonotribe.hpp"
 
-void RibbonWidget::onButton(const event::Button& e) {
+void Ribbon::onButton(const event::Button& e) {
     if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
         dragging = true;
         dragStartPos = e.pos;
@@ -16,14 +16,14 @@ void RibbonWidget::onButton(const event::Button& e) {
     }
 }
 
-void RibbonWidget::onDragMove(const event::DragMove& e) {
+void Ribbon::onDragMove(const event::DragMove& e) {
     if (dragging) {
         dragStartPos = dragStartPos.plus(e.mouseDelta);
         updatePosition(dragStartPos);
     }
 }
 
-void RibbonWidget::updatePosition(Vec pos) {
+void Ribbon::updatePosition(Vec pos) {
     if (!module) return;
     
     float margin = 6.0f;
@@ -35,7 +35,7 @@ void RibbonWidget::updatePosition(Vec pos) {
     module->ribbon.setTouching(true);
 }
 
-void RibbonWidget::draw(const DrawArgs& args) {
+void Ribbon::draw(const DrawArgs& args) {
     if (module && module->ribbon.touching) {
         float margin = 6.0f;
         float effectiveWidth = box.size.x - 2 * margin;
@@ -43,7 +43,7 @@ void RibbonWidget::draw(const DrawArgs& args) {
         
         nvgBeginPath(args.vg);
         nvgCircle(args.vg, pos, box.size.y * 0.5f, 6);
-        nvgFillColor(args.vg, nvgRGB(255, 100, 100));
+        nvgFillColor(args.vg, nvgRGBA(255, 100, 100, 200));
         nvgFill(args.vg);
     }
     

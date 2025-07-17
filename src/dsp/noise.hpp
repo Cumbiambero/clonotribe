@@ -26,5 +26,4 @@ struct NoiseGenerator {
         state = 12345;
     }
 };
-
 }

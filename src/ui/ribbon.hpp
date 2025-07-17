@@ -1,24 +1,20 @@
 #pragma once
 #include <rack.hpp>
 
-// Forward declaration
 struct Clonotribe;
 
 using namespace rack;
 
-struct RibbonWidget : Widget {
+struct Ribbon : Widget {
     Clonotribe* module;
     bool dragging = false;
     Vec dragStartPos;
     
-    RibbonWidget() {
+    Ribbon(Clonotribe* m) : module(m) {
         box.size = Vec(192.8, 26);
+        box.pos = mm2px(Vec(73.8, 99.2)); 
     }
-    
-    void setModule(Clonotribe* m) {
-        module = m;
-    }
-    
+        
     void onButton(const event::Button& e) override;
     void onDragMove(const event::DragMove& e) override;
     void updatePosition(Vec pos);

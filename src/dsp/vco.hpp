@@ -12,7 +12,7 @@ struct VCO {
     float pulseWidth = 0.5f;
     float lastSaw = 0.f;
     float lastPulse = 0.f;
-    bool active = true; // For conditional processing
+    bool active = true;
     
     dsp::RCFilter antiAlias;
     
@@ -22,7 +22,7 @@ struct VCO {
     
     void setPitch(float pitch) {
         freq = dsp::FREQ_C4 * std::pow(2.f, pitch);
-        active = (freq > 1.f); // Skip processing for very low frequencies
+        active = (freq > 1.f);
     }
     
     void setPulseWidth(float pw) {
@@ -30,13 +30,13 @@ struct VCO {
     }
     
     float processSaw(float sampleTime) {
-        if (!active) return lastSaw; // Skip processing if inactive
+        if (!active) return lastSaw;
         
         phase += freq * sampleTime;
         if (phase >= 1.f) phase -= 1.f;
         
         float saw = 2.f * phase - 1.f;
-        saw = saw + 0.1f * saw * saw * saw; // Add harmonics
+        saw = saw + 0.1f * saw * saw * saw; // add harmonics
         
         antiAlias.process(saw);
         lastSaw = saw;
@@ -44,7 +44,7 @@ struct VCO {
     }
     
     float processPulse(float sampleTime) {
-        if (!active) return lastPulse; // Skip processing if inactive
+        if (!active) return lastPulse;
         
         phase += freq * sampleTime;
         if (phase >= 1.f) phase -= 1.f;
@@ -63,7 +63,7 @@ struct VCO {
     }
     
     float processTriangle(float sampleTime) {
-        if (!active) return 0.f; // Skip processing if inactive
+        if (!active) return 0.f;
         
         phase += freq * sampleTime;
         if (phase >= 1.f) phase -= 1.f;
@@ -82,7 +82,7 @@ struct VCO {
     }
     
     float processSquare(float sampleTime) {
-        if (!active) return 0.f; // Skip processing if inactive
+        if (!active) return 0.f;
         
         phase += freq * sampleTime;
         if (phase >= 1.f) phase -= 1.f;
@@ -105,5 +105,4 @@ struct VCO {
         return square;
     }
 };
-
 }

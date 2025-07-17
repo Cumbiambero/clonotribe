@@ -11,10 +11,9 @@ struct LFO {
     float freq = 1.f;
     bool oneShot = false;
     bool triggered = false;
-    bool active = true; // For conditional processing
-    bool sampleAndHold = false; // New: Sample & Hold mode
+    bool active = true;
+    bool sampleAndHold = false;
     
-    // Sample & Hold variables
     float sampleHoldValue = 0.f;
     float lastPhase = 0.f;
     
@@ -33,8 +32,7 @@ struct LFO {
     void setSampleAndHold(bool sh) {
         sampleAndHold = sh;
         if (sh) {
-            // Initialize sample hold value
-            sampleHoldValue = (rand() / (float)RAND_MAX) * 2.f - 1.f; // Random initial value
+            sampleHoldValue = (random::uniform() - 0.5f) * 2.f;
         }
     }
     
@@ -53,7 +51,6 @@ struct LFO {
         phase += freq * sampleTime;
         
         if (oneShot && phase >= 0.5f) {
-            // In one-shot mode, stop after half cycle
             triggered = false;
             return 0.f;
         }
@@ -67,15 +64,12 @@ struct LFO {
         
         float output = 0.f;
         
-        // Handle Sample & Hold mode override
         if (sampleAndHold) {
-            // In Sample & Hold mode, generate new random value at regular intervals
-            if (phase < lastPhase) { // Phase wrapped around
+            if (phase < lastPhase) {
                 sampleHoldValue = (random::uniform() - 0.5f) * 2.f;
             }
             output = sampleHoldValue;
         } else {
-            // Normal waveform processing
             switch (waveform) {
                 case 0: // Square
                     output = (phase < 0.5f) ? 1.f : -1.f;
@@ -90,16 +84,11 @@ struct LFO {
                 case 2: // Sawtooth
                     output = 2.f * phase - 1.f;
                     break;
-                case 3: // Sample & Hold (new in firmware 2.1)
-                    // Generate new random value when phase wraps
+                case 3:
                     if (phase < lastPhase) {
                         sampleHoldValue = (random::uniform() - 0.5f) * 2.f;
                     }
                     output = sampleHoldValue;
-                    break;
-                default: // Sine using fast approximation
-                    output = FastMath::fastSin(2.f * M_PI * phase);
-                    break;
             }
         }
         
@@ -107,5 +96,4 @@ struct LFO {
         return output;
     }
 };
-
 }

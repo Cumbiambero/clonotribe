@@ -1,6 +1,6 @@
 #pragma once
 #include <rack.hpp>
-#include "noisegenerator.hpp"
+#include "noise.hpp"
 
 using namespace rack;
 
@@ -41,7 +41,7 @@ struct HiHat {
     }
     
     float process(float sampleTime, NoiseGenerator& noise) {
-        if (!triggered) return 0.f; // Early exit for performance
+        if (!triggered) return 0.f;
         
         // Six square wave oscillators at metallic ratios (like real analog hi-hats)
         // These frequencies create the characteristic metallic timbre
@@ -75,7 +75,6 @@ struct HiHat {
         if (osc6Phase >= 2.f * M_PI) osc6Phase -= 2.f * M_PI;
         metallic += (osc6Phase < M_PI ? 1.f : -1.f) * amps[5];
         
-        // Generate filtered noise for sizzle from shared source
         float noiseValue = noise.process();
         
         // High-pass the noise for brightness
@@ -114,12 +113,11 @@ struct HiHat {
         float output = filteredMetallic + sizzle * 0.4f;
         
         // Apply envelope with sharp attack characteristic
-        float envShaped = envelope * envelope * envelope; // Sharper decay
+        float envShaped = envelope * envelope * envelope;
         
-        // Soft saturation for analog character
-        output = tanh(output * 2.f) * 0.7f;
+        output = tanh(output * 2.f) * 0.7f; // soft saturation for analog character
         
-        return output * envShaped * 4.0f; // Final output level - balanced with other drums
+        return output * envShaped * 4.0f;
     }
 };
 

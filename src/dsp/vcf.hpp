@@ -6,13 +6,13 @@ using namespace rack;
 
 namespace clonotribe {
 
-struct Filter {
+struct VCF {
     float cutoff = 1000.f;
     float resonance = 0.f;
     float x1 = 0.f, x2 = 0.f;
     float y1 = 0.f, y2 = 0.f;
     float z1 = 0.f;
-    bool active = true; // For conditional processing
+    bool active = true;
     
     void setActive(bool active) {
         this->active = active;
@@ -27,7 +27,7 @@ struct Filter {
     }
     
     float process(float input, float sampleRate) {
-        if (!active) return input; // Skip processing if inactive
+        if (!active) return input;
         
         float omega = 2.f * M_PI * cutoff / sampleRate;
         float cos_omega = FastMath::fastCos(omega);
@@ -56,7 +56,7 @@ struct Filter {
         x1 = input;
         y2 = y1;
         y1 = output;
-        z1 = output; // Store for feedback
+        z1 = output;
         
         return output;
     }

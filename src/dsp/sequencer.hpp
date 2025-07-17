@@ -6,35 +6,55 @@ using namespace rack;
 namespace clonotribe {
 
 struct Sequencer {
+
     struct Step {
         bool active = true;
         float pitch = 0.f;
         float gate = 0.f;
-        float gateTime = 0.5f; // 0.0 to 1.0
+        float gateTime = 0.5f;
     };
     
     Step steps[16];
+
+    Sequencer() {
+       for (int i = 0; i < 16; i++) {
+            if (i < 8) {
+                steps[i].active = true;
+                steps[i].pitch = 0.f;
+                steps[i].gate = 5.f;
+                steps[i].gateTime = 0.8f;
+            } else {
+                steps[i].active = false;
+                steps[i].pitch = 0.f;
+                steps[i].gate = 5.f;
+                steps[i].gateTime = 0.8f;
+            }
+        }
+    }
+
     int currentStep = 0;
+    int fluxRecordingStep = 0;
+    int fluxSampleCount = 0;
+    int recordingStep = 0;
+
+    float fluxBuffer[1600];
+    float fluxStepTimer = 0.f;
+    float lastRecordedPitch = 0.f;
+    float stepDuration = 0.25f;
     float stepTimer = 0.f;
-    float stepDuration = 0.25f; // Quarter note at 120 BPM
+
+    bool externalSync = false;
+    bool fluxMode = false;
     bool playing = false;
     bool recording = false;
-    bool fluxMode = false;
-    bool externalSync = false;
     bool sixteenStepMode = false;
-    int recordingStep = 0;
     
-    dsp::SchmittTrigger syncTrigger;
     dsp::SchmittTrigger gateTrigger; 
+    dsp::SchmittTrigger syncTrigger;
     
-    float lastRecordedPitch = 0.f;
-    float fluxBuffer[1600];
-    int fluxSampleCount = 0;
-    int fluxRecordingStep = 0;
-    float fluxStepTimer = 0.f;
     
     void setTempo(float bpm) {
-        stepDuration = 60.f / (bpm * 4.f); // 16th notes
+        stepDuration = 60.f / (bpm * 4.f);
     }
     
     void setExternalSync(bool external) {
@@ -45,7 +65,7 @@ struct Sequencer {
         sixteenStepMode = sixteenStep;
     }
     
-    bool isSixteenStepMode() const {
+    bool isInSixteenStepMode() const {
         return sixteenStepMode;
     }
     
@@ -189,7 +209,6 @@ struct Sequencer {
         output.step = currentStep;
         output.stepChanged = wasNewStep;
         
-        // Always process the current step, but output silence if inactive
         if (steps[currentStep].active) {
             if (fluxMode && fluxSampleCount > 0) {
                 int samplesPerStep = fluxSampleCount / getStepCount();
@@ -218,5 +237,4 @@ struct Sequencer {
         return output;
     }
 };
-
 }

@@ -2,10 +2,10 @@
 #include <rack.hpp>
 
 using namespace rack;
-struct TransparentMomentaryButton : app::ParamWidget {
+struct TransparentButton : app::ParamWidget {
     bool pressed = false;
     
-    TransparentMomentaryButton() {
+    TransparentButton() {
         box.size = Vec(24, 18);
     }
     

@@ -1,7 +1,7 @@
 #pragma once
 #include "plugin.hpp"
-#include "dsp.hpp"
-#include <random>
+#include "dsp/dsp.hpp"
+#include "ui/ui.hpp"
 
 struct Clonotribe : Module {
     enum ParamId {
@@ -75,80 +75,65 @@ struct Clonotribe : Module {
         LIGHTS_LEN
     };
 
-    // DSP components
     clonotribe::VCO vco;
-    clonotribe::Filter vcf;
+    clonotribe::VCF vcf;
     clonotribe::LFO lfo;
     clonotribe::Envelope envelope;
     clonotribe::Sequencer sequencer;
-    
-    // Shared noise generator for performance
-    clonotribe::NoiseGenerator noiseGen;
-    
-    // Drum components
+    clonotribe::NoiseGenerator noiseGenerator;
     clonotribe::KickDrum kickDrum;
     clonotribe::SnareDrum snareDrum;
     clonotribe::HiHat hiHat;
-    clonotribe::RibbonController ribbon;
+    clonotribe::Ribbon ribbon;
     
-    // Gate detection
     dsp::SchmittTrigger gateTrigger;
     dsp::SchmittTrigger playTrigger;
     dsp::SchmittTrigger recTrigger;
     dsp::SchmittTrigger fluxTrigger;
-    dsp::SchmittTrigger stepTriggers[8];
-    bool gateActive = false;
-    
-    // Drum pattern storage
-    bool drumPatterns[3][8] = {{false}}; // [drum][step] - 0=kick, 1=snare, 2=hihat
-    int selectedDrumPart = 0; // 0=synth, 1=kick, 2=snare, 3=hihat
-    dsp::SchmittTrigger drumTriggers[4]; // For the 4 part selection buttons
-    
-    int selectedStepForEditing = 0; // Which step is selected for ACTIVE STEP/GATE TIME editing
     dsp::SchmittTrigger activeStepTrigger;
-    dsp::SchmittTrigger gateTimeTrigger;
-    
-    bool activeStepWasPressed = false;
-    bool activeStepActive = false;
-    bool activeStepsSequencerSteps[16]; // Expanded for 16-step mode
-    bool activeStepsDrumPatterns[3][8]; // Drums stay at 8 steps
-    
-    bool gateTimeHeld = false;
-    bool sixteenStepModeTogglePending = false;
-        
-    dsp::SchmittTrigger gateTimeSeq1Trigger; // Clear synth+drum sequence
-    dsp::SchmittTrigger gateTimeSeq2Trigger; // Clear synth sequence
-    dsp::SchmittTrigger gateTimeSeq3Trigger; // Clear drum sequence
-    dsp::SchmittTrigger gateTimeSeq4Trigger; // Turn on all active steps
-    dsp::SchmittTrigger gateTimeSeq6Trigger; // 16 or 8 step mode toggle
-    dsp::SchmittTrigger gateTimeSeq5Trigger; // Change LFO 1SHOT to Sample & Hold
-    dsp::SchmittTrigger gateTimeSeq7Trigger; // Lock synth gate times
-    dsp::SchmittTrigger gateTimeSeq8Trigger; // SYNC INPUT half tempo
-    
-    bool lfoSampleAndHoldMode = false; // When true, LFO is in Sample & Hold mode instead of 1SHOT
-    bool gateTimesLocked = false; // When true, gate times are locked and can't be modified by ribbon
-    bool syncHalfTempo = false; // When true, sync input runs at half tempo
-    int syncDivideCounter = 0; // Counter for sync half tempo feature
-    
+    dsp::SchmittTrigger gateTimeTrigger;    
+    dsp::SchmittTrigger clearAllSequencesTrigger;
+    dsp::SchmittTrigger clearSynthSequenceTrigger;
+    dsp::SchmittTrigger clearDrumSequenceTrigger;
+    dsp::SchmittTrigger enableAllActiveStepsTrigger;
+    dsp::SchmittTrigger toggleSixteenStepModeTrigger;
+    dsp::SchmittTrigger toggleLFOModeTrigger;
+    dsp::SchmittTrigger gateTimesLockTrigger;
+    dsp::SchmittTrigger syncHalfTempoTrigger;
+    dsp::SchmittTrigger stepTriggers[8];
+    dsp::SchmittTrigger drumTriggers[4];
     dsp::PulseGenerator syncPulse;
-    
-    std::default_random_engine noiseEngine;
-    std::uniform_real_distribution<float> noiseDist{-1.f, 1.f};
+
+    int selectedDrumPart = 0; // 0=synth, 1=kick, 2=snare, 3=hihat
+    int selectedStepForEditing = 0;
+    int syncDivideCounter = 0;
+
+    bool drumPatterns[3][8] = {{false}}; // [drum][step] - 0=kick, 1=snare, 2=hihat
+    bool activeStepsSequencerSteps[16];
+    bool activeStepsDrumPatterns[3][8];
+
+    bool activeStepActive = false;    
+    bool activeStepWasPressed = false;
+    bool gateActive = false;
+    bool gateTimeHeld = false;
+    bool gateTimesLocked = false;
+    bool lfoSampleAndHoldMode = false;
+    bool sixteenStepModeTogglePending = false;
+    bool syncHalfTempo = false;
 
     Clonotribe();
     void process(const ProcessArgs& args) override;
     
 private:
-    // Helper methods for better code organization
-    void handleStepButtons();
+    void clearAllSequences();
+    void clearDrumSequence();
+    void clearSynthSequence();
+    void enableAllActiveSteps();
     void handleActiveStep();
     void handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld);
-    void updateStepLights(const clonotribe::Sequencer::SequencerOutput& seqOutput);
-    bool isStepActiveInCurrentMode(int step);
+    void handleStepButtons();
     void toggleStepInCurrentMode(int step);
-    
-    void clearAllSequences();
-    void clearSynthSequence();
-    void clearDrumSequence();
-    void enableAllSteps();
+    void updateStepLights(const clonotribe::Sequencer::SequencerOutput& seqOutput);
+
+    bool isStepActiveInCurrentMode(int step);
 };
