@@ -6,7 +6,7 @@ void Clonotribe::process(const ProcessArgs& args) {
         float lfoRate = params[PARAM_LFO_RATE_KNOB].getValue();
         float noiseLevel = params[PARAM_NOISE_KNOB].getValue();
         float resonance = params[PARAM_VCF_PEAK_KNOB].getValue();
-        float rhythmVolume = params[PARAM_RHYTM_VOLUME_KNOB].getValue();
+        float rhythmVolume = params[PARAM_RHYTHM_VOLUME_KNOB].getValue();
         float tempo = params[PARAM_SEQUENCER_TEMPO_KNOB].getValue();
         float volume = params[PARAM_VCA_LEVEL_KNOB].getValue();
         

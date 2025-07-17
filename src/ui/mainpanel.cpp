@@ -23,7 +23,7 @@ struct MainPanel : ModuleWidget {
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(77.0, 42.0)), module, Clonotribe::PARAM_VCA_LEVEL_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(98.0, 42.0)), module, Clonotribe::PARAM_LFO_RATE_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(119.0, 42.0)), module, Clonotribe::PARAM_LFO_INTERVAL_KNOB));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0, 42.0)), module, Clonotribe::PARAM_RHYTM_VOLUME_KNOB));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0, 42.0)), module, Clonotribe::PARAM_RHYTHM_VOLUME_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.0, 62.5)), module, Clonotribe::PARAM_NOISE_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(56.5, 62.5)), module, Clonotribe::PARAM_VCF_PEAK_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0, 62.5)), module, Clonotribe::PARAM_SEQUENCER_TEMPO_KNOB));

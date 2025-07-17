@@ -19,7 +19,7 @@ Clonotribe::Clonotribe() {
         configParam(PARAM_VCA_LEVEL_KNOB, 0.f, 1.f, 0.8f, "VCA Level");
         configParam(PARAM_LFO_RATE_KNOB, 0.f, 1.f, 0.3f, "LFO Rate");
         configParam(PARAM_LFO_INTERVAL_KNOB, 0.f, 1.f, 0.f, "LFO Intensity");
-        configParam(PARAM_RHYTM_VOLUME_KNOB, 0.f, 1.f, 0.f, "Rhythm Volume");
+        configParam(PARAM_RHYTHM_VOLUME_KNOB, 0.f, 1.f, 0.f, "Rhythm Volume");
         configParam(PARAM_SEQUENCER_TEMPO_KNOB, 0.f, 1.f, 0.5f, "Sequencer Tempo", " BPM", 0.f, 120.f, 60.f);
         
         configButton(PARAM_SNARE_BUTTON, "Snare");
