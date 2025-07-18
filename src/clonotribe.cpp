@@ -1,26 +1,26 @@
 #include "clonotribe.hpp"
 
-Clonotribe::Clonotribe() {
+Clonotribe::Clonotribe() : ribbonController(this) {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
                
-        configSwitch(PARAM_VCO_WAVEFORM_SWITCH, 0.f, 2.f, 0.f, "VCO Waveform", {"Square", "Triangle", "Sawtooth"});
-        configSwitch(PARAM_RIBBON_RANGE_SWITCH, 0.f, 2.f, 0.f, "Ribbon Range", {"Key", "Narrow", "Wide"});
-        configSwitch(PARAM_ENVELOPE_FORM_SWITCH, 0.f, 2.f, 0.f, "Envelope",  {"Attack", "Gate", "Decay"});
-        configSwitch(PARAM_LFO_TARGET_SWITCH, 0.f, 2.f, 0.f, "LFO Target",  {"VCF", "VCO+VCF", "VCO"});
-        configSwitch(PARAM_LFO_MODE_SWITCH, 0.f, 2.f, 0.f, "LFO Mode", {"1 Shot", "Slow", "Fast"});
-        configSwitch(PARAM_LFO_WAVEFORM_SWITCH, 0.f, 2.f, 0.f, "LFO Waveform",  {"Square", "Triangle", "Sawtooth"});
+        configSwitch(PARAM_VCO_WAVEFORM_SWITCH, 0.0f, 2.0f, 0.0f, "VCO Waveform", {"Square", "Triangle", "Sawtooth"});
+        configSwitch(PARAM_RIBBON_RANGE_SWITCH, 0.0f, 2.0f, 0.0f, "Ribbon Controller Range", {"Key", "Narrow", "Wide"});
+        configSwitch(PARAM_ENVELOPE_FORM_SWITCH, 0.0f, 2.0f, 0.0f, "Envelope",  {"Attack", "Gate", "Decay"});
+        configSwitch(PARAM_LFO_TARGET_SWITCH, 0.0f, 2.0f, 0.0f, "LFO Target",  {"VCF", "VCO+VCF", "VCO"});
+        configSwitch(PARAM_LFO_MODE_SWITCH, 0.0f, 2.0f, 0.0f, "LFO Mode", {"1 Shot", "Slow", "Fast"});
+        configSwitch(PARAM_LFO_WAVEFORM_SWITCH, 0.0f, 2.0f, 0.0f, "LFO Waveform",  {"Square", "Triangle", "Sawtooth"});
         
-        configParam(PARAM_VCO_OCTAVE_KNOB, 0.f, 5.f, 2.f, "VCO Octave");
+        configParam(PARAM_VCO_OCTAVE_KNOB, 0.0f, 5.0f, 2.0f, "VCO Octave");
         getParamQuantity(PARAM_VCO_OCTAVE_KNOB)->snapEnabled = true;
 
-        configParam(PARAM_NOISE_KNOB, 0.f, 1.f, 0.f, "Noise Level", "%", 0.f, 100.f);
-        configParam(PARAM_VCF_CUTOFF_KNOB, 0.f, 1.f, 0.7f, "VCF Cutoff");
-        configParam(PARAM_VCF_PEAK_KNOB, 0.f, 1.f, 0.f, "VCF Peak (Resonance)");
-        configParam(PARAM_VCA_LEVEL_KNOB, 0.f, 1.f, 0.8f, "VCA Level");
-        configParam(PARAM_LFO_RATE_KNOB, 0.f, 1.f, 0.3f, "LFO Rate");
-        configParam(PARAM_LFO_INTERVAL_KNOB, 0.f, 1.f, 0.f, "LFO Intensity");
-        configParam(PARAM_RHYTHM_VOLUME_KNOB, 0.f, 1.f, 0.f, "Rhythm Volume");
-        configParam(PARAM_SEQUENCER_TEMPO_KNOB, 0.f, 1.f, 0.5f, "Sequencer Tempo", " BPM", 0.f, 120.f, 60.f);
+        configParam(PARAM_NOISE_KNOB, 0.0f, 1.0f, 0.0f, "Noise Level", "%", 0.0f, 100.0f);
+        configParam(PARAM_VCF_CUTOFF_KNOB, 0.0f, 1.0f, 0.7f, "VCF Cutoff");
+        configParam(PARAM_VCF_PEAK_KNOB, 0.0f, 1.0f, 0.0f, "VCF Peak (Resonance)");
+        configParam(PARAM_VCA_LEVEL_KNOB, 0.0f, 1.0f, 0.8f, "VCA Level");
+        configParam(PARAM_LFO_RATE_KNOB, 0.0f, 1.0f, 0.3f, "LFO Rate");
+        configParam(PARAM_LFO_INTERVAL_KNOB, 0.0f, 1.0f, 0.0f, "LFO Intensity");
+        configParam(PARAM_RHYTHM_VOLUME_KNOB, 0.0f, 1.0f, 0.0f, "Rhythm Volume");
+        configParam(PARAM_SEQUENCER_TEMPO_KNOB, 0.0f, 1.0f, 0.5f, "Sequencer Tempo", " BPM", 0.0f, 120.0f, 60.0f);
         
         configButton(PARAM_SNARE_BUTTON, "Snare");
         configButton(PARAM_FLUX_BUTTON, "Flux");
@@ -49,4 +49,4 @@ Clonotribe::Clonotribe() {
         configOutput(OUTPUT_GATE_CONNECTOR, "Gate");
         configOutput(OUTPUT_AUDIO_CONNECTOR, "Audio");
         configOutput(OUTPUT_SYNC_CONNECTOR, "Sync");
-}
+};

@@ -1,97 +1,108 @@
 #pragma once
-#include <rack.hpp>
+#include <numbers>
+#include <array>
 #include "fastmath.hpp"
-
-using namespace rack;
 
 namespace clonotribe {
 
-struct LFO {
-    float phase = 0.f;
-    float freq = 1.f;
+struct LFO final {
+    enum class Waveform { Square = 0, Triangle = 1, Sawtooth = 2, SampleHold = 3 };
+    static constexpr float MIN_FREQ = 0.01f;
+    static constexpr float MAX_FREQ = 20.0f;
+    static constexpr float MIN_ACTIVE_FREQ = 0.001f;
+
+    float phase = 0.0f;
+    float freq = 1.0f;
     bool oneShot = false;
     bool triggered = false;
     bool active = true;
     bool sampleAndHold = false;
-    
-    float sampleHoldValue = 0.f;
-    float lastPhase = 0.f;
-    
-    void setRate(float rate) {
-        freq = clamp(rate, 0.01f, 20.f);
-        active = (freq > 0.001f); // Skip processing for very low frequencies
+    float sampleHoldValue = 0.0f;
+    float lastPhase = 0.0f;
+
+    constexpr LFO() noexcept = default;
+    LFO(const LFO&) noexcept = default;
+    LFO& operator=(const LFO&) noexcept = default;
+    LFO(LFO&&) noexcept = default;
+    LFO& operator=(LFO&&) noexcept = default;
+    ~LFO() noexcept = default;
+
+    void setRate(float rate) noexcept {
+        freq = std::clamp(rate, MIN_FREQ, MAX_FREQ);
+        active = (freq > MIN_ACTIVE_FREQ);
     }
-    
-    void setOneShot(bool os) {
+
+    void setOneShot(bool os) noexcept {
         oneShot = os;
         if (os && !triggered) {
-            phase = 0.f;
+            phase = 0.0f;
         }
     }
-    
-    void setSampleAndHold(bool sh) {
+
+    void setSampleAndHold(bool sh) noexcept {
         sampleAndHold = sh;
         if (sh) {
-            sampleHoldValue = (random::uniform() - 0.5f) * 2.f;
+            sampleHoldValue = (rack::random::uniform() - 0.5f) * 2.0f;
         }
     }
-    
-    void trigger() {
+
+    void trigger() noexcept {
         if (oneShot) {
-            phase = 0.f;
+            phase = 0.0f;
             triggered = true;
         }
     }
-    
-    float process(float sampleTime, int waveform = 0) {
-        if (!active || (oneShot && !triggered)) {
-            return 0.f;
+
+    [[nodiscard]] float process(float sampleTime, Waveform waveform = Waveform::Square) noexcept {
+        if (!active || (oneShot && !triggered)) [[unlikely]] {
+            return 0.0f;
         }
-        
+
         phase += freq * sampleTime;
-        
+
         if (oneShot && phase >= 0.5f) {
             triggered = false;
-            return 0.f;
+            return 0.0f;
         }
-        
-        if (phase >= 1.f) {
-            phase -= 1.f;
+
+        if (phase >= 1.0f) {
+            phase -= 1.0f;
             if (oneShot) {
                 triggered = false;
             }
         }
-        
-        float output = 0.f;
-        
+
+        float output = 0.0f;
+
         if (sampleAndHold) {
             if (phase < lastPhase) {
-                sampleHoldValue = (random::uniform() - 0.5f) * 2.f;
+                sampleHoldValue = (rack::random::uniform() - 0.5f) * 2.0f;
             }
             output = sampleHoldValue;
         } else {
             switch (waveform) {
-                case 0: // Square
-                    output = (phase < 0.5f) ? 1.f : -1.f;
+                case Waveform::Square:
+                    output = (phase < 0.5f) ? 1.0f : -1.0f;
                     break;
-                case 1: // Triangle
+                case Waveform::Triangle:
                     if (phase < 0.5f) {
-                        output = 4.f * phase - 1.f;
+                        output = 4.0f * phase - 1.0f;
                     } else {
-                        output = 3.f - 4.f * phase;
+                        output = 3.0f - 4.0f * phase;
                     }
                     break;
-                case 2: // Sawtooth
-                    output = 2.f * phase - 1.f;
+                case Waveform::Sawtooth:
+                    output = 2.0f * phase - 1.0f;
                     break;
-                case 3:
+                case Waveform::SampleHold:
                     if (phase < lastPhase) {
-                        sampleHoldValue = (random::uniform() - 0.5f) * 2.f;
+                        sampleHoldValue = (rack::random::uniform() - 0.5f) * 2.0f;
                     }
                     output = sampleHoldValue;
+                    break;
             }
         }
-        
+
         lastPhase = phase;
         return output;
     }

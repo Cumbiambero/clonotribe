@@ -1,75 +1,59 @@
 #pragma once
-#include <rack.hpp>
-
-using namespace rack;
+#include <algorithm>
+#include <cmath>
+#include <array>
 
 namespace clonotribe {
 
-struct Ribbon {
-    float position = 0.f;
-    bool touching = false;
-    int mode = 1;
-    float octave = 0.f;
-    
-    void setPosition(float pos) {
-        position = clamp(pos, 0.f, 1.f);
+// DSP-side Ribbon controller for pitch, gate, and modulation
+class Ribbon {
+public:
+    enum class Mode { Key = 0, Narrow = 1, Wide = 2 };
+
+    Ribbon() = default;
+
+    void setMode(int m) noexcept {
+        mode = static_cast<Mode>(std::clamp(m, 0, 2));
     }
-    
-    void setTouching(bool touch) {
-        touching = touch;
-    }
-    
-    void setMode(int m) {
-        mode = clamp(m, 0, 2);
-    }
-    
-    void setOctave(float oct) {
-        octave = oct;
-    }
-    
-    float getCV() {
-        if (!touching) return 0.f;
-        
-        float cv = 0.f;
-        
+    void setOctave(float oct) noexcept { octave = oct; }
+    void setTouching(bool t) noexcept { touching = t; }
+    void setPosition(float pos) noexcept { position = std::clamp(pos, 0.0f, 1.0f); }
+    float getPosition() const noexcept { return position; }
+
+    [[nodiscard]] float getCV() const noexcept {
+        // Map position to CV depending on mode
         switch (mode) {
-            case 0: // KEY - chromatic steps, respects octave (Ccromatic steps + octave)
-                {
-                    int step = (int)(position * 12.f);
-                    cv = (step / 12.f) + octave;
-                }
-                break;
-            case 1: // NARROW - continuous, respects octave (±0.5 octave + octave setting)
-                cv = (position - 0.5f) * 1.f + octave; 
-                break;
-                
-            case 2: // WIDE - 6x range, ignores octave  (±3 octaves)
-                cv = (position - 0.5f) * 6.f;
+            case Mode::Key: {
+                int step = static_cast<int>(position * 12.0f);
+                return (static_cast<float>(step) / 12.0f) + octave;
+            }
+            case Mode::Narrow:
+                return position * 2.0f + octave - 1.0f;
+            case Mode::Wide:
+                return position * 5.0f + octave - 2.5f;
+            default:
+                return 0.0f;
         }
-        
-        return cv;
     }
-    
-    float getGate() {
-        return touching ? 5.f : 0.f;
+    [[nodiscard]] float getGate() const noexcept {
+        return touching ? 10.0f : 0.0f;
     }
-    
-    // Get gate time modulation (0.1 to 1.0) based on ribbon position (default gate time when not touching)
-    float getGateTimeMod() {
-        if (!touching) return 0.5f;
-        return clamp(position * 0.9f + 0.1f, 0.1f, 1.0f);
-    }
-    
-    // Get volume automation (-1.0 to +1.0) for synth part volume (no volume change when not touching)
-    float getVolumeAutomation() {
-        if (!touching) return 0.f; 
-        return (position - 0.5f) * 2.f; // -1.0 to +1.0
-    }
-    
-    // Get drum roll intensity (0.0 to 1.0) for drum parts
-    float getDrumRollIntensity() {
-        if (!touching) return 0.f;
+    [[nodiscard]] float getGateTimeMod() const noexcept {
+        // 0.0f (short) to 1.0f (long)
         return position;
     }
+    [[nodiscard]] float getVolumeAutomation() const noexcept {
+        // -1.0f (min) to +1.0f (max)
+        return (position - 0.5f) * 2.0f;
+    }
+    [[nodiscard]] float getDrumRollIntensity() const noexcept {
+        // 0.0f (min) to 1.0f (max)
+        return position;
+    }
+    bool touching = false;
+private:
+    Mode mode = Mode::Key;
+    float octave = 0.0f;
+    float position = 0.0f;
 };
 }

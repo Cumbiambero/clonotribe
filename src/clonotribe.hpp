@@ -3,7 +3,16 @@
 #include "dsp/dsp.hpp"
 #include "ui/ui.hpp"
 
+using namespace clonotribe;
+
 struct Clonotribe : Module {
+    static float processEnvelope(int envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
+    static float processOutput(
+        float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
+        float rhythmVolume, float sampleTime,
+        KickDrum& kickDrum, SnareDrum& snareDrum, HiHat& hiHat, NoiseGenerator& noiseGenerator
+    );
+    void handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered);
     enum ParamId {
         PARAM_VCO_OCTAVE_KNOB,
         PARAM_VCA_LEVEL_KNOB,
@@ -75,16 +84,17 @@ struct Clonotribe : Module {
         LIGHTS_LEN
     };
 
-    clonotribe::VCO vco;
-    clonotribe::VCF vcf;
-    clonotribe::LFO lfo;
-    clonotribe::Envelope envelope;
-    clonotribe::Sequencer sequencer;
-    clonotribe::NoiseGenerator noiseGenerator;
-    clonotribe::KickDrum kickDrum;
-    clonotribe::SnareDrum snareDrum;
-    clonotribe::HiHat hiHat;
-    clonotribe::Ribbon ribbon;
+    VCO vco;
+    VCF vcf;
+    LFO lfo;
+    Envelope envelope;
+    Sequencer sequencer;
+    NoiseGenerator noiseGenerator;
+    KickDrum kickDrum;
+    SnareDrum snareDrum;
+    HiHat hiHat;
+    Ribbon ribbon;
+    RibbonController ribbonController;
     
     dsp::SchmittTrigger gateTrigger;
     dsp::SchmittTrigger playTrigger;
@@ -123,6 +133,13 @@ struct Clonotribe : Module {
 
     Clonotribe();
     void process(const ProcessArgs& args) override;
+
+    auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, int, int, int, int, int, int>;
+    void updateDSPState(float volume, float rhythmVolume, float lfoIntensity, int ribbonMode, float octave);
+    void handleMainTriggers();
+    void handleDrumSelectionAndTempo(float tempo);
+    void handleSpecialGateTimeButtons(bool gateTimeHeld);
+    auto processInputTriggers(float inputPitch, float gate, bool gateTimeHeld) -> std::tuple<float, float, bool, bool>;
     
 private:
     void clearAllSequences();
@@ -133,7 +150,6 @@ private:
     void handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld);
     void handleStepButtons();
     void toggleStepInCurrentMode(int step);
-    void updateStepLights(const clonotribe::Sequencer::SequencerOutput& seqOutput);
-
+    void updateStepLights(const Sequencer::SequencerOutput& seqOutput);
     bool isStepActiveInCurrentMode(int step);
 };

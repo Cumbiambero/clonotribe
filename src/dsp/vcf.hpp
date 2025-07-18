@@ -1,65 +1,71 @@
 #pragma once
-#include <rack.hpp>
-#include "fastmath.hpp"
-
-using namespace rack;
+#include <array>
+#include <numbers>
 
 namespace clonotribe {
 
-struct VCF {
-    float cutoff = 1000.f;
-    float resonance = 0.f;
-    float x1 = 0.f, x2 = 0.f;
-    float y1 = 0.f, y2 = 0.f;
-    float z1 = 0.f;
+struct VCF final {
+    float cutoff = 1000.0f;
+    float resonance = 0.5f;
+    float state1 = 0.0f;
+    float state2 = 0.0f;
     bool active = true;
-    
-    void setActive(bool active) {
-        this->active = active;
+
+    constexpr VCF() noexcept = default;
+    VCF(const VCF&) noexcept = default;
+    VCF& operator=(const VCF&) noexcept = default;
+    VCF(VCF&&) noexcept = default;
+    VCF& operator=(VCF&&) noexcept = default;
+    ~VCF() noexcept = default;
+
+    void setActive(bool a) noexcept {
+        active = a;
     }
-    
-    void setCutoff(float freq) {
-        cutoff = clamp(freq, 20.f, 20000.f);
+
+    void setCutoff(float freq) noexcept {
+        cutoff = freq < 20.0f ? 20.0f : (freq > 20000.0f ? 20000.0f : freq);
     }
-    
-    void setResonance(float res) {
-        resonance = clamp(res, 0.f, 4.f);
+
+    void setResonance(float res) noexcept {
+        resonance = res < 0.0f ? 0.0f : (res > 4.0f ? 4.0f : res);
     }
-    
-    float process(float input, float sampleRate) {
+
+    void reset() noexcept {
+        state1 = 0.0f;
+        state2 = 0.0f;
+    }
+
+    [[nodiscard]] float process(float input, float sampleRate) noexcept {
         if (!active) return input;
-        
-        float omega = 2.f * M_PI * cutoff / sampleRate;
+
+        constexpr float pi_f = static_cast<float>(std::numbers::pi);
+        float omega = 2.0f * pi_f * cutoff / sampleRate;
         float cos_omega = FastMath::fastCos(omega);
         float sin_omega = FastMath::fastSin(omega);
-        
+
         float feedback = resonance * 0.9f;
-        float nonlinearFeedback = FastMath::fastTanh(feedback * z1) * 0.7f;
-        
+        float nonlinearFeedback = FastMath::fastTanh(feedback * state1) * 0.7f;
+
         input -= nonlinearFeedback;
-        
+
         // Sallen-Key topology approximation
-        float alpha = sin_omega / (2.f * (1.f + feedback * 0.1f));
-        
-        float b0 = (1.f - cos_omega) / 2.f;
-        float b1 = 1.f - cos_omega;
-        float b2 = (1.f - cos_omega) / 2.f;
-        float a0 = 1.f + alpha;
-        float a1 = -2.f * cos_omega;
-        float a2 = 1.f - alpha;
-        
-        float output = (b0 * input + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2) / a0;
-        
+        float alpha = sin_omega / (2.0f * (1.0f + feedback * 0.1f));
+
+        float b0 = (1.0f - cos_omega) / 2.0f;
+        float b1 = 1.0f - cos_omega;
+        float b2 = (1.0f - cos_omega) / 2.0f;
+        float a0 = 1.0f + alpha;
+        float a1 = -2.0f * cos_omega;
+        float a2 = 1.0f - alpha;
+
+        float output = (b0 * input + b1 * state1 + b2 * state2 - a1 * state1 - a2 * state2) / a0;
+
         output = FastMath::fastTanh(output * 1.2f) * 0.8f;
-        
-        x2 = x1;
-        x1 = input;
-        y2 = y1;
-        y1 = output;
-        z1 = output;
-        
+
+        state2 = state1;
+        state1 = input;
+
         return output;
     }
 };
-
 }

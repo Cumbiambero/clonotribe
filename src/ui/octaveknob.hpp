@@ -1,12 +1,14 @@
 #pragma once
 #include <rack.hpp>
+#include "../dsp/fastmath.hpp"
 
-using namespace rack;
+namespace clonotribe {
 
-struct OctaveKnob : RoundBlackKnob {
-    OctaveKnob() {
-        minAngle = -0.4f * M_PI;
-        maxAngle = 0.4f * M_PI;
+struct OctaveKnob final : rack::RoundBlackKnob {
+    OctaveKnob() noexcept {
+        minAngle = -0.4f * FastMath::PI;
+        maxAngle = 0.4f * FastMath::PI;
         snap = true;
     }
 };
+}

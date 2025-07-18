@@ -1,14 +1,14 @@
 #pragma once
 #include <rack.hpp>
 
-using namespace rack;
-struct TransparentButton : app::ParamWidget {
+namespace clonotribe {
+struct TransparentButton final : rack::app::ParamWidget {
     bool pressed = false;
-    
-    TransparentButton() {
-        box.size = Vec(24, 18);
+
+    TransparentButton() noexcept {
+        box.size = rack::Vec(24, 18);
     }
-    
+
     void draw(const DrawArgs& args) override {
         if (getParamQuantity() && getParamQuantity()->getValue() > 0.5f) {
             nvgBeginPath(args.vg);
@@ -18,35 +18,36 @@ struct TransparentButton : app::ParamWidget {
             nvgStroke(args.vg);
         }
     }
-    
-    void onButton(const event::Button& e) override {
+
+    void onButton(const rack::event::Button& e) override {
         if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
             pressed = true;
             if (getParamQuantity()) {
-                getParamQuantity()->setValue(1.f);
+                getParamQuantity()->setValue(1.0f);
             }
             e.consume(this);
         }
-        ParamWidget::onButton(e);
+        rack::app::ParamWidget::onButton(e);
     }
-    
-    void onDragStart(const event::DragStart& e) override {
+
+    void onDragStart(const rack::event::DragStart& e) override {
         if (e.button == GLFW_MOUSE_BUTTON_LEFT) {
             pressed = true;
             if (getParamQuantity()) {
-                getParamQuantity()->setValue(1.f);
+                getParamQuantity()->setValue(1.0f);
             }
         }
-        ParamWidget::onDragStart(e);
+        rack::app::ParamWidget::onDragStart(e);
     }
     
     void onDragEnd(const event::DragEnd& e) override {
         if (e.button == GLFW_MOUSE_BUTTON_LEFT && pressed) {
             pressed = false;
             if (getParamQuantity()) {
-                getParamQuantity()->setValue(0.f);
+                getParamQuantity()->setValue(0.0f);
             }
         }
         ParamWidget::onDragEnd(e);
     }
 };
+}

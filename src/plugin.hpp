@@ -2,7 +2,5 @@
 #include <rack.hpp>
 #include "dsp/dsp.hpp"
 
-using namespace rack;
-
-extern Plugin* pluginInstance;
-extern Model* modelClonotribe;
+extern rack::Plugin* pluginInstance;
+extern rack::Model* modelClonotribe;

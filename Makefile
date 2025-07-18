@@ -2,7 +2,8 @@ RACK_DIR ?= $(RACK_DIR)
 SLUG = ClonoTribe
 VERSION = 2.0.0
 
-FLAGS += -Idep/include
+FLAGS += -isystem $(RACK_DIR)/include
+FLAGS += -std=c++23 -Wall -Wextra -Wpedantic -Wconversion -Wno-psabi
 
 SOURCES += $(wildcard src/*.cpp)
 SOURCES += $(wildcard src/ui/*.cpp)
