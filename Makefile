@@ -1,7 +1,7 @@
 RACK_DIR ?= ../..
 
 FLAGS += -isystem
-FLAGS += -Wall -Wextra -Wpedantic -Wconversion -Wno-psabi
+FLAGS += -Wpedantic -Wconversion -Wno-psabi
 CXXFLAGS += -std=c++23
 
 SOURCES += $(wildcard src/*.cpp)
