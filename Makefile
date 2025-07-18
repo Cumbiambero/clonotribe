@@ -1,9 +1,8 @@
-RACK_DIR ?= $(RACK_DIR)
-SLUG = ClonoTribe
-VERSION = 2.0.0
+RACK_DIR ?= ../..
 
-FLAGS += -isystem $(RACK_DIR)/include
-FLAGS += -std=c++23 -Wall -Wextra -Wpedantic -Wconversion -Wno-psabi
+FLAGS += -isystem
+FLAGS += -Wall -Wextra -Wpedantic -Wconversion -Wno-psabi
+CXXFLAGS += -std=c++23
 
 SOURCES += $(wildcard src/*.cpp)
 SOURCES += $(wildcard src/ui/*.cpp)
@@ -14,3 +13,5 @@ DISTRIBUTABLES += $(wildcard LICENSE*)
 DISTRIBUTABLES += $(wildcard presets)
 
 include $(RACK_DIR)/plugin.mk
+
+CXXFLAGS := $(filter-out -std=c++11,$(CXXFLAGS))
