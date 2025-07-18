@@ -5,60 +5,65 @@
 namespace clonotribe {
 
 struct VCO final {
-    float phase = 0.0f;
-    float freq = 440.0f;
-    float pulseWidth = 0.5f;
-    float lastSaw = 0.0f;
-    float lastPulse = 0.0f;
-    bool active = true;
+    float phase{0.0f};
+    float freq{440.0f};
+    float pulseWidth{0.5f};
+    float lastSaw{0.0f};
+    float lastPulse{0.0f};
+    bool active{true};
 
-    rack::dsp::RCFilter antiAlias;
+    rack::dsp::RCFilter antiAlias{};
+    float dcBlockerY{0.0f};
+    float dcBlockerX{0.0f};
+    static constexpr float dcBlockerAlpha = 0.995f;
 
-    VCO() noexcept {
+    constexpr VCO() noexcept = default;
+
+    void initialize() noexcept {
         antiAlias.setCutoff(8000.0f / 48000.0f); // 8kHz cutoff
     }
 
     void setPitch(float pitch) noexcept {
-        freq = rack::dsp::FREQ_C4 * std::pow(2.0f, pitch);
-        active = (freq > 1.0f);
+        freq = rack::dsp::FREQ_C4 * std::pow(2.0f, static_cast<float>(pitch));
+        active = freq > 1.0f;
     }
 
     void setPulseWidth(float pw) noexcept {
         pulseWidth = std::clamp(pw, 0.01f, 0.99f);
     }
 
+    // PolyBLEP helper for band-limited step
+    [[nodiscard]] static constexpr float polyblep(float t, float dt) noexcept {
+        if (t < dt) {
+            t /= dt;
+            return t + t - t * t - 1.0f;
+        } else if (t > 1.0f - dt) {
+            t = (t - 1.0f) / dt;
+            return t * t + t + t + 1.0f;
+        } else {
+            return 0.0f;
+        }
+    }
+
     [[nodiscard]] float processSaw(float sampleTime) noexcept {
         if (!active) return lastSaw;
 
-        phase += freq * sampleTime;
+        const auto dt = freq * sampleTime;
+        phase += dt;
         if (phase >= 1.0f) phase -= 1.0f;
 
-        float saw = 2.0f * phase - 1.0f;
-        saw = saw + 0.1f * saw * saw * saw; // add harmonics
+        auto saw = 2.0f * phase - 1.0f;
+        saw -= polyblep(phase, dt);
 
-        antiAlias.process(saw);
-        lastSaw = saw;
-        return saw;
+        // DC-blocking highpass filter
+        float y = saw - dcBlockerX + dcBlockerAlpha * dcBlockerY;
+        dcBlockerX = saw;
+        dcBlockerY = y;
+
+        lastSaw = y;
+        return y;
     }
 
-    [[nodiscard]] float processPulse(float sampleTime) noexcept {
-        if (!active) return lastPulse;
-
-        phase += freq * sampleTime;
-        if (phase >= 1.0f) phase -= 1.0f;
-
-        float pulse = (phase < pulseWidth) ? 1.0f : -1.0f;
-
-        constexpr float transition = 0.01f;
-        if (phase > pulseWidth - transition && phase < pulseWidth + transition) {
-            float t = (phase - (pulseWidth - transition)) / (2.0f * transition);
-            pulse = 1.0f - 2.0f * t;
-        }
-
-        antiAlias.process(pulse);
-        lastPulse = pulse;
-        return pulse;
-    }
 
     [[nodiscard]] float processTriangle(float sampleTime) noexcept {
         if (!active) return 0.0f;
@@ -75,8 +80,12 @@ struct VCO final {
 
         triangle = triangle + 0.05f * triangle * triangle * triangle;
 
-        antiAlias.process(triangle);
-        return triangle;
+        // DC-blocking highpass filter
+        float y = triangle - dcBlockerX + dcBlockerAlpha * dcBlockerY;
+        dcBlockerX = triangle;
+        dcBlockerY = y;
+
+        return y;
     }
 
     [[nodiscard]] float processSquare(float sampleTime) noexcept {
@@ -99,8 +108,12 @@ struct VCO final {
             square = 1.0f - 2.0f * t;
         }
 
-        antiAlias.process(square);
-        return square;
+        // DC-blocking highpass filter
+        float y = square - dcBlockerX + dcBlockerAlpha * dcBlockerY;
+        dcBlockerX = square;
+        dcBlockerY = y;
+
+        return y;
     }
 };
 }
