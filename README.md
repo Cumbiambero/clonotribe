@@ -1,8 +1,13 @@
 # ClonoTribe - KORG monotribe VCV Rack Module
 
-A module heavily inspired by the KORG monotribe analog synthesizer, including some firmware 2.1 features.
+A module heavily inspired by the KORG monotribe analog synthesizer, including the firmware 2.1 features.
 
-There are some differences to the original, specially the drum sounds. 
+Please be aware that this is still work in progress. Specially in achieving the authentical sound there are a lot of improvements needed. Everyone is invited to bring this to perfection.
+
+The monotribe is a great little box and I hope that this tribute will bring some fun to the community.
+
+I'm currentyly working on improving the filter. Other parts also need improvements. There is also documentation missing.
+
 
 ## Features
 

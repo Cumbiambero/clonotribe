@@ -1,15 +1,18 @@
 #pragma once
-#include <array>
-#include <numbers>
+#include "fastmath.hpp"
 
 namespace clonotribe {
 
 struct VCF final {
     float cutoff = 1000.0f;
     float resonance = 0.5f;
-    float state1 = 0.0f;
-    float state2 = 0.0f;
     bool active = true;
+
+    // State variables for 4 stages
+    float s[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    // Nonlinearity strength per stage
+    float nonlin[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
     constexpr VCF() noexcept = default;
     VCF(const VCF&) noexcept = default;
@@ -18,54 +21,71 @@ struct VCF final {
     VCF& operator=(VCF&&) noexcept = default;
     ~VCF() noexcept = default;
 
-    void setActive(bool a) noexcept {
-        active = a;
-    }
-
+    void setActive(bool a) noexcept { active = a; }
     void setCutoff(float freq) noexcept {
         cutoff = freq < 20.0f ? 20.0f : (freq > 20000.0f ? 20000.0f : freq);
     }
-
     void setResonance(float res) noexcept {
-        resonance = res < 0.0f ? 0.0f : (res > 4.0f ? 4.0f : res);
+        resonance = res < 0.0f ? 0.0f : (res > 2.5f ? 2.5f : res);
     }
-
+    void setNonlinearity(float n0, float n1, float n2, float n3) noexcept {
+        nonlin[0] = n0; nonlin[1] = n1; nonlin[2] = n2; nonlin[3] = n3;
+    }
     void reset() noexcept {
-        state1 = 0.0f;
-        state2 = 0.0f;
+        for (int i = 0; i < 4; ++i) s[i] = 0.0f;
     }
 
+    // Internal process for one sample (used for oversampling)
+    float processSample(float input, float g, float k, float input_gain) noexcept {
+        // Diode nonlinearity in feedback path (use last stage)
+        float diode_fb = FastMath::fastTanh(s[3] * nonlin[3]);
+
+        // Feedback modulated by input amplitude (MS-20 "flaw")
+        float feedback = k * diode_fb * (1.0f + 0.2f * FastMath::fastTanh(std::abs(input)));
+
+        // Four nonlinear integrator stages
+        float stage_in = input * input_gain - feedback;
+        for (int i = 0; i < 4; ++i) {
+            float x = (i == 0 ? stage_in : s[i-1]) - s[i];
+            // Nonlinearity per stage for "diode ladder" effect
+            x = FastMath::fastTanh(x * nonlin[i]);
+            s[i] += x * g;
+        }
+
+        // Output: soft clip for analog character
+        return FastMath::fastTanh(s[3]);
+    }
+
+    // MS-20 VCF process (diode ladder, 4-stage, nonlinear feedback, 2x oversampling)
     [[nodiscard]] float process(float input, float sampleRate) noexcept {
         if (!active) return input;
+        if (std::abs(input) < 1e-6f) {
+            reset();
+            return 0.0f;
+        }
 
-        constexpr float pi_f = static_cast<float>(std::numbers::pi);
-        float omega = 2.0f * pi_f * cutoff / sampleRate;
-        float cos_omega = FastMath::fastCos(omega);
-        float sin_omega = FastMath::fastSin(omega);
+        // Clamp cutoff
+        float fc = cutoff;
+        if (fc < 20.0f) fc = 20.0f;
+        if (fc > 0.45f * sampleRate) fc = 0.45f * sampleRate;
 
-        float feedback = resonance * 0.9f;
-        float nonlinearFeedback = FastMath::fastTanh(feedback * state1) * 0.7f;
+        // Calculate integrator coefficient
+        float wc = 2.0f * FastMath::PI * fc / sampleRate;
+        float g = wc / (1.0f + wc);
 
-        input -= nonlinearFeedback;
+        // Resonance mapping: MS-20 self-oscillates at high resonance
+        float k = resonance * 2.0f;
 
-        // Sallen-Key topology approximation
-        float alpha = sin_omega / (2.0f * (1.0f + feedback * 0.1f));
+        // Input gain compensation (MS-20 input stage is hot)
+        float input_gain = 1.5f;
 
-        float b0 = (1.0f - cos_omega) / 2.0f;
-        float b1 = 1.0f - cos_omega;
-        float b2 = (1.0f - cos_omega) / 2.0f;
-        float a0 = 1.0f + alpha;
-        float a1 = -2.0f * cos_omega;
-        float a2 = 1.0f - alpha;
+        // Simple 2x oversampling (process twice with half input each time)
+        float out1 = processSample(input * 0.5f, g, k, input_gain);
+        float out2 = processSample(input * 0.5f, g, k, input_gain);
 
-        float output = (b0 * input + b1 * state1 + b2 * state2 - a1 * state1 - a2 * state2) / a0;
-
-        output = FastMath::fastTanh(output * 1.2f) * 0.8f;
-
-        state2 = state1;
-        state1 = input;
-
-        return output;
+        // Average the two outputs
+        return 0.5f * (out1 + out2);
     }
 };
+
 }
