@@ -1,91 +1,173 @@
 #pragma once
+
 #include "fastmath.hpp"
+#include <algorithm>
+#include <cmath>
 
-namespace clonotribe {
+using namespace clonotribe;
 
-struct VCF final {
-    float cutoff = 1000.0f;
-    float resonance = 0.5f;
-    bool active = true;
+class VCF {
+private:
+    static constexpr float EPSILON = 1e-10f;
 
-    // State variables for 4 stages
-    float s[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    float z1, z2;
+    float cutoffParam;
+    float resonanceParam;
+    float sampleRate;
+    float prevCutoff;
+    float prevResonance;
 
-    // Nonlinearity strength per stage
-    float nonlin[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-
-    constexpr VCF() noexcept = default;
-    VCF(const VCF&) noexcept = default;
-    VCF& operator=(const VCF&) noexcept = default;
-    VCF(VCF&&) noexcept = default;
-    VCF& operator=(VCF&&) noexcept = default;
-    ~VCF() noexcept = default;
-
-    void setActive(bool a) noexcept { active = a; }
-    void setCutoff(float freq) noexcept {
-        cutoff = freq < 20.0f ? 20.0f : (freq > 20000.0f ? 20000.0f : freq);
+    bool active{true};    
+    
+    inline float smoothParameter(float current, float target, float smoothing = 0.005f) {
+        return current + (target - current) * smoothing;
     }
-    void setResonance(float res) noexcept {
-        resonance = res < 0.0f ? 0.0f : (res > 2.5f ? 2.5f : res);
-    }
-    void setNonlinearity(float n0, float n1, float n2, float n3) noexcept {
-        nonlin[0] = n0; nonlin[1] = n1; nonlin[2] = n2; nonlin[3] = n3;
-    }
-    void reset() noexcept {
-        for (int i = 0; i < 4; ++i) s[i] = 0.0f;
-    }
-
-    // Internal process for one sample (used for oversampling)
-    float processSample(float input, float g, float k, float input_gain) noexcept {
-        // Diode nonlinearity in feedback path (use last stage)
-        float diode_fb = FastMath::fastTanh(s[3] * nonlin[3]);
-
-        // Feedback modulated by input amplitude (MS-20 "flaw")
-        float feedback = k * diode_fb * (1.0f + 0.2f * FastMath::fastTanh(std::abs(input)));
-
-        // Four nonlinear integrator stages
-        float stage_in = input * input_gain - feedback;
-        for (int i = 0; i < 4; ++i) {
-            float x = (i == 0 ? stage_in : s[i-1]) - s[i];
-            // Nonlinearity per stage for "diode ladder" effect
-            x = FastMath::fastTanh(x * nonlin[i]);
-            s[i] += x * g;
+    
+    inline float calculateCutoffFreq(float param) const {
+        param = std::clamp(param, 0.0f, 1.0f);
+        
+        if (param <= 0.02f) {
+            return 0.5f + param * 2.0f;
         }
-
-        // Output: soft clip for analog character
-        return FastMath::fastTanh(s[3]);
+        
+        float freq;
+        if (param <= 0.1f) {
+            float t = param / 0.1f;
+            freq = 0.5f + t * t * t * 19.5f;
+        } else if (param <= 0.4f) {
+            float t = (param - 0.1f) / 0.3f;
+            freq = 20.0f + t * t * 180.0f;
+        } else if (param <= 0.7f) {
+            float t = (param - 0.4f) / 0.3f;
+            freq = 200.0f + t * 1800.0f; 
+        } else {
+            float t = (param - 0.7f) / 0.3f;
+            freq = 2000.0f + t * t * 6000.0f;
+        }
+        
+        return std::clamp(freq, 0.1f, sampleRate * 0.45f);
+    }
+    
+    void processMS20Filter(float input, float frequency, float resonance) {
+        float omega = 2.0f * FastMath::PI * frequency / sampleRate;
+        omega = std::clamp(omega, 0.0001f, FastMath::PI * 0.95f);
+        
+        float cosOmega = std::cos(omega);
+        float sinOmega = std::sin(omega);
+        
+        float q;
+        if (resonance <= 0.01f) {
+            q = 0.5f;
+        } else {
+            q = 0.7f + resonance * resonance * 25.0f;
+        }
+        q = std::clamp(q, 0.1f, 30.0f);
+        
+        float alpha = sinOmega / (2.0f * q);
+        alpha = std::clamp(alpha, EPSILON, 0.95f);
+        
+        float b0 = (1.0f - cosOmega) / 2.0f;
+        float b1 = 1.0f - cosOmega;
+        float b2 = (1.0f - cosOmega) / 2.0f;
+        float a0 = 1.0f + alpha;
+        float a1 = -2.0f * cosOmega;
+        float a2 = 1.0f - alpha;
+        
+        b0 /= a0;
+        b1 /= a0;
+        b2 /= a0;
+        a1 /= a0;
+        a2 /= a0;
+        
+        float output = b0 * input + b1 * z1 + b2 * z2 - a1 * z1 - a2 * z2;
+        
+        z2 = z1;
+        z1 = input;
+        
+        if (std::abs(output) < EPSILON) output = 0.0f;
+        if (std::abs(z1) < EPSILON) z1 = 0.0f;
+        if (std::abs(z2) < EPSILON) z2 = 0.0f;
+        
+        this->z1 = output;
+    }
+    
+    inline float ms20Distortion(float input) {
+        return FastMath::fastTanh(input * 0.9f) * 1.1f;
+    }
+    
+public:
+    VCF() : z1(0), z2(0), cutoffParam(0.5f), resonanceParam(0.0f), 
+            sampleRate(44100.0f), prevCutoff(0.5f), prevResonance(0.0f) {}
+    
+    void setSampleRate(float sampleRate) {
+        this->sampleRate = std::clamp(sampleRate, 8000.0f, 192000.0f);
+    }
+    
+    void setCutoff(float cutoffHz) {
+        if (cutoffHz <= 1.0f) {
+            cutoffParam = cutoffHz / 50.0f;
+        } else if (cutoffHz <= 20.0f) {
+            cutoffParam = 0.02f + (cutoffHz - 1.0f) / 190.0f * 0.08f;
+        } else if (cutoffHz <= 200.0f) {
+            cutoffParam = 0.1f + (cutoffHz - 20.0f) / 180.0f * 0.3f;
+        } else if (cutoffHz <= 2000.0f) {
+            cutoffParam = 0.4f + (cutoffHz - 200.0f) / 1800.0f * 0.3f;
+        } else {
+            cutoffParam = 0.7f + (cutoffHz - 2000.0f) / 6000.0f * 0.3f;
+        }
+        cutoffParam = std::clamp(cutoffParam, 0.0f, 1.0f);
+    }
+    
+    void setResonance(float resonance) {
+        resonanceParam = std::clamp(resonance, 0.0f, 1.0f);
+    }
+    
+    float process(float input, float sampleRate) {
+        if (!active) {
+            return input;
+        }
+        
+        input = std::clamp(input, -10.0f, 10.0f);
+        this->sampleRate = std::clamp(sampleRate, 8000.0f, 192000.0f);
+        
+        prevCutoff = smoothParameter(prevCutoff, cutoffParam, 0.002f);
+        prevResonance = smoothParameter(prevResonance, resonanceParam, 0.002f);
+        
+        float cutoffFrequency = calculateCutoffFreq(prevCutoff);
+        
+        float lowFreqAttenuation = 1.0f;
+        if (prevCutoff <= 0.05f) {
+            lowFreqAttenuation = prevCutoff * 20.0f;
+            lowFreqAttenuation = std::clamp(lowFreqAttenuation, 0.001f, 1.0f);
+        }
+        
+        float attenuatedInput = input * lowFreqAttenuation;
+        
+        float processedInput = ms20Distortion(attenuatedInput);
+        
+        processMS20Filter(processedInput, cutoffFrequency, prevResonance);
+        
+        float output = ms20Distortion(z1 * 0.8f);
+        
+        return output;
     }
 
-    // MS-20 VCF process (diode ladder, 4-stage, nonlinear feedback, 2x oversampling)
-    [[nodiscard]] float process(float input, float sampleRate) noexcept {
-        if (!active) return input;
-        if (std::abs(input) < 1e-6f) {
-            reset();
-            return 0.0f;
-        }
-
-        // Clamp cutoff
-        float fc = cutoff;
-        if (fc < 20.0f) fc = 20.0f;
-        if (fc > 0.45f * sampleRate) fc = 0.45f * sampleRate;
-
-        // Calculate integrator coefficient
-        float wc = 2.0f * FastMath::PI * fc / sampleRate;
-        float g = wc / (1.0f + wc);
-
-        // Resonance mapping: MS-20 self-oscillates at high resonance
-        float k = resonance * 2.0f;
-
-        // Input gain compensation (MS-20 input stage is hot)
-        float input_gain = 1.5f;
-
-        // Simple 2x oversampling (process twice with half input each time)
-        float out1 = processSample(input * 0.5f, g, k, input_gain);
-        float out2 = processSample(input * 0.5f, g, k, input_gain);
-
-        // Average the two outputs
-        return 0.5f * (out1 + out2);
+    void setActive(bool isActive) {
+        active = isActive;
+    }
+    
+    float getCurrentCutoffFreq() const {
+        return calculateCutoffFreq(cutoffParam);
+    }
+    
+    void reset() {
+        z1 = z2 = 0.0f;
+        prevCutoff = cutoffParam;
+        prevResonance = resonanceParam;
+    }
+    
+    bool isStable() const {
+        return std::isfinite(z1) && std::isfinite(z2) && 
+               std::abs(z1) < 100.0f && std::abs(z2) < 100.0f;
     }
 };
-
-}

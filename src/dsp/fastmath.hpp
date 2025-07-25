@@ -13,12 +13,11 @@ struct FastMath final {
     FastMath& operator=(FastMath&&) noexcept = default;
     ~FastMath() noexcept = default;
 
-    // Fast sine approximation using polynomial
     [[nodiscard]] static inline float fastSin(float x) noexcept {        
         while (x > PI) x -= 2.f * PI;
         while (x < -PI) x += 2.f * PI;
         float x2 = x * x;
-        return x * (1.f - x2 * (1.f/6.f - x2 * 1.f/120.f));
+        return x * (1.0f - x2 * (1.0f/6.0f - x2 * 1.0f/120.0f));
     }
 
     [[nodiscard]] static inline float fastCos(float x) noexcept {
@@ -26,14 +25,19 @@ struct FastMath final {
     }
 
     [[nodiscard]] static inline float fastTanh(float x) noexcept {
-        x = std::clamp(x, -3.f, 3.f);
+        x = std::clamp(x, -3.0f, 3.0f);
         float x2 = x * x;
-        return x * (27.f + x2) / (27.f + 9.f * x2);
+        return x * (27.0f + x2) / (27.0f + 9.0f * x2);
     }
 
-    // Fast envelope curves (exponential approximation)
     [[nodiscard]] static inline float fastExp(float x) noexcept {
-        return 1.f / (1.f - x * 0.99f);
+        return 1.0f / (1.0f - x * 0.99f);
+    }
+
+    [[nodiscard]] static inline float fastExp2(float x) noexcept {
+        float x2 = x * x;
+        float x3 = x2 * x;
+        return 1.0f + x * 0.6931f + x2 * 0.2402f + x3 * 0.0555f;
     }
 };
 }

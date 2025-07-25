@@ -20,7 +20,7 @@ struct VCO final {
     constexpr VCO() noexcept = default;
 
     void initialize() noexcept {
-        antiAlias.setCutoff(8000.0f / 48000.0f); // 8kHz cutoff
+        antiAlias.setCutoff(8000.0f / 48000.0f);
     }
 
     void setPitch(float pitch) noexcept {
@@ -32,7 +32,6 @@ struct VCO final {
         pulseWidth = std::clamp(pw, 0.01f, 0.99f);
     }
 
-    // PolyBLEP helper for band-limited step
     [[nodiscard]] static constexpr float polyblep(float t, float dt) noexcept {
         if (t < dt) {
             t /= dt;
@@ -55,7 +54,6 @@ struct VCO final {
         auto saw = 2.0f * phase - 1.0f;
         saw -= polyblep(phase, dt);
 
-        // DC-blocking highpass filter
         float y = saw - dcBlockerX + dcBlockerAlpha * dcBlockerY;
         dcBlockerX = saw;
         dcBlockerY = y;
@@ -80,7 +78,6 @@ struct VCO final {
 
         triangle = triangle + 0.05f * triangle * triangle * triangle;
 
-        // DC-blocking highpass filter
         float y = triangle - dcBlockerX + dcBlockerAlpha * dcBlockerY;
         dcBlockerX = triangle;
         dcBlockerY = y;
@@ -108,7 +105,6 @@ struct VCO final {
             square = 1.0f - 2.0f * t;
         }
 
-        // DC-blocking highpass filter
         float y = square - dcBlockerX + dcBlockerAlpha * dcBlockerY;
         dcBlockerX = square;
         dcBlockerY = y;

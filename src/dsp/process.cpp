@@ -176,7 +176,6 @@ void Clonotribe::process(const ProcessArgs& args) {
     }
 
     // 10. Sequencer, modulation, and output logic (unchanged, continues below...)
-
         float syncSignal = inputs[INPUT_SYNC_CONNECTOR].getVoltage();
         
         float effectiveSyncSignal = syncSignal;
