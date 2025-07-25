@@ -5,6 +5,13 @@
 
 using namespace clonotribe;
 
+enum TempoRange {
+    TEMPO_10_600,
+    TEMPO_20_300,
+    TEMPO_60_180,
+    TEMPO_RANGE_COUNT
+};
+
 struct Clonotribe : Module {
     static float processEnvelope(int envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
     static float processOutput(
@@ -141,6 +148,20 @@ struct Clonotribe : Module {
     void handleSpecialGateTimeButtons(bool gateTimeHeld);
     auto processInputTriggers(float inputPitch, float gate, bool gateTimeHeld) -> std::tuple<float, float, bool, bool>;
     
+    void appendContextMenu(rack::ui::Menu* menu);
+
+public:
+    TempoRange selectedTempoRange = TEMPO_10_600;
+
+    void getTempoRange(float& min, float& max) {
+        switch (selectedTempoRange) {
+            case TEMPO_10_600: min = 10.0f; max = 600.0f; break;
+            case TEMPO_20_300: min = 20.0f; max = 300.0f; break;
+            case TEMPO_60_180: min = 60.0f; max = 180.0f; break;
+            default: min = 10.0f; max = 600.0f;
+        }
+    }
+
 private:
     void clearAllSequences();
     void clearDrumSequence();

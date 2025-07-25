@@ -178,6 +178,14 @@ struct MainPanel : ModuleWidget {
         handleHoverKey(e);
         ModuleWidget::onHoverKey(e);
     }
+
+    void appendContextMenu(rack::ui::Menu* menu) override {
+        ModuleWidget::appendContextMenu(menu);
+        Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
+        if (clonotribeModule) {
+            clonotribeModule->appendContextMenu(menu);
+        }
+    }
 };
 
 

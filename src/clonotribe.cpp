@@ -20,7 +20,7 @@ Clonotribe::Clonotribe() : ribbonController(this) {
         configParam(PARAM_LFO_RATE_KNOB, 0.0f, 1.0f, 0.3f, "LFO Rate");
         configParam(PARAM_LFO_INTERVAL_KNOB, 0.0f, 1.0f, 0.0f, "LFO Intensity");
         configParam(PARAM_RHYTHM_VOLUME_KNOB, 0.0f, 1.0f, 0.0f, "Rhythm Volume");
-        configParam(PARAM_SEQUENCER_TEMPO_KNOB, 0.0f, 1.0f, 0.5f, "Sequencer Tempo", " BPM", 0.0f, 120.0f, 60.0f);
+        configParam(PARAM_SEQUENCER_TEMPO_KNOB, 0.0f, 1.0f, 0.5f, "Sequencer Tempo", " BPM", 0.0f, 600.0f, 10.0f);
         
         configButton(PARAM_SNARE_BUTTON, "Snare");
         configButton(PARAM_FLUX_BUTTON, "Flux");
@@ -50,3 +50,42 @@ Clonotribe::Clonotribe() : ribbonController(this) {
         configOutput(OUTPUT_AUDIO_CONNECTOR, "Audio");
         configOutput(OUTPUT_SYNC_CONNECTOR, "Sync");
 };
+
+struct TempoRangeItem : rack::MenuItem {
+    Clonotribe* module;
+    TempoRange range;
+    void onAction(const rack::event::Action& e) override {
+        module->selectedTempoRange = range;
+        float min, max;
+        module->getTempoRange(min, max);
+        auto* q = module->getParamQuantity(Clonotribe::PARAM_SEQUENCER_TEMPO_KNOB);
+        if (q) {
+            q->name = "Sequencer Tempo";
+            q->unit = " BPM";
+            q->minValue = 0.0f;
+            q->maxValue = 1.0f;
+            q->displayBase = 0.0f;
+            q->displayMultiplier = (max - min);
+            q->displayOffset = min;
+        }
+    }
+    void step() override {
+        rightText = (module->selectedTempoRange == range) ? "✔" : "";
+        MenuItem::step();
+    }
+};
+
+void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
+    menu->addChild(new rack::MenuSeparator());
+    menu->addChild(rack::createMenuLabel("Tempo range"));
+    static const char* rangeLabels[TEMPO_RANGE_COUNT] = {
+        "10–600 BPM", "20–300 BPM", "60–180 BPM"
+    };
+    for (int i = 0; i < TEMPO_RANGE_COUNT; ++i) {
+        auto* item = new TempoRangeItem;
+        item->module = this;
+        item->range = (TempoRange)i;
+        item->text = rangeLabels[i];
+        menu->addChild(item);
+    }
+}

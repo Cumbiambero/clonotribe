@@ -74,7 +74,9 @@ void Clonotribe::handleDrumSelectionAndTempo(float tempo) {
     if (snarePressed) selectedDrumPart = 2;
     if (hihatPressed) selectedDrumPart = 3;
     if (!inputs[INPUT_SYNC_CONNECTOR].isConnected()) {
-        float bpm = rescale(tempo, 0.0f, 1.0f, 60.0f, 180.0f);
+        float minTempo, maxTempo;
+        getTempoRange(minTempo, maxTempo);
+        float bpm = rescale(tempo, 0.0f, 1.0f, minTempo, maxTempo);
         sequencer.setTempo(bpm);
         sequencer.setExternalSync(false);
     } else {
