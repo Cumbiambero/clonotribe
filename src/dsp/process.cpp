@@ -322,8 +322,8 @@ void Clonotribe::process(const ProcessArgs& args) {
         vcf.setResonance(res);
         
         // Process through filter
-        float filteredSignal = vcf.process(mixedSignal, args.sampleRate);
-        
+        float filteredSignal = vcf.process(mixedSignal, args.sampleRate, noiseGenerator);
+
         float envValue = processEnvelope(envelopeType, envelope, args.sampleTime, finalSequencerGate);
 
         float finalOutput = processOutput(
