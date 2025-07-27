@@ -94,13 +94,41 @@ struct MainPanel : ModuleWidget {
             Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
             if (!clonotribeModule) return;
             switch (e.key) {
+                case GLFW_KEY_F5:
+                    if (clonotribeModule->params[Clonotribe::PARAM_SYNTH_BUTTON].getValue() < 0.5f)
+                        clonotribeModule->params[Clonotribe::PARAM_SYNTH_BUTTON].setValue(1.0f);
+                    break;
+                case GLFW_KEY_F6:
+                    if (clonotribeModule->params[Clonotribe::PARAM_BASSDRUM_BUTTON].getValue() < 0.5f)
+                        clonotribeModule->params[Clonotribe::PARAM_BASSDRUM_BUTTON].setValue(1.0f);
+                    break;
                 case GLFW_KEY_F7:
+                    if (clonotribeModule->params[Clonotribe::PARAM_SNARE_BUTTON].getValue() < 0.5f)
+                        clonotribeModule->params[Clonotribe::PARAM_SNARE_BUTTON].setValue(1.0f);
+                    break;
+                case GLFW_KEY_F8:
+                    if (clonotribeModule->params[Clonotribe::PARAM_HIGHHAT_BUTTON].getValue() < 0.5f)
+                        clonotribeModule->params[Clonotribe::PARAM_HIGHHAT_BUTTON].setValue(1.0f);
+                    break;
+                case GLFW_KEY_F9:
                     if (clonotribeModule->params[Clonotribe::PARAM_ACTIVE_STEP_BUTTON].getValue() < 0.5f)
                         clonotribeModule->params[Clonotribe::PARAM_ACTIVE_STEP_BUTTON].setValue(1.0f);
                     break;
-                case GLFW_KEY_F8:
+                case GLFW_KEY_F10:
                     if (clonotribeModule->params[Clonotribe::PARAM_GATE_TIME_BUTTON].getValue() < 0.5f)
                         clonotribeModule->params[Clonotribe::PARAM_GATE_TIME_BUTTON].setValue(1.0f);
+                    break;
+                case GLFW_KEY_TAB:
+                    if (clonotribeModule->params[Clonotribe::PARAM_FLUX_BUTTON].getValue() < 0.5f)
+                        clonotribeModule->params[Clonotribe::PARAM_FLUX_BUTTON].setValue(1.0f);
+                    break;
+                case GLFW_KEY_LEFT_SHIFT:
+                    if (clonotribeModule->params[Clonotribe::PARAM_REC_BUTTON].getValue() < 0.5f)
+                        clonotribeModule->params[Clonotribe::PARAM_REC_BUTTON].setValue(1.0f);
+                    break;
+                case GLFW_KEY_SPACE:
+                    if (clonotribeModule->params[Clonotribe::PARAM_PLAY_BUTTON].getValue() < 0.5f)
+                        clonotribeModule->params[Clonotribe::PARAM_PLAY_BUTTON].setValue(1.0f);
                     break;
                 case GLFW_KEY_1:
                     if (clonotribeModule->params[Clonotribe::PARAM_SEQUENCER_1_BUTTON].getValue() < 0.5f)
@@ -139,11 +167,32 @@ struct MainPanel : ModuleWidget {
             Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
             if (!clonotribeModule) return;
             switch (e.key) {
+                case GLFW_KEY_F5:
+                    clonotribeModule->params[Clonotribe::PARAM_SYNTH_BUTTON].setValue(0.0f);
+                    break;
+                case GLFW_KEY_F6:
+                    clonotribeModule->params[Clonotribe::PARAM_BASSDRUM_BUTTON].setValue(0.0f);
+                    break;
                 case GLFW_KEY_F7:
-                    clonotribeModule->params[Clonotribe::PARAM_ACTIVE_STEP_BUTTON].setValue(0.0f);
+                    clonotribeModule->params[Clonotribe::PARAM_SNARE_BUTTON].setValue(0.0f);
                     break;
                 case GLFW_KEY_F8:
+                    clonotribeModule->params[Clonotribe::PARAM_HIGHHAT_BUTTON].setValue(0.0f);
+                    break;
+                case GLFW_KEY_F9:
+                    clonotribeModule->params[Clonotribe::PARAM_ACTIVE_STEP_BUTTON].setValue(0.0f);
+                    break;
+                case GLFW_KEY_F10:
                     clonotribeModule->params[Clonotribe::PARAM_GATE_TIME_BUTTON].setValue(0.0f);
+                    break;
+                case GLFW_KEY_TAB:
+                    clonotribeModule->params[Clonotribe::PARAM_FLUX_BUTTON].setValue(0.0f);
+                    break;
+                case GLFW_KEY_LEFT_SHIFT:
+                    clonotribeModule->params[Clonotribe::PARAM_REC_BUTTON].setValue(0.0f);
+                    break;
+                case GLFW_KEY_SPACE:
+                    clonotribeModule->params[Clonotribe::PARAM_PLAY_BUTTON].setValue(0.0f);
                     break;
                 case GLFW_KEY_1:
                     clonotribeModule->params[Clonotribe::PARAM_SEQUENCER_1_BUTTON].setValue(0.0f);

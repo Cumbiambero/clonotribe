@@ -22,13 +22,13 @@ Clonotribe::Clonotribe() : ribbonController(this) {
         configParam(PARAM_RHYTHM_VOLUME_KNOB, 0.0f, 1.0f, 0.0f, "Rhythm Volume");
         configParam(PARAM_SEQUENCER_TEMPO_KNOB, 0.0f, 1.0f, 0.5f, "Sequencer Tempo", " BPM", 0.0f, 600.0f, 10.0f);
         
-        configButton(PARAM_SNARE_BUTTON, "Snare");
-        configButton(PARAM_FLUX_BUTTON, "Flux");
-        configButton(PARAM_REC_BUTTON, "Record");
-        configButton(PARAM_SYNTH_BUTTON, "Synth");
-        configButton(PARAM_BASSDRUM_BUTTON, "Bass Drum");
-        configButton(PARAM_HIGHHAT_BUTTON, "Hi-Hat");
-        configButton(PARAM_ACTIVE_STEP_BUTTON, "Active Step (F7)");
+        configButton(PARAM_SNARE_BUTTON, "Snare (F7)");
+        configButton(PARAM_FLUX_BUTTON, "Flux (Tab)");
+        configButton(PARAM_REC_BUTTON, "Record (Shift)");
+        configButton(PARAM_SYNTH_BUTTON, "Synth (F5)");
+        configButton(PARAM_BASSDRUM_BUTTON, "Bass Drum (F6)");
+        configButton(PARAM_HIGHHAT_BUTTON, "Hi-Hat (F8)");
+        configButton(PARAM_ACTIVE_STEP_BUTTON, "Active Step (F9)");
         configButton(PARAM_SEQUENCER_1_BUTTON, "Sequencer 1");
         configButton(PARAM_SEQUENCER_2_BUTTON, "Sequencer 2");
         configButton(PARAM_SEQUENCER_3_BUTTON, "Sequencer 3");
@@ -37,8 +37,8 @@ Clonotribe::Clonotribe() : ribbonController(this) {
         configButton(PARAM_SEQUENCER_6_BUTTON, "Sequencer 6");
         configButton(PARAM_SEQUENCER_7_BUTTON, "Sequencer 7");
         configButton(PARAM_SEQUENCER_8_BUTTON, "Sequencer 8");
-        configButton(PARAM_PLAY_BUTTON, "Play");
-        configButton(PARAM_GATE_TIME_BUTTON, "Gate Time (F8)");
+        configButton(PARAM_PLAY_BUTTON, "Play (Space)");
+        configButton(PARAM_GATE_TIME_BUTTON, "Gate Time (F10)");
         
         configInput(INPUT_CV_CONNECTOR, "CV");
         configInput(INPUT_GATE_CONNECTOR, "Gate");
