@@ -3,183 +3,165 @@
 #include "fastmath.hpp"
 #include "noise.hpp"
 
-using namespace clonotribe;
+namespace clonotribe {
 
 class VCF {
 private:
-    static constexpr float EPSILON = 1e-10f;
+    // MS-20 filter specifications
+    static constexpr float MS20_MIN_FREQ = 20.0f;
+    static constexpr float MS20_MAX_FREQ = 20000.0f;
+    static constexpr float MS20_Q_GAIN = 12.0f;
+    static constexpr float MS20_THERMAL_COEFF = 0.02f;
+    static constexpr float MS20_DRIFT_RANGE = 0.01f;
+    static constexpr float PROBLEM_RANGE_START = 0.62f;
+    static constexpr float PROBLEM_RANGE_END = 0.70f;
+    static constexpr float PROBLEM_RANGE_CENTER = 0.66f;
+    static constexpr float CUTOFF_MUTE_THRESHOLD = 0.28f;
 
-    float xIn1, xIn2;
-    float yIn1, yIn2;
-    
-    float cutoffParam;
-    float resonanceParam;
-    float sampleRate;
-    
-    float previousCutoff;
-    float previousResonance;
-    
+    // State variables
+    float x1 = 0.f, x2 = 0.f;
+    float y1 = 0.f, y2 = 0.f;
+    float cutoffParam = 0.5f;
+    float resonanceParam = 0.f;
+    float sampleRate = 44100.f;
+    float invSampleRate = 1.f/44100.f;
+    float thermalState = 0.f;
     bool active = true;
-    
-    inline float smoothParameter(float current, float target, float smoothing = 0.01f) {
-        return current + (target - current) * smoothing;
-    }
-    
-    inline float calculateCutoffFreq(float param) const {
-        param = std::clamp(param, 0.0f, 1.0f);
-        
-        if (param <= 0.01f) {
-            return 20.0f + param * 480.0f;
+
+    NoiseGenerator componentDrift;
+
+    // Frequency calculation with smooth transitions
+    [[nodiscard]] inline float calculateCutoffHz(float param) const noexcept {
+        param = std::clamp(param, 0.f, 1.f);
+        // Piecewise response curve
+        if (param < 0.78f) {
+            return 20.0f + std::pow(param * 1.28f, 3.0f) * 18000.0f;
         }
-        
-        float freq = 20.0f + param * param * 18000.0f;
-        return std::clamp(freq, 20.0f, sampleRate * 0.45f);
+        return 20.0f + std::exp(6.5f * param) * 15.0f;
     }
-    
-    void processLowpassFilter(float input, float frequency, float resonance) {
-        float omega = 2.0f * FastMath::PI * frequency / sampleRate;
-        omega = std::clamp(omega, 0.01f, FastMath::PI * 0.8f);
-        float cosOmega = FastMath::fastCos(omega);
-        float sinOmega = FastMath::fastSin(omega);
 
-        float q = 0.7f + resonance * resonance * 8.0f; 
-        q = std::clamp(q, 0.5f, 10.0f);
+    // Resonance calculation with problem range adjustment
+    [[nodiscard]] inline float calculateResonance(float param) const noexcept {
+        param = std::clamp(param, 0.f, 1.f);
+        float q = 0.5f + param * 2.5f + std::pow(param, 3.0f) * 10.0f;
+        return std::clamp(q, 0.5f, MS20_Q_GAIN);
+    }
 
-        float alpha = sinOmega / (2.0f * q);
-        alpha = std::clamp(alpha, EPSILON, 0.5f);
+    // Saturation with problem range adjustment
+    [[nodiscard]] inline float ms20Saturation(float x, bool inProblemRange) const noexcept {
+        x = std::clamp(x, -5.f, 5.f);
+        if (inProblemRange) {
+            return FastMath::fastTanh(x * 0.9f) * 1.1f; // Softer saturation
+        }
+        if (x > 0) return FastMath::fastTanh(x * 1.05f) * 0.95f;
+        return FastMath::fastTanh(x * 0.95f) * 1.05f;
+    }
 
-        float b0 = (1.0f - cosOmega) / 2.0f;
-        float b1 = 1.0f - cosOmega;
-        float b2 = (1.0f - cosOmega) / 2.0f;
-        float a0 = 1.0f + alpha;
-        
-        if (std::abs(a0) < EPSILON) a0 = EPSILON;
-        float a1 = -2.0f * cosOmega;
-        float a2 = 1.0f - alpha;
+    void processFilter(float input, float cutoffHz, float resonance) noexcept {
+        const bool inProblemRange = (cutoffParam > PROBLEM_RANGE_START) && 
+                                  (cutoffParam < PROBLEM_RANGE_END);
 
-        b0 /= a0;
-        b1 /= a0;
-        b2 /= a0;
-        a1 /= a0;
-        a2 /= a0;
-
-        if (std::abs(a2) >= 0.99f) {
-            a2 = std::copysign(0.99f, a2);
+        // Problem range specific processing
+        if (inProblemRange) {
+            // Apply bell-curve damping centered at 0.66
+            float damping = 1.f - std::abs(cutoffParam - PROBLEM_RANGE_CENTER) * 5.f;
+            resonance *= std::clamp(damping, 0.8f, 1.f);
+            
+            // Gentle lowpass on cutoff modulation
+            cutoffHz = cutoffHz * 0.99f + calculateCutoffHz(cutoffParam) * 0.01f;
         }
 
-        float output = b0 * input + b1 * xIn1 + b2 * xIn2 - a1 * yIn1 - a2 * yIn2;
+        // Thermal and drift modeling
+        thermalState += (std::abs(input) - thermalState) * 0.0005f;
+        float driftedCutoff = cutoffHz * (1.f + thermalState * MS20_THERMAL_COEFF);
+        driftedCutoff += componentDrift.process() * MS20_DRIFT_RANGE * cutoffHz;
 
-        output = std::clamp(output, -100.0f, 100.0f);
+        // Filter coefficients
+        const float omega = 2.f * FastMath::PI * std::clamp(driftedCutoff, MS20_MIN_FREQ, sampleRate*0.45f) * invSampleRate;
+        const float sinOmega = FastMath::fastSin(std::clamp(omega, 0.01f, FastMath::PI*0.8f));
+        const float cosOmega = FastMath::fastCos(omega);
 
-        xIn2 = xIn1;
-        xIn1 = input;
-        yIn2 = yIn1;
-        yIn1 = output;
+        float alpha = sinOmega / (2.f * resonance);
+        alpha = std::clamp(alpha, 0.0001f, 0.5f) * 0.999f;
 
-        if (!std::isfinite(yIn1) || std::abs(yIn1) > 100.0f) yIn1 = 0.0f;
-        if (!std::isfinite(yIn2) || std::abs(yIn2) > 100.0f) yIn2 = 0.0f;
-        if (!std::isfinite(xIn1) || std::abs(xIn1) > 100.0f) xIn1 = 0.0f;
-        if (!std::isfinite(xIn2) || std::abs(xIn2) > 100.0f) xIn2 = 0.0f;
-        
-        if (std::abs(yIn1) < 1e-6f) yIn1 = 0.0f;
-        if (std::abs(yIn2) < 1e-6f) yIn2 = 0.0f;
-        if (std::abs(xIn1) < 1e-6f) xIn1 = 0.0f;
-        if (std::abs(xIn2) < 1e-6f) xIn2 = 0.0f;
+        const float b0 = (1.f - cosOmega) * 0.5f;
+        const float b1 = 1.f - cosOmega;
+        const float b2 = b0;
+        const float a0 = 1.f + alpha;
+        const float a1 = -2.f * cosOmega;
+        const float a2 = 1.f - alpha;
+
+        // Process sample
+        float output = (b0 * input + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2) / a0;
+
+        // State update with stability checks
+        x2 = x1; x1 = input + 1e-20f; // Anti-denormal
+        y2 = y1; y1 = output + 1e-20f;
+        if (!std::isfinite(y1)) reset();
     }
-    
-    inline float saturation(float input, float amount = 0.1f) {
-        return FastMath::fastTanh(input * (1.0f + amount)) / (1.0f + amount * 0.5f);
-    }
-    
+
 public:
-    VCF() : xIn1(0), xIn2(0), yIn1(0), yIn2(0), 
-            cutoffParam(0.5f), resonanceParam(0.0f), 
-            sampleRate(44100.0f), previousCutoff(0.5f), previousResonance(0.0f) {}
-    
-    void setSampleRate(float sampleRate) {
-        this->sampleRate = std::clamp(sampleRate, 8000.0f, 192000.0f);
-    }
-    
-    void setCutoff(float cutoffHz) {
-        if (cutoffHz <= 20.0f) {
-            cutoffParam = 0.0f;
-        } else {
-            float normalizedFreq = (cutoffHz - 20.0f) / 18000.0f;
-            cutoffParam = std::sqrt(std::clamp(normalizedFreq, 0.0f, 1.0f));
-        }
-        cutoffParam = std::clamp(cutoffParam, 0.0f, 1.0f);
-    }
-    
-    void setResonance(float resonance) {
-        resonanceParam = std::clamp(resonance, 0.0f, 1.0f);
-    }
-    
-    float process(float input, float sampleRate, NoiseGenerator& noiseGenerator) {
-        if (!active) {
-            return input;
-        }
+    VCF() = default;
 
-        input = std::clamp(input, -10.0f, 10.0f);
-        this->sampleRate = std::clamp(sampleRate, 8000.0f, 192000.0f);
-
-        float smoothingFactor = 0.02f;
-        previousCutoff = smoothParameter(previousCutoff, cutoffParam, smoothingFactor);
-        previousResonance = smoothParameter(previousResonance, resonanceParam, smoothingFactor);
-
-        if (previousCutoff < 0.005f) {
-            xIn1 *= 0.9f;
-            xIn2 *= 0.9f;
-            yIn1 *= 0.9f;
-            yIn2 *= 0.9f;
-            return 0.0f; 
-        }
-
-        float analogNoise = 0.0f;
-        if (previousResonance > 0.8f && previousCutoff > 0.1f) {
-            analogNoise = noiseGenerator.process() * 0.0002f;
-        }
-
-        float cutoffFrequency = calculateCutoffFreq(previousCutoff + analogNoise);
-        float saturatedInput = input;
-
-        if (previousResonance > 0.3f) {
-            saturatedInput = saturation(input, previousResonance * 0.02f);
-        }
-
-        processLowpassFilter(saturatedInput, cutoffFrequency, previousResonance);
-
-        float output = yIn1;
-        
-        if (previousResonance > 0.3f) {
-            output = saturation(output, previousResonance * 0.01f);
-        }
-
-        if (previousResonance > 0.5f && previousCutoff > 0.1f) {
-            output *= (1.0f + previousResonance * 0.05f);
-        }
-
-        if (previousCutoff < 0.1f) {
-            float cutoffFade = previousCutoff * 10.0f;
-            cutoffFade = cutoffFade * cutoffFade * cutoffFade;
-            output *= cutoffFade;
-        }
-
-        output = std::clamp(output, -50.0f, 50.0f);
-
-        if (!std::isfinite(output)) {
-            output = 0.0f;
-        }
-
-        return output;
+    void reset() noexcept {
+        x1 = x2 = y1 = y2 = 0.f;
+        thermalState = 0.f;
     }
 
-    void setActive(bool isActive) {
+    void setSampleRate(float sr) noexcept {
+        sampleRate = std::clamp(sr, 8000.f, 192000.f);
+        invSampleRate = 1.f / sampleRate;
+        componentDrift.setSeed(static_cast<uint32_t>(sampleRate));
+    }
+
+    void setCutoff(float param) noexcept {
+        cutoffParam = std::clamp(param, 0.f, 1.f);
+    }
+
+    void setResonance(float param) noexcept {
+        resonanceParam = std::clamp(param, 0.f, 1.f);
+    }
+
+     void setActive(bool isActive) noexcept {
         active = isActive;
+        if (!active) reset();
     }
+
+
+    [[nodiscard]] float process(float input) noexcept {
+        if (!active) return input;
+
+        if (cutoffParam < CUTOFF_MUTE_THRESHOLD) {
+            reset();
+            return 0.f;
+        }
+
+        const bool inProblemRange = (cutoffParam > PROBLEM_RANGE_START) && 
+                                  (cutoffParam < PROBLEM_RANGE_END);
+
+        // Input processing
+        input = ms20Saturation(input, inProblemRange);
+        
+        // Noise injection (reduced in problem range)
+        if (resonanceParam > 0.7f) {
+            float noiseAmount = inProblemRange ? 0.00006f : 0.0002f;
+            input += componentDrift.process() * noiseAmount * resonanceParam;
+        }
+
+        // Filter processing
+        processFilter(input, calculateCutoffHz(cutoffParam), calculateResonance(resonanceParam));
+
+        // Output processing
+        float output = y1;
+        if (inProblemRange) {
+            output = std::clamp(output, -2.f, 2.f);
+        }
+        output = ms20Saturation(output, inProblemRange) * (1.f + resonanceParam * 0.03f);
+        
+        return std::clamp(output, -5.f, 5.f);
+    }
+
     
-    void reset() {
-        xIn1 = xIn2 = yIn1 = yIn2 = 0.0f;
-        previousCutoff = cutoffParam;
-        previousResonance = resonanceParam;
-    }
+   
 };
+}

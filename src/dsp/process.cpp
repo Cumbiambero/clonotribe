@@ -315,14 +315,12 @@ void Clonotribe::process(const ProcessArgs& args) {
         float audioIn = inputs[INPUT_AUDIO_CONNECTOR].getVoltage();
         mixedSignal += audioIn * 1.5f; // Even higher gain for testing
 
-        // Set filter parameters with modulation
-        float cutoffFreq = rescale(cutoff + cutoffMod, 0.0f, 1.0f, 80.0f, 8000.0f);
-        float res = rescale(resonance, 0.0f, 1.0f, 0.0f, 3.5f);
-        vcf.setCutoff(cutoffFreq);
-        vcf.setResonance(res);
+        // Set filter parameters with modulation (using normalized 0-1 values)
+        vcf.setCutoff(cutoff + cutoffMod);
+        vcf.setResonance(resonance);
         
         // Process through filter
-        float filteredSignal = vcf.process(mixedSignal, args.sampleRate, noiseGenerator);
+        float filteredSignal = vcf.process(mixedSignal);
 
         float envValue = processEnvelope(envelopeType, envelope, args.sampleTime, finalSequencerGate);
 
