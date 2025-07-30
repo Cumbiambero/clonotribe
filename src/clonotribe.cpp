@@ -1,3 +1,77 @@
+
+#include "clonotribe.hpp"
+
+void Clonotribe::toggleActiveStep(int step) {
+    int idx = step;
+    if (sequencer.isInSixteenStepMode()) {
+        idx = sequencer.getStepIndex(step, false);
+    }
+    if (idx >= 0 && idx < sequencer.getStepCount()) {
+        sequencer.toggleStepSkipped(idx);
+    }
+}
+
+
+void Clonotribe::handleStepButtons() {
+    for (int i = 0; i < 8; ++i) {
+        if (stepTriggers[i].process(params[PARAM_SEQUENCER_1_BUTTON + i].getValue() > 0.5f)) {
+            if (activeStepActive) {
+                toggleActiveStep(i);
+            } else {
+                toggleStepInCurrentMode(i);
+            }
+        }
+    }
+}
+
+void Clonotribe::toggleStepInCurrentMode(int step) {
+    if (selectedDrumPart == 0) {
+        int idx = step;
+        if (sequencer.isInSixteenStepMode()) {
+            idx = sequencer.getStepIndex(step, false);
+        }
+        if (idx >= 0 && idx < sequencer.getStepCount()) {
+            bool current = sequencer.isStepMuted(idx);
+            sequencer.setStepMuted(idx, !current);
+        }
+    } else {
+        int drumIdx = selectedDrumPart - 1;
+        if (drumIdx >= 0 && drumIdx < 3 && step >= 0 && step < 8) {
+            drumPatterns[drumIdx][step] = !drumPatterns[drumIdx][step];
+        }
+    }
+}
+
+void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& seqOutput) {
+    for (int i = 0; i < 8; ++i) {
+        if (activeStepActive) {
+              int mainIdx = sequencer.isInSixteenStepMode() ? sequencer.getStepIndex(i, false) : i;
+            bool notSkipped = (mainIdx >= 0 && mainIdx < sequencer.getStepCount()) && !sequencer.steps[mainIdx].skipped;
+            lights[LIGHT_SEQUENCER_1 + i].setBrightness(notSkipped ? 1.0f : 0.0f);
+        } else {
+            bool isPlaying = false;
+            bool notMuted = false;
+            if (selectedDrumPart == 0) {
+                int mainIdx = sequencer.isInSixteenStepMode() ? sequencer.getStepIndex(i, false) : i;
+                notMuted = !sequencer.isStepMuted(mainIdx);
+                isPlaying = sequencer.playing && (seqOutput.step == mainIdx);
+            } else {
+                int drumIdx = selectedDrumPart - 1;
+                notMuted = (drumIdx >= 0 && drumIdx < 3 && i >= 0 && i < 8) ? drumPatterns[drumIdx][i] : false;
+                isPlaying = sequencer.playing && (seqOutput.step == i);
+            }
+            float brightness = 0.0f;
+            if (isPlaying) {
+                brightness = 1.0f;
+            } else if (notMuted) {
+                brightness = 0.3f;
+            } else {
+                brightness = 0.0f;
+            }
+            lights[LIGHT_SEQUENCER_1 + i].setBrightness(brightness);
+        }
+    }
+}
 #include "clonotribe.hpp"
 
 Clonotribe::Clonotribe() : ribbonController(this) {

@@ -334,10 +334,8 @@ void Clonotribe::process(const ProcessArgs& args) {
         outputs[OUTPUT_GATE_CONNECTOR].setVoltage(finalSequencerGate);
         
         if (inputs[INPUT_SYNC_CONNECTOR].isConnected()) {
-            // Pass through input sync
             outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(inputs[INPUT_SYNC_CONNECTOR].getVoltage());
         } else {
-            // Generate sync output pulses when playing
             bool syncOut = syncPulse.process(args.sampleTime);
             outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(syncOut ? 5.0f : 0.0f);
         }
@@ -354,77 +352,18 @@ void Clonotribe::process(const ProcessArgs& args) {
 }
 
 
-void Clonotribe::handleStepButtons() {
-    for (int i = 0; i < 8; i++) {
-        bool stepPressed = stepTriggers[i].process(params[PARAM_SEQUENCER_1_BUTTON + i].getValue() > 0.5f);
-        if (stepPressed) {
-            selectedStepForEditing = i;
-            
-            if (sequencer.isInSixteenStepMode() && selectedDrumPart == 0) {
-                // In 16-step mode for synth part, check if we're editing main step or sub-step
-                if (gateTimeHeld) {
-                    // GATE_TIME + step button = toggle sub-step (odd indices)
-                    int subStepIndex = sequencer.getStepIndex(i, true); // Get sub-step index
-                    bool currentState = sequencer.isStepActive(subStepIndex);
-                    sequencer.setStepActive(subStepIndex, !currentState);
-                } else {
-                    // Normal step button = toggle main step (even indices)
-                    int mainStepIndex = sequencer.getStepIndex(i, false); // Get main step index
-                    bool currentState = sequencer.isStepActive(mainStepIndex);
-                    sequencer.setStepActive(mainStepIndex, !currentState);
-                }
-            } else {
-                // 8-step mode or drum parts - use original behavior
-                toggleStepInCurrentMode(i);
-            }
-        }
-    }
-}
 
 void Clonotribe::handleActiveStep() {
     bool activeStepHeld = params[PARAM_ACTIVE_STEP_BUTTON].getValue() > 0.5f;
-    
+
     if (activeStepHeld && !activeStepWasPressed) {
         activeStepWasPressed = true;
         activeStepActive = true;
-        
-        // Copy current state - expand for 16-step mode
-        for (int i = 0; i < 16; i++) {
-            if (i < sequencer.getStepCount()) {
-                activeStepsSequencerSteps[i] = sequencer.isStepActive(i);
-            } else {
-                activeStepsSequencerSteps[i] = false;
-            }
-        }
-        for (int d = 0; d < 3; d++) {
-            for (int i = 0; i < 8; i++) {
-                activeStepsDrumPatterns[d][i] = drumPatterns[d][i];
-            }
-        }
-        
-        // Toggle the selected step
-        if (selectedStepForEditing >= 0 && selectedStepForEditing < 8) {
-            if (selectedDrumPart == 0) {
-                // For synth part, toggle appropriate step based on 16-step mode
-                if (sequencer.isInSixteenStepMode()) {
-                    // In 16-step mode, toggle main step (even index)
-                    int stepIndex = sequencer.getStepIndex(selectedStepForEditing, false);
-                    if (stepIndex < 16) {
-                        activeStepsSequencerSteps[stepIndex] = !activeStepsSequencerSteps[stepIndex];
-                    }
-                } else {
-                    // In 8-step mode, toggle normally
-                    activeStepsSequencerSteps[selectedStepForEditing] = !activeStepsSequencerSteps[selectedStepForEditing];
-                }
-            } else {
-                int drumIndex = selectedDrumPart - 1;
-                if (drumIndex >= 0 && drumIndex < 3) {
-                    activeStepsDrumPatterns[drumIndex][selectedStepForEditing] = !activeStepsDrumPatterns[drumIndex][selectedStepForEditing];
-                }
-            }
+        // Only toggle skipping (not muting) for synth part, and only on button press
+        if (selectedDrumPart == 0 && selectedStepForEditing >= 0 && selectedStepForEditing < 8) {
+            toggleActiveStep(selectedStepForEditing);
         }
     } else if (!activeStepHeld && activeStepWasPressed) {
-        // ACTIVE STEP released - return to original sequence
         activeStepWasPressed = false;
         activeStepActive = false;
     }
@@ -435,7 +374,7 @@ void Clonotribe::handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld) {
     
     if (gateTimeHeld && ribbon.touching && selectedDrumPart > 0) {
         float rollIntensity = ribbon.getDrumRollIntensity();
-        float rollRate = rollIntensity * 50.0f + 1.0f; // 1-51 Hz roll rate
+        float rollRate = rollIntensity * 50.0f + 1.0f;        
         rollTimer += args.sampleTime * rollRate;
         
         if (rollTimer >= 1.0f) {
@@ -451,148 +390,23 @@ void Clonotribe::handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld) {
     }
 }
 
-void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& seqOutput) {
-    static float blinkTimer = 0.0f;
-    blinkTimer += 1.0f / APP->engine->getSampleRate(); // Increment by sample time
-    bool blinkState = fmodf(blinkTimer, 0.5f) < 0.25f; // Blink at 2 Hz
-    
-    for (int i = 0; i < 8; i++) {
-        float brightness = 0.0f;
-        
-        if (sequencer.isInSixteenStepMode() && selectedDrumPart == 0) {
-            // 16-step mode: LEDs represent both main and sub-steps
-            int mainStepIndex = sequencer.getStepIndex(i, false); // Even index (0,2,4,6,8,10,12,14)
-            int subStepIndex = sequencer.getStepIndex(i, true);   // Odd index (1,3,5,7,9,11,13,15)
-            
-            bool mainStepActive = sequencer.isStepActive(mainStepIndex);
-            bool subStepActive = sequencer.isStepActive(subStepIndex);
-            
-            // Current playing step gets special treatment
-            if (sequencer.playing && (seqOutput.step == mainStepIndex || seqOutput.step == subStepIndex)) {
-                if (seqOutput.step == mainStepIndex) {
-                    brightness = 1.0f; // Solid bright for main step
-                } else {
-                    brightness = blinkState ? 1.0f : 0.5f; // Blinking for sub-step
-                }
-            } else {
-                // Not currently playing - show step state
-                if (mainStepActive && subStepActive) {
-                    brightness = blinkState ? 0.6f : 0.3f; // Blink between bright and dim
-                } else if (mainStepActive) {
-                    brightness = 0.3f; // Solid dim for main step only
-                } else if (subStepActive) {
-                    brightness = blinkState ? 0.3f : 0.0f; // Blink dim for sub-step only
-                } else {
-                    brightness = 0.0f; // Off if neither active
-                }
-                
-                // Recording step indicator
-                if (sequencer.recording && !sequencer.playing && selectedDrumPart == 0) {
-                    if (sequencer.recordingStep == mainStepIndex || sequencer.recordingStep == subStepIndex) {
-                        brightness = 0.6f;
-                    }
-                }
-                
-                // Active steps mode highlighting
-                if (activeStepActive) {
-                    if (i == selectedStepForEditing) {
-                        brightness = (mainStepActive || subStepActive) ? 1.0f : 0.2f;
-                    } else {
-                        if (mainStepActive || subStepActive) {
-                            brightness = 0.4f;
-                        } else {
-                            brightness = 0.05f;
-                        }
-                    }
-                }
-            }
-        } else {
-            // 8-step mode or drum parts - original behavior
-            // Current playing step gets full brightness
-            if (sequencer.playing && seqOutput.step == i) {
-                brightness = 1.0f;
-            } else {
-                bool stepActive = isStepActiveInCurrentMode(i);
-                brightness = stepActive ? 0.3f : 0.0f;
-                
-                // Recording step indicator
-                if (sequencer.recording && !sequencer.playing && selectedDrumPart == 0 && i == sequencer.recordingStep) {
-                    brightness = 0.6f;
-                }
-                
-                // Active steps mode highlighting
-                if (activeStepActive) {
-                    if (i == selectedStepForEditing) {
-                        brightness = stepActive ? 1.0f : 0.2f;
-                    } else {
-                        brightness = stepActive ? 0.4f : 0.05f;
-                    }
-                }
-            }
-        }
-        
-        lights[LIGHT_SEQUENCER_1 + i].setBrightness(brightness);
-    }
-}
 
 bool Clonotribe::isStepActiveInCurrentMode(int step) {
     if (activeStepActive) {
         if (selectedDrumPart == 0) {
-            if (sequencer.isInSixteenStepMode()) {
-                int stepIndex = sequencer.getStepIndex(step, false);
-                return (stepIndex < 16) ? activeStepsSequencerSteps[stepIndex] : false;
-            } else {
-                return activeStepsSequencerSteps[step];
-            }
-        } else {
-            int drumIndex = selectedDrumPart - 1;
-            return (drumIndex >= 0 && drumIndex < 3) ? activeStepsDrumPatterns[drumIndex][step] : false;
-        }
-    } else {
-        if (selectedDrumPart == 0) {
-            if (sequencer.isInSixteenStepMode()) {
-                int stepIndex = sequencer.getStepIndex(step, false);
-                return sequencer.isStepActive(stepIndex);
-            } else {
-                return sequencer.isStepActive(step);
-            }
+            int idx = sequencer.isInSixteenStepMode() ? sequencer.getStepIndex(step, false) : step;
+            return (idx >= 0 && idx < sequencer.getStepCount()) && !sequencer.isStepSkipped(idx);
         } else {
             int drumIndex = selectedDrumPart - 1;
             return (drumIndex >= 0 && drumIndex < 3) ? drumPatterns[drumIndex][step] : false;
         }
-    }
-}
-
-void Clonotribe::toggleStepInCurrentMode(int step) {
-    if (activeStepActive) {
-        if (selectedDrumPart == 0) {
-            if (sequencer.isInSixteenStepMode()) {
-                int stepIndex = sequencer.getStepIndex(step, false);
-                if (stepIndex < 16) {
-                    activeStepsSequencerSteps[stepIndex] = !activeStepsSequencerSteps[stepIndex];
-                }
-            } else {
-                activeStepsSequencerSteps[step] = !activeStepsSequencerSteps[step];
-            }
-        } else {
-            int drumIndex = selectedDrumPart - 1;
-            if (drumIndex >= 0 && drumIndex < 3) {
-                activeStepsDrumPatterns[drumIndex][step] = !activeStepsDrumPatterns[drumIndex][step];
-            }
-        }
     } else {
         if (selectedDrumPart == 0) {
-            if (sequencer.isInSixteenStepMode()) {
-                int stepIndex = sequencer.getStepIndex(step, false);
-                sequencer.setStepActive(stepIndex, !sequencer.isStepActive(stepIndex));
-            } else {
-                sequencer.setStepActive(step, !sequencer.isStepActive(step));
-            }
+            int idx = sequencer.isInSixteenStepMode() ? sequencer.getStepIndex(step, false) : step;
+            return (idx >= 0 && idx < sequencer.getStepCount()) && !sequencer.isStepMuted(idx);
         } else {
             int drumIndex = selectedDrumPart - 1;
-            if (drumIndex >= 0 && drumIndex < 3) {
-                drumPatterns[drumIndex][step] = !drumPatterns[drumIndex][step];
-            }
+            return (drumIndex >= 0 && drumIndex < 3) ? drumPatterns[drumIndex][step] : false;
         }
     }
 }
@@ -605,12 +419,14 @@ void Clonotribe::clearAllSequences() {
 void Clonotribe::clearSynthSequence() {
     int stepCount = sequencer.getStepCount();
     for (int i = 0; i < stepCount; i++) {
-        sequencer.setStepActive(i, false);
+        sequencer.setStepSkipped(i, false);
+        sequencer.setStepMuted(i, false);
         sequencer.steps[i].pitch = 0.0f;
         sequencer.steps[i].gate = 5.0f;
         sequencer.steps[i].gateTime = 0.8f;
     }
 }
+
 
 void Clonotribe::clearDrumSequence() {
     for (int d = 0; d < 3; d++) {
@@ -624,7 +440,7 @@ void Clonotribe::enableAllActiveSteps() {
     if (selectedDrumPart == 0) {
         int stepCount = sequencer.getStepCount();
         for (int i = 0; i < stepCount; i++) {
-            sequencer.setStepActive(i, true);
+            sequencer.setStepSkipped(i, false);
         }
     } else {
         int drumIndex = selectedDrumPart - 1;

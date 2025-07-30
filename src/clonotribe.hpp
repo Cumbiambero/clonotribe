@@ -126,8 +126,6 @@ struct Clonotribe : Module {
     int syncDivideCounter = 0;
 
     bool drumPatterns[3][8] = {{false}}; // [drum][step] - 0=kick, 1=snare, 2=hihat
-    bool activeStepsSequencerSteps[16];
-    bool activeStepsDrumPatterns[3][8];
 
     bool activeStepActive = false;    
     bool activeStepWasPressed = false;
@@ -171,6 +169,7 @@ private:
     void handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld);
     void handleStepButtons();
     void toggleStepInCurrentMode(int step);
+    void toggleActiveStep(int step);
     void updateStepLights(const Sequencer::SequencerOutput& seqOutput);
     bool isStepActiveInCurrentMode(int step);
 };

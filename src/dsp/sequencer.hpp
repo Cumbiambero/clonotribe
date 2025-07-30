@@ -10,7 +10,8 @@ struct Sequencer final {
     static constexpr int kFluxBufferSize = 1600;
 
     struct Step {
-        bool active = true;
+        bool skipped = false;
+        bool muted = false;
         float pitch = 0.0f;
         float gate = 0.0f;
         float gateTime = 0.5f;
@@ -52,12 +53,26 @@ struct Sequencer final {
         if (!sixteenStepMode) return buttonStep;
         return buttonStep * 2 + (isSubStep ? 1 : 0);
     }
-    void setStepActive(int step, bool active) noexcept {
-        if (step >= 0 && step < getStepCount()) steps[step].active = active;
+    void setStepSkipped(int step, bool skip) noexcept {
+        if (step >= 0 && step < getStepCount()) steps[step].skipped = skip;
     }
-    bool isStepActive(int step) const noexcept {
-        if (step >= 0 && step < getStepCount()) return steps[step].active;
+    bool isStepSkipped(int step) const noexcept {
+        if (step >= 0 && step < getStepCount()) return steps[step].skipped;
         return false;
+    }
+    void toggleStepSkipped(int step) noexcept {
+        if (step >= 0 && step < getStepCount()) steps[step].skipped = !steps[step].skipped;
+    }
+
+    void setStepMuted(int step, bool mute) noexcept {
+        if (step >= 0 && step < getStepCount()) steps[step].muted = mute;
+    }
+    bool isStepMuted(int step) const noexcept {
+        if (step >= 0 && step < getStepCount()) return steps[step].muted;
+        return false;
+    }
+    void toggleStepMuted(int step) noexcept {
+        if (step >= 0 && step < getStepCount()) steps[step].muted = !steps[step].muted;
     }
     void setStepGateTime(int step, float gateTime) noexcept {
         if (step >= 0 && step < getStepCount()) steps[step].gateTime = std::clamp(gateTime, 0.1f, 1.0f);
@@ -84,7 +99,8 @@ struct Sequencer final {
                 steps[targetStep].pitch = pitch;
                 steps[targetStep].gate = gate;
                 steps[targetStep].gateTime = gateTime;
-                steps[targetStep].active = true;
+                steps[targetStep].skipped = false;
+                steps[targetStep].muted = false;
             }
         }
     }
@@ -93,7 +109,8 @@ struct Sequencer final {
             steps[step].pitch = pitch;
             steps[step].gate = gate;
             steps[step].gateTime = gateTime;
-            steps[step].active = true;
+            steps[step].skipped = false;
+            steps[step].muted = false;
         }
     }
     void recordFlux(float pitch) noexcept {
@@ -124,11 +141,21 @@ struct Sequencer final {
         SequencerOutput output;
         if (!playing) return output;
         bool wasNewStep = false;
+        auto advanceToNextActiveStep = [this](int fromStep) -> int {
+            int count = getStepCount();
+            int next = (fromStep + 1) % count;
+            for (int i = 0; i < count; ++i) {
+                if (!steps[next].skipped) return next;
+                next = (next + 1) % count;
+            }
+            return fromStep;
+        };
         if (externalSync) {
             bool syncTriggered = syncTrigger.process(syncSignal > 1.0f);
             if (syncTriggered) {
-                currentStep = (currentStep + 1) % getStepCount();
-                wasNewStep = true;
+                int nextStep = advanceToNextActiveStep(currentStep);
+                wasNewStep = (nextStep != currentStep);
+                currentStep = nextStep;
                 stepTimer = 0.0f;
             }
             stepTimer += sampleTime;
@@ -136,32 +163,38 @@ struct Sequencer final {
             stepTimer += sampleTime;
             if (stepTimer >= stepDuration) {
                 stepTimer -= stepDuration;
-                currentStep = (currentStep + 1) % getStepCount();
-                wasNewStep = true;
+                int nextStep = advanceToNextActiveStep(currentStep);
+                wasNewStep = (nextStep != currentStep);
+                currentStep = nextStep;
             }
         }
         output.step = currentStep;
         output.stepChanged = wasNewStep;
-        if (steps[currentStep].active) {
-            if (fluxMode && fluxSampleCount > 0) {
-                int samplesPerStep = fluxSampleCount / getStepCount();
-                if (samplesPerStep > 0) {
-                    int stepOffset = currentStep * samplesPerStep;
-                    int sampleIndex = stepOffset + static_cast<int>((stepTimer / stepDuration) * static_cast<float>(samplesPerStep));
-                    if (sampleIndex < fluxSampleCount) {
-                        output.pitch = fluxBuffer[sampleIndex];
+        if (!steps[currentStep].skipped) {
+            if (steps[currentStep].muted) {
+                output.pitch = 0.0f;
+                output.gate = 0.0f;
+            } else {
+                if (fluxMode && fluxSampleCount > 0) {
+                    int samplesPerStep = fluxSampleCount / getStepCount();
+                    if (samplesPerStep > 0) {
+                        int stepOffset = currentStep * samplesPerStep;
+                        int sampleIndex = stepOffset + static_cast<int>((stepTimer / stepDuration) * static_cast<float>(samplesPerStep));
+                        if (sampleIndex < fluxSampleCount) {
+                            output.pitch = fluxBuffer[sampleIndex];
+                        } else {
+                            output.pitch = steps[currentStep].pitch;
+                        }
                     } else {
                         output.pitch = steps[currentStep].pitch;
                     }
                 } else {
                     output.pitch = steps[currentStep].pitch;
                 }
-            } else {
-                output.pitch = steps[currentStep].pitch;
+                float effectiveGateTime = std::clamp(steps[currentStep].gateTime * ribbonGateTimeMod, 0.1f, 1.0f);
+                float stepProgress = externalSync ? (stepTimer / 0.1f) : (stepTimer / stepDuration);
+                output.gate = (stepProgress < effectiveGateTime) ? 5.0f : 0.0f;
             }
-            float effectiveGateTime = std::clamp(steps[currentStep].gateTime * ribbonGateTimeMod, 0.1f, 1.0f);
-            float stepProgress = externalSync ? (stepTimer / 0.1f) : (stepTimer / stepDuration);
-            output.gate = (stepProgress < effectiveGateTime) ? 5.0f : 0.0f;
         } else {
             output.pitch = 0.0f;
             output.gate = 0.0f;

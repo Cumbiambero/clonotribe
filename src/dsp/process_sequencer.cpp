@@ -1,15 +1,11 @@
 #include "../clonotribe.hpp"
 
 void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered) {
-    // Override sequencer output with active steps when ACTIVE STEP is active
-    if (activeStepActive && sequencer.playing) {
+    if (sequencer.playing) {
         int currentStep = seqOutput.step;
-        if (currentStep >= 0 && currentStep < sequencer.getStepCount()) {
-            if (selectedDrumPart == 0) {
-                if (!activeStepsSequencerSteps[currentStep]) {
-                    seqOutput.gate = 0.0f;
-                }
-            }
+        if (sequencer.isStepMuted(currentStep)) {
+            seqOutput.gate = 0.0f;
+            seqOutput.pitch = 0.0f;
         }
     }
 
@@ -18,18 +14,26 @@ void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOut
             if (finalGate > 1.0f) {
                 sequencer.recordFlux(finalInputPitch);
             }
-        } else {
+        } else if(gateTriggered) {
             if (sequencer.playing) {
-                // Record on any gate trigger (CV/Gate input OR ribbon touch)
-                if (gateTriggered) {
-                    sequencer.recordNote(finalInputPitch, finalGate > 1.0f ? finalGate : 5.0f, 0.8f);
-                }
+                sequencer.recordNote(finalInputPitch, finalGate > 1.0f ? finalGate : 5.0f, 0.8f);
             } else {
-                // When not playing, record on gate trigger from any source
-                if (gateTriggered) {
-                    sequencer.recordNoteToStep(sequencer.recordingStep, finalInputPitch, finalGate > 1.0f ? finalGate : 5.0f, 0.8f);
-                    sequencer.recordingStep = (sequencer.recordingStep + 1) % sequencer.getStepCount();
+                int stepCount = sequencer.getStepCount();
+                int nextStep = sequencer.recordingStep;
+                for (int i = 0; i < stepCount; ++i) {
+                    if (!sequencer.isStepSkipped(nextStep)) break;
+                    nextStep = (nextStep + 1) % stepCount;
                 }
+                bool allSkipped = true;
+                for (int i = 0; i < stepCount; ++i) {
+                    if (!sequencer.isStepSkipped(i)) { allSkipped = false; break; }
+                }
+                if (allSkipped) {
+                    sequencer.setStepSkipped(0, false);
+                    nextStep = 0;
+                }
+                sequencer.recordNoteToStep(nextStep, finalInputPitch, finalGate > 1.0f ? finalGate : 5.0f, 0.8f);
+                sequencer.recordingStep = (nextStep + 1) % stepCount;
             }
         }
     }
@@ -38,7 +42,6 @@ void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOut
     if (sequencer.playing && seqOutput.stepChanged) {
         int currentStep = seqOutput.step;
 
-        // Drums only use first 8 steps, even in 16-step mode
         int drumStepIndex = currentStep;
         if (sequencer.isInSixteenStepMode()) {
             // In 16-step mode, drums trigger on main steps (even indices 0,2,4,6,8,10,12,14) map these back to 0,1,2,3,4,5,6,7
@@ -49,16 +52,10 @@ void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOut
             }
         }
 
-        if (drumStepIndex >= 0 && drumStepIndex < 8) {
-            if (activeStepActive) {
-                if (activeStepsDrumPatterns[0][drumStepIndex]) kickDrum.trigger();
-                if (activeStepsDrumPatterns[1][drumStepIndex]) snareDrum.trigger();
-                if (activeStepsDrumPatterns[2][drumStepIndex]) hiHat.trigger();
-            } else {
-                if (drumPatterns[0][drumStepIndex]) kickDrum.trigger();
-                if (drumPatterns[1][drumStepIndex]) snareDrum.trigger();
-                if (drumPatterns[2][drumStepIndex]) hiHat.trigger();
-            }
+        if (drumStepIndex >= 0 && drumStepIndex < 8 && !sequencer.isStepSkipped(currentStep)) {
+            if (drumPatterns[0][drumStepIndex]) kickDrum.trigger();
+            if (drumPatterns[1][drumStepIndex]) snareDrum.trigger();
+            if (drumPatterns[2][drumStepIndex]) hiHat.trigger();
         }
         syncPulse.trigger(1e-3f); // Generate sync pulse on step change (1ms pulse)
     }
