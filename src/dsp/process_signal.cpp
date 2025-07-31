@@ -28,19 +28,19 @@ float Clonotribe::processEnvelope(int envelopeType, Envelope& envelope, float sa
 float Clonotribe::processOutput(
     float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
     float rhythmVolume, float sampleTime,
-    KickDrum& kickDrum, SnareDrum& snareDrum, HiHat& hiHat, NoiseGenerator& noiseGenerator
+    drumkits::KickDrum& kickDrum, drumkits::SnareDrum& snareDrum, drumkits::HiHat& hiHat, NoiseGenerator& noiseGenerator
 ) {
     // Apply VCA (volume and envelope) with ribbon controller volume automation
     float volumeModulation = 1.0f + (ribbonVolumeAutomation * 0.5f); // ±50% volume change
-    volumeModulation = clamp(volumeModulation, 0.1f, 2.0f);
+    volumeModulation = std::clamp(volumeModulation, 0.1f, 2.0f);
     float finalOutput = filteredSignal * volume * envValue * volumeModulation;
 
     // Process drums and mix with synth output
     float drumMix = 0.0f;
     if (rhythmVolume > 0.0f) {
-        float kickOut = kickDrum.process(sampleTime);
-        float snareOut = snareDrum.process(sampleTime, noiseGenerator);
-        float hihatOut = hiHat.process(sampleTime, noiseGenerator);
+        float kickOut = kickDrum.process(1.0f, 0.0f, noiseGenerator);
+        float snareOut = snareDrum.process(1.0f, 0.0f, noiseGenerator);
+        float hihatOut = hiHat.process(1.0f, 0.0f, noiseGenerator);
         drumMix = (kickOut + snareOut + hihatOut) * rhythmVolume;
     }
     finalOutput += drumMix;  // mix synth and drums

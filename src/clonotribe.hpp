@@ -1,7 +1,19 @@
+
 #pragma once
+#include <rack.hpp>
+
 #include "plugin.hpp"
 #include "dsp/dsp.hpp"
 #include "ui/ui.hpp"
+#include "dsp/drumkits/original/kickdrum.hpp"
+#include "dsp/drumkits/original/snaredrum.hpp"
+#include "dsp/drumkits/original/hihat.hpp"
+#include "dsp/drumkits/tr808/kickdrum.hpp"
+#include "dsp/drumkits/tr808/snaredrum.hpp"
+#include "dsp/drumkits/tr808/hihat.hpp"
+#include "dsp/drumkits/latin/kickdrum.hpp"
+#include "dsp/drumkits/latin/snaredrum.hpp"
+#include "dsp/drumkits/latin/hihat.hpp"
 
 using namespace clonotribe;
 
@@ -11,13 +23,19 @@ enum TempoRange {
     TEMPO_60_180,
     TEMPO_RANGE_COUNT
 };
+enum DrumKitType {
+    DRUMKIT_ORIGINAL,
+    DRUMKIT_TR808,
+    DRUMKIT_LATIN,
+    DRUMKIT_COUNT
+};
 
-struct Clonotribe : Module {
+struct Clonotribe : rack::Module {
     static float processEnvelope(int envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
     static float processOutput(
         float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
         float rhythmVolume, float sampleTime,
-        KickDrum& kickDrum, SnareDrum& snareDrum, HiHat& hiHat, NoiseGenerator& noiseGenerator
+        drumkits::KickDrum& kickDrum, drumkits::SnareDrum& snareDrum, drumkits::HiHat& hiHat, NoiseGenerator& noiseGenerator
     );
     void handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered);
     enum ParamId {
@@ -97,9 +115,41 @@ struct Clonotribe : Module {
     Envelope envelope;
     Sequencer sequencer;
     NoiseGenerator noiseGenerator;
-    KickDrum kickDrum;
-    SnareDrum snareDrum;
-    HiHat hiHat;
+    // DrumKit Instanzen
+    drumkits::original::KickDrum kickDrumOriginal;
+    drumkits::original::SnareDrum snareDrumOriginal;
+    drumkits::original::HiHat hiHatOriginal;
+    drumkits::tr808::KickDrum kickDrumTR808;
+    drumkits::tr808::SnareDrum snareDrumTR808;
+    drumkits::tr808::HiHat hiHatTR808;
+    drumkits::latin::KickDrum kickDrumLatin;
+    drumkits::latin::SnareDrum snareDrumLatin;
+    drumkits::latin::HiHat hiHatLatin;
+
+    DrumKitType selectedDrumKit = DRUMKIT_ORIGINAL;
+
+    // Getter für aktives DrumKit
+    inline drumkits::KickDrum& getKickDrum() {
+        switch(selectedDrumKit) {
+            case DRUMKIT_TR808: return kickDrumTR808;
+            case DRUMKIT_LATIN: return kickDrumLatin;
+            default: return kickDrumOriginal;
+        }
+    }
+    inline drumkits::SnareDrum& getSnareDrum() {
+        switch(selectedDrumKit) {
+            case DRUMKIT_TR808: return snareDrumTR808;
+            case DRUMKIT_LATIN: return snareDrumLatin;
+            default: return snareDrumOriginal;
+        }
+    }
+    inline drumkits::HiHat& getHiHat() {
+        switch(selectedDrumKit) {
+            case DRUMKIT_TR808: return hiHatTR808;
+            case DRUMKIT_LATIN: return hiHatLatin;
+            default: return hiHatOriginal;
+        }
+    }
     Ribbon ribbon;
     RibbonController ribbonController;
     

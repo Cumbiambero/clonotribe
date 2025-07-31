@@ -40,7 +40,7 @@ struct TransparentButton final : rack::app::ParamWidget {
         rack::app::ParamWidget::onDragStart(e);
     }
     
-    void onDragEnd(const event::DragEnd& e) override {
+    void onDragEnd(const rack::event::DragEnd& e) override {
         if (e.button == GLFW_MOUSE_BUTTON_LEFT && pressed) {
             pressed = false;
             if (getParamQuantity()) {

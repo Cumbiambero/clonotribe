@@ -1,8 +1,8 @@
 #include "plugin.hpp"
 
-Plugin* pluginInstance;
+rack::plugin::Plugin* pluginInstance;
 
-void init(Plugin* p) {
+void init(rack::plugin::Plugin* p) {
     pluginInstance = p;
     p->addModel(modelClonotribe);
 }

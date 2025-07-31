@@ -1,7 +1,7 @@
 #include "ribboncontroller.hpp"
 #include "../clonotribe.hpp"
 
-void RibbonController::onButton(const event::Button& e) {
+void RibbonController::onButton(const rack::event::Button& e) {
     if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
         dragging = true;
         dragStartPos = e.pos;
@@ -16,19 +16,19 @@ void RibbonController::onButton(const event::Button& e) {
     }
 }
 
-void RibbonController::onDragMove(const event::DragMove& e) {
+void RibbonController::onDragMove(const rack::event::DragMove& e) {
     if (dragging) {
         dragStartPos = dragStartPos.plus(e.mouseDelta);
         updatePosition(dragStartPos);
     }
 }
 
-void RibbonController::updatePosition(Vec pos) noexcept {
+void RibbonController::updatePosition(rack::math::Vec pos) noexcept {
     if (!module) return;
     
     float margin = 6.0f;
     float effectiveWidth = box.size.x - 2 * margin;
-    float adjustedX = clamp(pos.x - margin, 0.0f, effectiveWidth);
+    float adjustedX = std::clamp(pos.x - margin, 0.0f, effectiveWidth);
     
     float position = adjustedX / effectiveWidth;
     module->ribbon.setPosition(position);

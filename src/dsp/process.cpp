@@ -76,7 +76,7 @@ void Clonotribe::handleDrumSelectionAndTempo(float tempo) {
     if (!inputs[INPUT_SYNC_CONNECTOR].isConnected()) {
         float minTempo, maxTempo;
         getTempoRange(minTempo, maxTempo);
-        float bpm = rescale(tempo, 0.0f, 1.0f, minTempo, maxTempo);
+        float bpm = rack::math::rescale(tempo, 0.0f, 1.0f, minTempo, maxTempo);
         sequencer.setTempo(bpm);
         sequencer.setExternalSync(false);
     } else {
@@ -260,14 +260,14 @@ void Clonotribe::process(const ProcessArgs& args) {
         
         switch (lfoMode) {
             case 0: // 1-Shot (or Sample & Hold when enabled)
-                actualLfoRate = rescale(lfoRate, 0.0f, 1.0f, 1.0f, 5.0f);
+                actualLfoRate = rack::math::rescale(lfoRate, 0.0f, 1.0f, 1.0f, 5.0f);
                 isOneShot = !isSampleAndHold; // Disable one-shot if in Sample & Hold mode
                 break;
             case 1: // Slow
-                actualLfoRate = rescale(lfoRate, 0.0f, 1.0f, 0.05f, 18.0f);
+                actualLfoRate = rack::math::rescale(lfoRate, 0.0f, 1.0f, 0.05f, 18.0f);
                 break;
             case 2: // Fast
-                actualLfoRate = rescale(lfoRate, 0.0f, 1.0f, 1.0f, 5000.0f);
+                actualLfoRate = rack::math::rescale(lfoRate, 0.0f, 1.0f, 1.0f, 5000.0f);
                 break;
             default:
                 actualLfoRate = 1.0f;
@@ -326,10 +326,10 @@ void Clonotribe::process(const ProcessArgs& args) {
 
         float finalOutput = processOutput(
             filteredSignal, volume, envValue, ribbonVolumeAutomation,
-            rhythmVolume, args.sampleTime, kickDrum, snareDrum, hiHat, noiseGenerator
+            rhythmVolume, args.sampleTime, getKickDrum(), getSnareDrum(), getHiHat(), noiseGenerator
         );
         
-        outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(clamp(finalOutput * 5.0f, -10.0f, 10.0f));
+        outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(std::clamp(finalOutput * 5.0f, -10.0f, 10.0f));
         outputs[OUTPUT_CV_CONNECTOR].setVoltage(finalPitch);
         outputs[OUTPUT_GATE_CONNECTOR].setVoltage(finalSequencerGate);
         
@@ -380,9 +380,9 @@ void Clonotribe::handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld) {
         if (rollTimer >= 1.0f) {
             rollTimer -= 1.0f;
             switch (selectedDrumPart) {
-                case 1: kickDrum.trigger(); break;
-                case 2: snareDrum.trigger(); break;
-                case 3: hiHat.trigger(); break;
+                case 1: getKickDrum().reset(); break;
+                case 2: getSnareDrum().reset(); break;
+                case 3: getHiHat().reset(); break;
             }
         }
     } else {
