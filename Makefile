@@ -1,6 +1,6 @@
 RACK_DIR ?= ../..
 
-FLAGS += -isystem
+FLAGS += -isystem $(RACK_DIR)/include
 FLAGS += -Wpedantic -Wconversion -Wno-psabi
 CXXFLAGS += -std=c++23
 
