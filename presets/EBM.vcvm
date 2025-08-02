@@ -1,0 +1,240 @@
+{
+  "plugin": "Clonotribe",
+  "model": "Clonotribe",
+  "version": "2.0.0",
+  "params": [
+    {
+      "value": 3.0,
+      "id": 0
+    },
+    {
+      "value": 0.96747004985809326,
+      "id": 1
+    },
+    {
+      "value": 0.0,
+      "id": 2
+    },
+    {
+      "value": 0.72048228979110718,
+      "id": 3
+    },
+    {
+      "value": 0.0,
+      "id": 4
+    },
+    {
+      "value": 0.0,
+      "id": 5
+    },
+    {
+      "value": 0.0,
+      "id": 6
+    },
+    {
+      "value": 0.64458185434341431,
+      "id": 7
+    },
+    {
+      "value": 0.0,
+      "id": 8
+    },
+    {
+      "value": 0.0,
+      "id": 9
+    },
+    {
+      "value": 0.0,
+      "id": 10
+    },
+    {
+      "value": 1.0,
+      "id": 11
+    },
+    {
+      "value": 2.0,
+      "id": 12
+    },
+    {
+      "value": 1.0,
+      "id": 13
+    },
+    {
+      "value": 2.0,
+      "id": 14
+    },
+    {
+      "value": 2.0,
+      "id": 15
+    },
+    {
+      "value": 2.0,
+      "id": 16
+    },
+    {
+      "value": 0.13132530450820923,
+      "id": 17
+    },
+    {
+      "value": 0.0,
+      "id": 18
+    },
+    {
+      "value": 0.0,
+      "id": 19
+    },
+    {
+      "value": 0.0,
+      "id": 20
+    },
+    {
+      "value": 0.0,
+      "id": 21
+    },
+    {
+      "value": 0.0,
+      "id": 22
+    },
+    {
+      "value": 0.0,
+      "id": 23
+    },
+    {
+      "value": 0.0,
+      "id": 24
+    },
+    {
+      "value": 0.0,
+      "id": 25
+    },
+    {
+      "value": 0.0,
+      "id": 26
+    },
+    {
+      "value": 0.0,
+      "id": 27
+    },
+    {
+      "value": 0.0,
+      "id": 28
+    },
+    {
+      "value": 0.0,
+      "id": 29
+    },
+    {
+      "value": 0.0,
+      "id": 30
+    },
+    {
+      "value": 0.0,
+      "id": 31
+    }
+  ],
+  "data": {
+    "sequencer": {
+      "sixteenStepMode": false,
+      "currentStep": 3,
+      "recordingStep": 0,
+      "fluxMode": false,
+      "steps": [
+        {
+          "pitch": -2.0250415802001953,
+          "gate": 10.0,
+          "gateTime": 0.80000001192092896,
+          "skipped": false,
+          "muted": false
+        },
+        {
+          "pitch": -2.0250415802001953,
+          "gate": 10.0,
+          "gateTime": 0.80000001192092896,
+          "skipped": false,
+          "muted": true
+        },
+        {
+          "pitch": -1.7310464382171631,
+          "gate": 10.0,
+          "gateTime": 0.80000001192092896,
+          "skipped": false,
+          "muted": false
+        },
+        {
+          "pitch": 0.28273558616638184,
+          "gate": 10.0,
+          "gateTime": 0.80000001192092896,
+          "skipped": false,
+          "muted": false
+        },
+        {
+          "pitch": 0.28273558616638184,
+          "gate": 10.0,
+          "gateTime": 0.80000001192092896,
+          "skipped": false,
+          "muted": true
+        },
+        {
+          "pitch": 1.8261146545410156,
+          "gate": 10.0,
+          "gateTime": 0.80000001192092896,
+          "skipped": false,
+          "muted": false
+        },
+        {
+          "pitch": 1.8261146545410156,
+          "gate": 10.0,
+          "gateTime": 0.80000001192092896,
+          "skipped": false,
+          "muted": false
+        },
+        {
+          "pitch": -2.0250415802001953,
+          "gate": 10.0,
+          "gateTime": 0.80000001192092896,
+          "skipped": false,
+          "muted": false
+        }
+      ],
+      "drumPatterns": [
+        [
+          true,
+          false,
+          true,
+          false,
+          true,
+          false,
+          true,
+          false
+        ],
+        [
+          false,
+          false,
+          true,
+          false,
+          false,
+          false,
+          true,
+          false
+        ],
+        [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      ]
+    },
+    "selectedDrumPart": 0,
+    "selectedStepForEditing": 0,
+    "gateTimesLocked": false,
+    "lfoSampleAndHoldMode": false,
+    "syncHalfTempo": false,
+    "selectedDrumKit": 1,
+    "selectedTempoRange": 2
+  }
+}

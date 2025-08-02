@@ -168,7 +168,6 @@ struct Clonotribe : rack::Module {
     Clonotribe();
     void process(const ProcessArgs& args) override;
     
-    // Initialize drum processor with correct sample rate
     void onSampleRateChange() override {
         drumProcessor.setSampleRate(APP->engine->getSampleRate());
     }
@@ -181,6 +180,9 @@ struct Clonotribe : rack::Module {
     auto processInputTriggers(float inputPitch, float gate, bool gateTimeHeld) -> std::tuple<float, float, bool, bool>;
     
     void appendContextMenu(rack::ui::Menu* menu);
+    
+    json_t* dataToJson() override;
+    void dataFromJson(json_t* rootJ) override;
 
 public:
     TempoRange selectedTempoRange = TEMPO_10_600;

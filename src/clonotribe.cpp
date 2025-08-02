@@ -191,4 +191,151 @@ void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
         item->text = rangeLabels[i];
         menu->addChild(item);
     }
-};
+}
+
+json_t* Clonotribe::dataToJson() {
+    json_t* rootJ = json_object();
+    
+    json_t* sequencerJ = json_object();
+    
+    json_object_set_new(sequencerJ, "sixteenStepMode", json_boolean(sequencer.isInSixteenStepMode()));
+    json_object_set_new(sequencerJ, "currentStep", json_integer(sequencer.currentStep));
+    json_object_set_new(sequencerJ, "recordingStep", json_integer(sequencer.recordingStep));
+    json_object_set_new(sequencerJ, "fluxMode", json_boolean(sequencer.fluxMode));
+    
+    json_t* stepsJ = json_array();
+    int stepCount = sequencer.getStepCount();
+    for (int i = 0; i < stepCount; i++) {
+        json_t* stepJ = json_object();
+        json_object_set_new(stepJ, "pitch", json_real(sequencer.steps[i].pitch));
+        json_object_set_new(stepJ, "gate", json_real(sequencer.steps[i].gate));
+        json_object_set_new(stepJ, "gateTime", json_real(sequencer.steps[i].gateTime));
+        json_object_set_new(stepJ, "skipped", json_boolean(sequencer.steps[i].skipped));
+        json_object_set_new(stepJ, "muted", json_boolean(sequencer.steps[i].muted));
+        json_array_append_new(stepsJ, stepJ);
+    }
+    json_object_set_new(sequencerJ, "steps", stepsJ);
+    
+    json_t* drumPatternsJ = json_array();
+    for (int d = 0; d < 3; d++) {
+        json_t* drumJ = json_array();
+        for (int s = 0; s < 8; s++) {
+            json_array_append_new(drumJ, json_boolean(drumPatterns[d][s]));
+        }
+        json_array_append_new(drumPatternsJ, drumJ);
+    }
+    json_object_set_new(sequencerJ, "drumPatterns", drumPatternsJ);
+    
+    json_object_set_new(rootJ, "sequencer", sequencerJ);
+    
+    json_object_set_new(rootJ, "selectedDrumPart", json_integer(selectedDrumPart));
+    json_object_set_new(rootJ, "selectedStepForEditing", json_integer(selectedStepForEditing));
+    json_object_set_new(rootJ, "gateTimesLocked", json_boolean(gateTimesLocked));
+    json_object_set_new(rootJ, "lfoSampleAndHoldMode", json_boolean(lfoSampleAndHoldMode));
+    json_object_set_new(rootJ, "syncHalfTempo", json_boolean(syncHalfTempo));
+    json_object_set_new(rootJ, "selectedDrumKit", json_integer(selectedDrumKit));
+    json_object_set_new(rootJ, "selectedTempoRange", json_integer(selectedTempoRange));
+    
+    return rootJ;
+}
+
+void Clonotribe::dataFromJson(json_t* rootJ) {
+    json_t* sequencerJ = json_object_get(rootJ, "sequencer");
+    if (sequencerJ) {
+        json_t* sixteenStepModeJ = json_object_get(sequencerJ, "sixteenStepMode");
+        if (sixteenStepModeJ) {
+            sequencer.setSixteenStepMode(json_boolean_value(sixteenStepModeJ));
+        }
+        
+        json_t* currentStepJ = json_object_get(sequencerJ, "currentStep");
+        if (currentStepJ) {
+            sequencer.currentStep = static_cast<int>(json_integer_value(currentStepJ));
+        }
+        
+        json_t* recordingStepJ = json_object_get(sequencerJ, "recordingStep");
+        if (recordingStepJ) {
+            sequencer.recordingStep = static_cast<int>(json_integer_value(recordingStepJ));
+        }
+        
+        json_t* fluxModeJ = json_object_get(sequencerJ, "fluxMode");
+        if (fluxModeJ) {
+            sequencer.fluxMode = json_boolean_value(fluxModeJ);
+        }
+        
+        json_t* stepsJ = json_object_get(sequencerJ, "steps");
+        if (stepsJ) {
+            size_t stepIndex;
+            json_t* stepJ;
+            json_array_foreach(stepsJ, stepIndex, stepJ) {
+                if (stepIndex < sequencer.kMaxSteps) {
+                    json_t* pitchJ = json_object_get(stepJ, "pitch");
+                    if (pitchJ) sequencer.steps[stepIndex].pitch = static_cast<float>(json_real_value(pitchJ));
+                    
+                    json_t* gateJ = json_object_get(stepJ, "gate");
+                    if (gateJ) sequencer.steps[stepIndex].gate = static_cast<float>(json_real_value(gateJ));
+                    
+                    json_t* gateTimeJ = json_object_get(stepJ, "gateTime");
+                    if (gateTimeJ) sequencer.steps[stepIndex].gateTime = static_cast<float>(json_real_value(gateTimeJ));
+                    
+                    json_t* skippedJ = json_object_get(stepJ, "skipped");
+                    if (skippedJ) sequencer.steps[stepIndex].skipped = json_boolean_value(skippedJ);
+                    
+                    json_t* mutedJ = json_object_get(stepJ, "muted");
+                    if (mutedJ) sequencer.steps[stepIndex].muted = json_boolean_value(mutedJ);
+                }
+            }
+        }
+        
+        json_t* drumPatternsJ = json_object_get(sequencerJ, "drumPatterns");
+        if (drumPatternsJ) {
+            size_t drumIndex;
+            json_t* drumJ;
+            json_array_foreach(drumPatternsJ, drumIndex, drumJ) {
+                if (drumIndex < 3) {
+                    size_t stepIndex;
+                    json_t* stepJ;
+                    json_array_foreach(drumJ, stepIndex, stepJ) {
+                        if (stepIndex < 8) {
+                            drumPatterns[drumIndex][stepIndex] = json_boolean_value(stepJ);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    json_t* selectedDrumPartJ = json_object_get(rootJ, "selectedDrumPart");
+    if (selectedDrumPartJ) {
+        selectedDrumPart = static_cast<int>(json_integer_value(selectedDrumPartJ));
+    }
+    
+    json_t* selectedStepForEditingJ = json_object_get(rootJ, "selectedStepForEditing");
+    if (selectedStepForEditingJ) {
+        selectedStepForEditing = static_cast<int>(json_integer_value(selectedStepForEditingJ));
+    }
+    
+    json_t* gateTimesLockedJ = json_object_get(rootJ, "gateTimesLocked");
+    if (gateTimesLockedJ) {
+        gateTimesLocked = json_boolean_value(gateTimesLockedJ);
+    }
+    
+    json_t* lfoSampleAndHoldModeJ = json_object_get(rootJ, "lfoSampleAndHoldMode");
+    if (lfoSampleAndHoldModeJ) {
+        lfoSampleAndHoldMode = json_boolean_value(lfoSampleAndHoldModeJ);
+    }
+    
+    json_t* syncHalfTempoJ = json_object_get(rootJ, "syncHalfTempo");
+    if (syncHalfTempoJ) {
+        syncHalfTempo = json_boolean_value(syncHalfTempoJ);
+    }
+    
+    json_t* selectedDrumKitJ = json_object_get(rootJ, "selectedDrumKit");
+    if (selectedDrumKitJ) {
+        setDrumKit(static_cast<DrumKitType>(json_integer_value(selectedDrumKitJ)));
+    }
+    
+    json_t* selectedTempoRangeJ = json_object_get(rootJ, "selectedTempoRange");
+    if (selectedTempoRangeJ) {
+        selectedTempoRange = static_cast<TempoRange>(json_integer_value(selectedTempoRangeJ));
+    }
+}
