@@ -13,7 +13,6 @@
 
 namespace clonotribe {
 
-// Performance-optimized drum processor that avoids virtual function calls
 class DrumProcessor {
 public:
     enum DrumKitType {
@@ -24,6 +23,22 @@ public:
     
     DrumProcessor() {
         setDrumKit(ORIGINAL);
+        setSampleRate(44100.0f);
+    }
+    
+    void setSampleRate(float sampleRate) {
+        currentSampleRate = sampleRate;
+        
+        // Update all drum instances with new sample rate
+        kickOriginal.setSampleRate(sampleRate);
+        snareOriginal.setSampleRate(sampleRate);
+        hihatOriginal.setSampleRate(sampleRate);
+        kickTR808.setSampleRate(sampleRate);
+        snareTR808.setSampleRate(sampleRate);
+        hihatTR808.setSampleRate(sampleRate);
+        kickLatin.setSampleRate(sampleRate);
+        snareLatin.setSampleRate(sampleRate);
+        hihatLatin.setSampleRate(sampleRate);
     }
     
     void setDrumKit(DrumKitType kit) {
@@ -67,7 +82,6 @@ public:
         }
     }
     
-    // High-performance processing without virtual calls
     float processKick(float trig, float accent, NoiseGenerator& noise) {
         switch (currentKit) {
             case TR808: return kickTR808.process(trig, accent, noise);
@@ -94,8 +108,8 @@ public:
 
 private:
     DrumKitType currentKit = ORIGINAL;
+    float currentSampleRate = 44100.0f;
     
-    // All drum instances - no inheritance overhead
     drumkits::original::KickDrum kickOriginal;
     drumkits::original::SnareDrum snareOriginal;
     drumkits::original::HiHat hihatOriginal;

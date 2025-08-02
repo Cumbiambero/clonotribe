@@ -24,6 +24,9 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
         paramCache.waveform = (int) params[PARAM_VCO_WAVEFORM_SWITCH].getValue();
         
         paramCache.resetUpdateCounter();
+        
+        // Update drum parameter cache for performance
+        drumParamCache.update();
     }
     
     return {paramCache.cutoff, paramCache.lfoIntensity, paramCache.lfoRate, paramCache.noiseLevel, 
@@ -264,7 +267,6 @@ void Clonotribe::process(const ProcessArgs& args) {
             }
         }
 
-        // PERFORMANCE: Pre-calculate LFO parameters to avoid repeated calculations
         static float cachedLfoRate = -1.0f;
         static int cachedLfoMode = -1;
         static bool cachedSampleAndHold = false;
@@ -300,7 +302,6 @@ void Clonotribe::process(const ProcessArgs& args) {
         
         float lfoValue = lfo.process(args.sampleTime, static_cast<clonotribe::LFO::Waveform>(lfoWaveform));
         
-        // PERFORMANCE: Pre-calculate modulation amounts
         float pitchMod = 0.0f;
         float cutoffMod = 0.0f;
         
@@ -313,7 +314,6 @@ void Clonotribe::process(const ProcessArgs& args) {
 
         vco.setPitch(finalPitch + pitchMod);
         
-        // PERFORMANCE: Use function pointer to avoid switch statement every sample
         static int cachedWaveform = -1;
         static float (VCO::*vcoProcessFunction)(float) = nullptr;
         
@@ -337,18 +337,13 @@ void Clonotribe::process(const ProcessArgs& args) {
         float audioIn = inputs[INPUT_AUDIO_CONNECTOR].getVoltage();
         mixedSignal += audioIn * 1.5f; // Even higher gain for testing
 
-        // Set filter parameters with modulation (using normalized 0-1 values)
-        vcf.setCutoff(cutoff + cutoffMod);
-        vcf.setResonance(resonance);
-        
-        // Process through filter
-        float filteredSignal = vcf.process(mixedSignal);
+        float filteredSignal = filterProcessor.process(mixedSignal, cutoff + cutoffMod, resonance);
 
         float envValue = processEnvelope(envelopeType, envelope, args.sampleTime, finalSequencerGate);
 
         float finalOutput = processOutput(
             filteredSignal, volume, envValue, ribbonVolumeAutomation,
-            rhythmVolume, args.sampleTime, getKickDrum(), getSnareDrum(), getHiHat(), noiseGenerator
+            rhythmVolume, args.sampleTime, noiseGenerator
         );
         
         outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(std::clamp(finalOutput * 5.0f, -10.0f, 10.0f));
@@ -402,9 +397,9 @@ void Clonotribe::handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld) {
         if (rollTimer >= 1.0f) {
             rollTimer -= 1.0f;
             switch (selectedDrumPart) {
-                case 1: getKickDrum().reset(); break;
-                case 2: getSnareDrum().reset(); break;
-                case 3: getHiHat().reset(); break;
+                case 1: triggerKick(); break;
+                case 2: triggerSnare(); break;
+                case 3: triggerHihat(); break;
             }
         }
     } else {

@@ -6,16 +6,10 @@
 #include "dsp/dsp.hpp"
 #include "dsp/parameter_cache.hpp"
 #include "dsp/sequencer_state_manager.hpp"
+#include "dsp/drum_processor.hpp"
+#include "dsp/drum_parameter_cache.hpp"
+#include "dsp/filter_processor.hpp"
 #include "ui/ui.hpp"
-#include "dsp/drumkits/original/kickdrum.hpp"
-#include "dsp/drumkits/original/snaredrum.hpp"
-#include "dsp/drumkits/original/hihat.hpp"
-#include "dsp/drumkits/tr808/kickdrum.hpp"
-#include "dsp/drumkits/tr808/snaredrum.hpp"
-#include "dsp/drumkits/tr808/hihat.hpp"
-#include "dsp/drumkits/latin/kickdrum.hpp"
-#include "dsp/drumkits/latin/snaredrum.hpp"
-#include "dsp/drumkits/latin/hihat.hpp"
 
 using namespace clonotribe;
 
@@ -36,10 +30,9 @@ enum DrumKitType {
 struct Clonotribe : rack::Module {
     // Static processing methods for performance
     static float processEnvelope(int envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
-    static float processOutput(
+    float processOutput(
         float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
-        float rhythmVolume, float sampleTime,
-        drumkits::KickDrum& kickDrum, drumkits::SnareDrum& snareDrum, drumkits::HiHat& hiHat, NoiseGenerator& noiseGenerator
+        float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator
     );
     
     void handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered);
@@ -120,48 +113,25 @@ struct Clonotribe : rack::Module {
     Envelope envelope;
     Sequencer sequencer;
     NoiseGenerator noiseGenerator;
-    // DrumKit Instanzen
-    drumkits::original::KickDrum kickDrumOriginal;
-    drumkits::original::SnareDrum snareDrumOriginal;
-    drumkits::original::HiHat hiHatOriginal;
-    drumkits::tr808::KickDrum kickDrumTR808;
-    drumkits::tr808::SnareDrum snareDrumTR808;
-    drumkits::tr808::HiHat hiHatTR808;
-    drumkits::latin::KickDrum kickDrumLatin;
-    drumkits::latin::SnareDrum snareDrumLatin;
-    drumkits::latin::HiHat hiHatLatin;
-
+    
+    DrumProcessor drumProcessor;
     DrumKitType selectedDrumKit = DRUMKIT_ORIGINAL;
 
-    // Getter für aktives DrumKit
-    inline drumkits::KickDrum& getKickDrum() {
-        switch(selectedDrumKit) {
-            case DRUMKIT_TR808: return kickDrumTR808;
-            case DRUMKIT_LATIN: return kickDrumLatin;
-            default: return kickDrumOriginal;
-        }
+    void setDrumKit(DrumKitType kit) {
+        selectedDrumKit = kit;
+        drumProcessor.setDrumKit(static_cast<DrumProcessor::DrumKitType>(kit));
     }
-    inline drumkits::SnareDrum& getSnareDrum() {
-        switch(selectedDrumKit) {
-            case DRUMKIT_TR808: return snareDrumTR808;
-            case DRUMKIT_LATIN: return snareDrumLatin;
-            default: return snareDrumOriginal;
-        }
-    }
-    inline drumkits::HiHat& getHiHat() {
-        switch(selectedDrumKit) {
-            case DRUMKIT_TR808: return hiHatTR808;
-            case DRUMKIT_LATIN: return hiHatLatin;
-            default: return hiHatOriginal;
-        }
-    }
+    
+    void triggerKick() { drumProcessor.triggerKick(); }
+    void triggerSnare() { drumProcessor.triggerSnare(); }
+    void triggerHihat() { drumProcessor.triggerHihat(); }
     Ribbon ribbon;
+    FilterProcessor filterProcessor;
     RibbonController ribbonController;
     
-    // Performance optimization: Parameter cache to reduce expensive reads
     ParameterCache paramCache;
+    DrumParameterCache drumParamCache;
     
-    // Clean separation of concerns: UI state management
     SequencerStateManager stateManager;
     SequencerStateManager::UIState uiState;
     
@@ -200,6 +170,11 @@ struct Clonotribe : rack::Module {
 
     Clonotribe();
     void process(const ProcessArgs& args) override;
+    
+    // Initialize drum processor with correct sample rate
+    void onSampleRateChange() override {
+        drumProcessor.setSampleRate(APP->engine->getSampleRate());
+    }
 
     auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, int, int, int, int, int, int>;
     void updateDSPState(float volume, float rhythmVolume, float lfoIntensity, int ribbonMode, float octave);

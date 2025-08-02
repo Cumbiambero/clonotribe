@@ -20,7 +20,10 @@ public:
         bandpass2 = 0.0f;
         highpass = 0.0f;
         triggered = true;
-        sampleRate = 44100.0f; // TODO: Remove hard-coding
+    }
+    
+    void setSampleRate(float newSampleRate) override {
+        sampleRate = newSampleRate;
     }
     
     float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {

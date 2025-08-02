@@ -81,7 +81,7 @@ void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& 
     }
 }
 
-Clonotribe::Clonotribe() : ribbonController(this) {
+Clonotribe::Clonotribe() : ribbonController(this), filterProcessor(vcf) {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
                
         configSwitch(PARAM_VCO_WAVEFORM_SWITCH, 0.0f, 2.0f, 0.0f, "VCO Waveform", {"Square", "Triangle", "Sawtooth"});
@@ -160,7 +160,7 @@ struct DrumKitMenuItem : rack::MenuItem {
     Clonotribe* module;
     DrumKitType kitType;
     void onAction(const rack::event::Action& e) override {
-        module->selectedDrumKit = kitType;
+        module->setDrumKit(kitType);
     }
     void step() override {
         static const char* kitLabels[DRUMKIT_COUNT] = {"Original", "TR-808", "Latin"};
