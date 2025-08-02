@@ -9,8 +9,6 @@
 #include "dsp/drumkits/latin/snaredrum.hpp"
 #include "dsp/drumkits/latin/hihat.hpp"
 
-#include "clonotribe.hpp"
-
 void Clonotribe::toggleActiveStep(int step) {
     int idx = step;
     if (sequencer.isInSixteenStepMode()) {
@@ -82,7 +80,6 @@ void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& 
         }
     }
 }
-#include "clonotribe.hpp"
 
 Clonotribe::Clonotribe() : ribbonController(this) {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -194,4 +191,4 @@ void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
         item->text = rangeLabels[i];
         menu->addChild(item);
     }
-}
+};

@@ -16,7 +16,7 @@ I'm currentyly working on improving the filter. Other parts also need improvemen
 - **LFO**: Multi-waveform LFO with  multiple targets and modes
 - **Envelope Generator**: Attack/Gate/Decay modes
 - **Simple Drum Machine**: Kick, Snare, and Hi-hat
-- **8-step Sequencer**: Full recording, playback, and pattern editing
+- **8-step Sequencer**: Full recording, playback, and pattern editing (expandable to 16 steps)
 - **Ribbon Controller**: Multi-mode pitch control
 - **CV/Gate Integration**: Full CV input/output with recording capabilities
 
@@ -53,12 +53,12 @@ I'm currentyly working on improving the filter. Other parts also need improvemen
 - Volume control and mixing
 
 ### Sequencer
-- 8-step sequencer with individual step control
+- 8-step sequencer with individual step control (switchable to 16 steps)
 - Record mode: live recording of CV/Gate and ribbon input
 - Flux mode: Almost real-time step editing while playing
 - Individual Active Step control per part
-- Gate Time adjustment per step (synth mode)
-- Tempo control (60-180 BPM) or external sync
+- Gate Time adjustment per step
+- Tempo control (60-180 BPM up to 10 - 600 BPM) or external sync
 
 ### Ribbon Controller (Firmware 2.1 Features)
 - Three modes: Key (chromatic), Narrow (±0.5 oct), Wide (±3 oct)

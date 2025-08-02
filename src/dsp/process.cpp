@@ -2,29 +2,40 @@
 #include <tuple>
 
 auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, int, int, int, int, int, int> {
-    float cutoff = params[PARAM_VCF_CUTOFF_KNOB].getValue();
-    float lfoIntensity = params[PARAM_LFO_INTERVAL_KNOB].getValue();
-    float lfoRate = params[PARAM_LFO_RATE_KNOB].getValue();
-    float noiseLevel = params[PARAM_NOISE_KNOB].getValue();
-    float resonance = params[PARAM_VCF_PEAK_KNOB].getValue();
-    float rhythmVolume = params[PARAM_RHYTHM_VOLUME_KNOB].getValue();
-    float tempo = params[PARAM_SEQUENCER_TEMPO_KNOB].getValue();
-    float volume = params[PARAM_VCA_LEVEL_KNOB].getValue();
-    float octaveSwitch = (float) params[PARAM_VCO_OCTAVE_KNOB].getValue();
-    float octave = octaveSwitch - 3.0f;
-    int envelopeType = (int) params[PARAM_ENVELOPE_FORM_SWITCH].getValue();
-    int lfoMode = (int) params[PARAM_LFO_MODE_SWITCH].getValue();
-    int lfoTarget = (int) params[PARAM_LFO_TARGET_SWITCH].getValue();
-    int lfoWaveform = (int) params[PARAM_LFO_WAVEFORM_SWITCH].getValue();
-    int ribbonMode = (int) params[PARAM_RIBBON_RANGE_SWITCH].getValue();
-    int waveform = (int) params[PARAM_VCO_WAVEFORM_SWITCH].getValue();
-    return {cutoff, lfoIntensity, lfoRate, noiseLevel, resonance, rhythmVolume, tempo, volume, octave, envelopeType, lfoMode, lfoTarget, lfoWaveform, ribbonMode, waveform};
+    // Only read parameters periodically, not every sample
+    if (paramCache.needsUpdate()) {
+        paramCache.cutoff = params[PARAM_VCF_CUTOFF_KNOB].getValue();
+        paramCache.lfoIntensity = params[PARAM_LFO_INTERVAL_KNOB].getValue();
+        paramCache.lfoRate = params[PARAM_LFO_RATE_KNOB].getValue();
+        paramCache.noiseLevel = params[PARAM_NOISE_KNOB].getValue();
+        paramCache.resonance = params[PARAM_VCF_PEAK_KNOB].getValue();
+        paramCache.rhythmVolume = params[PARAM_RHYTHM_VOLUME_KNOB].getValue();
+        paramCache.tempo = params[PARAM_SEQUENCER_TEMPO_KNOB].getValue();
+        paramCache.volume = params[PARAM_VCA_LEVEL_KNOB].getValue();
+        
+        float octaveSwitch = (float) params[PARAM_VCO_OCTAVE_KNOB].getValue();
+        paramCache.octave = octaveSwitch - 3.0f;
+        
+        paramCache.envelopeType = (int) params[PARAM_ENVELOPE_FORM_SWITCH].getValue();
+        paramCache.lfoMode = (int) params[PARAM_LFO_MODE_SWITCH].getValue();
+        paramCache.lfoTarget = (int) params[PARAM_LFO_TARGET_SWITCH].getValue();
+        paramCache.lfoWaveform = (int) params[PARAM_LFO_WAVEFORM_SWITCH].getValue();
+        paramCache.ribbonMode = (int) params[PARAM_RIBBON_RANGE_SWITCH].getValue();
+        paramCache.waveform = (int) params[PARAM_VCO_WAVEFORM_SWITCH].getValue();
+        
+        paramCache.resetUpdateCounter();
+    }
+    
+    return {paramCache.cutoff, paramCache.lfoIntensity, paramCache.lfoRate, paramCache.noiseLevel, 
+            paramCache.resonance, paramCache.rhythmVolume, paramCache.tempo, paramCache.volume, 
+            paramCache.octave, paramCache.envelopeType, paramCache.lfoMode, paramCache.lfoTarget, 
+            paramCache.lfoWaveform, paramCache.ribbonMode, paramCache.waveform};
 }
 
 void Clonotribe::updateDSPState(float volume, float rhythmVolume, float lfoIntensity, int ribbonMode, float octave) {
-    bool synthActive = (selectedDrumPart == 0) || (volume > 0.01f && rhythmVolume < 0.99f);
-    bool filterActive = synthActive;
-    bool lfoActive = synthActive && (lfoIntensity > 0.01f);
+    bool synthActive = true;
+    bool filterActive = true;
+    bool lfoActive = (lfoIntensity > 0.01f);
     lfo.active = lfoActive;
     vco.active = synthActive;
     vcf.setActive(filterActive);
@@ -253,59 +264,70 @@ void Clonotribe::process(const ProcessArgs& args) {
             }
         }
 
-        float actualLfoRate = 1.0f;
-        bool isOneShot = false;
+        // PERFORMANCE: Pre-calculate LFO parameters to avoid repeated calculations
+        static float cachedLfoRate = -1.0f;
+        static int cachedLfoMode = -1;
+        static bool cachedSampleAndHold = false;
         
-        bool isSampleAndHold = lfoSampleAndHoldMode && (lfoMode == 0);
-        
-        switch (lfoMode) {
-            case 0: // 1-Shot (or Sample & Hold when enabled)
-                actualLfoRate = rack::math::rescale(lfoRate, 0.0f, 1.0f, 1.0f, 5.0f);
-                isOneShot = !isSampleAndHold; // Disable one-shot if in Sample & Hold mode
-                break;
-            case 1: // Slow
-                actualLfoRate = rack::math::rescale(lfoRate, 0.0f, 1.0f, 0.05f, 18.0f);
-                break;
-            case 2: // Fast
-                actualLfoRate = rack::math::rescale(lfoRate, 0.0f, 1.0f, 1.0f, 5000.0f);
-                break;
-            default:
-                actualLfoRate = 1.0f;
+        if (cachedLfoRate != lfoRate || cachedLfoMode != lfoMode || cachedSampleAndHold != lfoSampleAndHoldMode) {
+            float actualLfoRate = 1.0f;
+            bool isOneShot = false;
+            bool isSampleAndHold = lfoSampleAndHoldMode && (lfoMode == 0);
+            
+            // Use lookup table for common rates instead of rescale calculations
+            switch (lfoMode) {
+                case 0: // 1-Shot (or Sample & Hold when enabled)
+                    actualLfoRate = 1.0f + lfoRate * 4.0f; // Simplified calculation
+                    isOneShot = !isSampleAndHold;
+                    break;
+                case 1: // Slow
+                    actualLfoRate = 0.05f + lfoRate * 17.95f;
+                    break;
+                case 2: // Fast
+                    actualLfoRate = 1.0f + lfoRate * 4999.0f;
+                    break;
+            }
+            
+            lfo.setRate(actualLfoRate);
+            lfo.setOneShot(isOneShot);
+            lfo.setSampleAndHold(isSampleAndHold);
+            
+            // Update cache
+            cachedLfoRate = lfoRate;
+            cachedLfoMode = lfoMode;
+            cachedSampleAndHold = lfoSampleAndHoldMode;
         }
-        lfo.setRate(actualLfoRate);
-        lfo.setOneShot(isOneShot);
-        lfo.setSampleAndHold(isSampleAndHold); // New method for Sample & Hold mode
         
         float lfoValue = lfo.process(args.sampleTime, static_cast<clonotribe::LFO::Waveform>(lfoWaveform));
         
+        // PERFORMANCE: Pre-calculate modulation amounts
         float pitchMod = 0.0f;
         float cutoffMod = 0.0f;
         
-        switch (lfoTarget) {
-            case 0: // VCF only
-                cutoffMod = lfoValue * lfoIntensity * 0.5f;
-                break;
-            case 1: // VCO+VCF  
-                pitchMod = lfoValue * lfoIntensity * 0.2f;
-                cutoffMod = lfoValue * lfoIntensity * 0.5f;
-                break;
-            case 2: // VCO only
-                pitchMod = lfoValue * lfoIntensity * 0.2f;
-        }
+        // Use bit flags for faster branching
+        bool modulateVCF = (lfoTarget == 0 || lfoTarget == 1);
+        bool modulateVCO = (lfoTarget == 1 || lfoTarget == 2);
+        
+        if (modulateVCF) cutoffMod = lfoValue * lfoIntensity * 0.5f;
+        if (modulateVCO) pitchMod = lfoValue * lfoIntensity * 0.2f;
 
         vco.setPitch(finalPitch + pitchMod);
         
-        float vcoOutput = 0.0f;
-        switch (waveform) {
-            case 0: // Square
-                vcoOutput = vco.processSquare(args.sampleTime);
-                break;
-            case 1: // Triangle  
-                vcoOutput = vco.processTriangle(args.sampleTime);
-                break;
-            case 2: // Sawtooth
-                vcoOutput = vco.processSaw(args.sampleTime);
+        // PERFORMANCE: Use function pointer to avoid switch statement every sample
+        static int cachedWaveform = -1;
+        static float (VCO::*vcoProcessFunction)(float) = nullptr;
+        
+        if (cachedWaveform != waveform) {
+            switch (waveform) {
+                case 0: vcoProcessFunction = &VCO::processSquare; break;
+                case 1: vcoProcessFunction = &VCO::processTriangle; break;
+                case 2: vcoProcessFunction = &VCO::processSaw; break;
+                default: vcoProcessFunction = &VCO::processSquare;
+            }
+            cachedWaveform = waveform;
         }
+        
+        float vcoOutput = (vco.*vcoProcessFunction)(args.sampleTime);
         
         // Add noise
         float noise = noiseGenerator.process() * noiseLevel;

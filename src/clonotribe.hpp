@@ -4,6 +4,8 @@
 
 #include "plugin.hpp"
 #include "dsp/dsp.hpp"
+#include "dsp/parameter_cache.hpp"
+#include "dsp/sequencer_state_manager.hpp"
 #include "ui/ui.hpp"
 #include "dsp/drumkits/original/kickdrum.hpp"
 #include "dsp/drumkits/original/snaredrum.hpp"
@@ -23,6 +25,7 @@ enum TempoRange {
     TEMPO_60_180,
     TEMPO_RANGE_COUNT
 };
+
 enum DrumKitType {
     DRUMKIT_ORIGINAL,
     DRUMKIT_TR808,
@@ -31,12 +34,14 @@ enum DrumKitType {
 };
 
 struct Clonotribe : rack::Module {
+    // Static processing methods for performance
     static float processEnvelope(int envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
     static float processOutput(
         float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
         float rhythmVolume, float sampleTime,
         drumkits::KickDrum& kickDrum, drumkits::SnareDrum& snareDrum, drumkits::HiHat& hiHat, NoiseGenerator& noiseGenerator
     );
+    
     void handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered);
     enum ParamId {
         PARAM_VCO_OCTAVE_KNOB,
@@ -152,6 +157,13 @@ struct Clonotribe : rack::Module {
     }
     Ribbon ribbon;
     RibbonController ribbonController;
+    
+    // Performance optimization: Parameter cache to reduce expensive reads
+    ParameterCache paramCache;
+    
+    // Clean separation of concerns: UI state management
+    SequencerStateManager stateManager;
+    SequencerStateManager::UIState uiState;
     
     dsp::SchmittTrigger gateTrigger;
     dsp::SchmittTrigger playTrigger;
