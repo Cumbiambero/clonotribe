@@ -24,9 +24,6 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
         paramCache.waveform = (int) params[PARAM_VCO_WAVEFORM_SWITCH].getValue();
         
         paramCache.resetUpdateCounter();
-        
-        // Update drum parameter cache for performance
-        drumParamCache.update();
     }
     
     return {paramCache.cutoff, paramCache.lfoIntensity, paramCache.lfoRate, paramCache.noiseLevel, 
@@ -343,10 +340,14 @@ void Clonotribe::process(const ProcessArgs& args) {
 
         float finalOutput = processOutput(
             filteredSignal, volume, envValue, ribbonVolumeAutomation,
-            rhythmVolume, args.sampleTime, noiseGenerator
+            rhythmVolume, args.sampleTime, noiseGenerator, seqOutput.step
         );
         
-        outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(std::clamp(finalOutput * 5.0f, -10.0f, 10.0f));
+        // Gentle output limiting to prevent clipping and distortion
+        finalOutput = clonotribe::FastMath::fastTanh(finalOutput * 0.8f) * 1.2f;
+        
+        // Improved output scaling for better levels
+        outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(std::clamp(finalOutput * 4.0f, -10.0f, 10.0f));
         outputs[OUTPUT_CV_CONNECTOR].setVoltage(finalPitch);
         outputs[OUTPUT_GATE_CONNECTOR].setVoltage(finalSequencerGate);
         

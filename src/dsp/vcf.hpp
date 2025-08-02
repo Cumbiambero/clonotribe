@@ -55,6 +55,10 @@ public:
     [[nodiscard]] float process(float input) noexcept {
         if (!active) return 0.f;
 
+        if (std::abs(input) < 1e-30f) input = 0.f;
+        if (std::abs(s1) < 1e-30f) s1 = 0.f;
+        if (std::abs(s2) < 1e-30f) s2 = 0.f;
+
         if (!std::isfinite(input)) {
             reset();
             return 0.f;
@@ -76,6 +80,8 @@ public:
         if (cutoffParam < 0.3f) {
             output *= cutoffParam * 3.33f;
         }
+
+        if (std::abs(output) < 1e-30f) output = 0.f;
 
         return saturate(output * 1.5f);
     }

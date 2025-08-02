@@ -7,7 +7,6 @@
 #include "dsp/parameter_cache.hpp"
 #include "dsp/sequencer_state_manager.hpp"
 #include "dsp/drum_processor.hpp"
-#include "dsp/drum_parameter_cache.hpp"
 #include "dsp/filter_processor.hpp"
 #include "ui/ui.hpp"
 
@@ -28,11 +27,10 @@ enum DrumKitType {
 };
 
 struct Clonotribe : rack::Module {
-    // Static processing methods for performance
     static float processEnvelope(int envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
     float processOutput(
         float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
-        float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator
+        float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep
     );
     
     void handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered);
@@ -130,7 +128,6 @@ struct Clonotribe : rack::Module {
     RibbonController ribbonController;
     
     ParameterCache paramCache;
-    DrumParameterCache drumParamCache;
     
     SequencerStateManager stateManager;
     SequencerStateManager::UIState uiState;

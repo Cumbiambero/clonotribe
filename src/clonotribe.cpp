@@ -81,7 +81,7 @@ void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& 
     }
 }
 
-Clonotribe::Clonotribe() : ribbonController(this), filterProcessor(vcf) {
+Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
                
         configSwitch(PARAM_VCO_WAVEFORM_SWITCH, 0.0f, 2.0f, 0.0f, "VCO Waveform", {"Square", "Triangle", "Sawtooth"});

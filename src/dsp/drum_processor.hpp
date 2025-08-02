@@ -29,7 +29,6 @@ public:
     void setSampleRate(float sampleRate) {
         currentSampleRate = sampleRate;
         
-        // Update all drum instances with new sample rate
         kickOriginal.setSampleRate(sampleRate);
         snareOriginal.setSampleRate(sampleRate);
         hihatOriginal.setSampleRate(sampleRate);
