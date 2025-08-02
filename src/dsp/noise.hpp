@@ -19,12 +19,18 @@ struct NoiseGenerator final {
     }
 
     [[nodiscard]] float process() noexcept {
-        state = state * 1664525u + 1013904223u;
-        return static_cast<float>(state % 65536u) / 32768.0f - 1.0f;
+        state ^= state << 13;
+        state ^= state >> 17;
+        state ^= state << 5;
+        // Convert to float in range [-1, 1] more efficiently
+        return static_cast<float>(static_cast<int32_t>(state)) * (1.0f / 2147483648.0f);
     }
 
+    // Generate stereo noise more efficiently
     void processStereo(float& left, float& right) noexcept {
+        // Generate two values with one operation
         left = process();
+        state ^= 0x55555555; // Add some decorrelation
         right = process();
     }
 

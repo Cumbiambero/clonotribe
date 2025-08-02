@@ -9,7 +9,7 @@ void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOut
         }
     }
 
-    if (sequencer.recording && selectedDrumPart == 0) {
+    if (sequencer.recording) {
         if (sequencer.fluxMode) {
             if (finalGate > 1.0f) {
                 sequencer.recordFlux(finalInputPitch);
@@ -53,9 +53,9 @@ void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOut
         }
 
         if (drumStepIndex >= 0 && drumStepIndex < 8 && !sequencer.isStepSkipped(currentStep)) {
-            if (drumPatterns[0][drumStepIndex]) kickDrum.trigger();
-            if (drumPatterns[1][drumStepIndex]) snareDrum.trigger();
-            if (drumPatterns[2][drumStepIndex]) hiHat.trigger();
+            if (drumPatterns[0][drumStepIndex]) triggerKick();
+            if (drumPatterns[1][drumStepIndex]) triggerSnare();
+            if (drumPatterns[2][drumStepIndex]) triggerHihat();
         }
         syncPulse.trigger(1e-3f); // Generate sync pulse on step change (1ms pulse)
     }

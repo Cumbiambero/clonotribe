@@ -2,5 +2,5 @@
 #include <rack.hpp>
 #include "dsp/dsp.hpp"
 
-extern rack::Plugin* pluginInstance;
+extern rack::plugin::Plugin* pluginInstance;
 extern rack::Model* modelClonotribe;

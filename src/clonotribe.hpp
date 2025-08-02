@@ -1,6 +1,13 @@
+
 #pragma once
+#include <rack.hpp>
+
 #include "plugin.hpp"
 #include "dsp/dsp.hpp"
+#include "dsp/parameter_cache.hpp"
+#include "dsp/sequencer_state_manager.hpp"
+#include "dsp/drum_processor.hpp"
+#include "dsp/filter_processor.hpp"
 #include "ui/ui.hpp"
 
 using namespace clonotribe;
@@ -12,13 +19,20 @@ enum TempoRange {
     TEMPO_RANGE_COUNT
 };
 
-struct Clonotribe : Module {
+enum DrumKitType {
+    DRUMKIT_ORIGINAL,
+    DRUMKIT_TR808,
+    DRUMKIT_LATIN,
+    DRUMKIT_COUNT
+};
+
+struct Clonotribe : rack::Module {
     static float processEnvelope(int envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
-    static float processOutput(
+    float processOutput(
         float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
-        float rhythmVolume, float sampleTime,
-        KickDrum& kickDrum, SnareDrum& snareDrum, HiHat& hiHat, NoiseGenerator& noiseGenerator
+        float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep
     );
+    
     void handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered);
     enum ParamId {
         PARAM_VCO_OCTAVE_KNOB,
@@ -97,11 +111,26 @@ struct Clonotribe : Module {
     Envelope envelope;
     Sequencer sequencer;
     NoiseGenerator noiseGenerator;
-    KickDrum kickDrum;
-    SnareDrum snareDrum;
-    HiHat hiHat;
+    
+    DrumProcessor drumProcessor;
+    DrumKitType selectedDrumKit = DRUMKIT_ORIGINAL;
+
+    void setDrumKit(DrumKitType kit) {
+        selectedDrumKit = kit;
+        drumProcessor.setDrumKit(static_cast<DrumProcessor::DrumKitType>(kit));
+    }
+    
+    void triggerKick() { drumProcessor.triggerKick(); }
+    void triggerSnare() { drumProcessor.triggerSnare(); }
+    void triggerHihat() { drumProcessor.triggerHihat(); }
     Ribbon ribbon;
+    FilterProcessor filterProcessor;
     RibbonController ribbonController;
+    
+    ParameterCache paramCache;
+    
+    SequencerStateManager stateManager;
+    SequencerStateManager::UIState uiState;
     
     dsp::SchmittTrigger gateTrigger;
     dsp::SchmittTrigger playTrigger;
@@ -138,6 +167,11 @@ struct Clonotribe : Module {
 
     Clonotribe();
     void process(const ProcessArgs& args) override;
+    
+    // Initialize drum processor with correct sample rate
+    void onSampleRateChange() override {
+        drumProcessor.setSampleRate(APP->engine->getSampleRate());
+    }
 
     auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, int, int, int, int, int, int>;
     void updateDSPState(float volume, float rhythmVolume, float lfoIntensity, int ribbonMode, float octave);

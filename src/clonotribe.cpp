@@ -1,5 +1,13 @@
-
 #include "clonotribe.hpp"
+#include "dsp/drumkits/original/kickdrum.hpp"
+#include "dsp/drumkits/original/snaredrum.hpp"
+#include "dsp/drumkits/original/hihat.hpp"
+#include "dsp/drumkits/tr808/kickdrum.hpp"
+#include "dsp/drumkits/tr808/snaredrum.hpp"
+#include "dsp/drumkits/tr808/hihat.hpp"
+#include "dsp/drumkits/latin/kickdrum.hpp"
+#include "dsp/drumkits/latin/snaredrum.hpp"
+#include "dsp/drumkits/latin/hihat.hpp"
 
 void Clonotribe::toggleActiveStep(int step) {
     int idx = step;
@@ -72,9 +80,8 @@ void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& 
         }
     }
 }
-#include "clonotribe.hpp"
 
-Clonotribe::Clonotribe() : ribbonController(this) {
+Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
                
         configSwitch(PARAM_VCO_WAVEFORM_SWITCH, 0.0f, 2.0f, 0.0f, "VCO Waveform", {"Square", "Triangle", "Sawtooth"});
@@ -149,7 +156,29 @@ struct TempoRangeItem : rack::MenuItem {
     }
 };
 
+struct DrumKitMenuItem : rack::MenuItem {
+    Clonotribe* module;
+    DrumKitType kitType;
+    void onAction(const rack::event::Action& e) override {
+        module->setDrumKit(kitType);
+    }
+    void step() override {
+        static const char* kitLabels[DRUMKIT_COUNT] = {"Original", "TR-808", "Latin"};
+        text = kitLabels[kitType];
+        rightText = (module->selectedDrumKit == kitType) ? "✔" : "";
+        MenuItem::step();
+    }
+};
+
 void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
+    menu->addChild(new rack::MenuSeparator());
+    menu->addChild(rack::createMenuLabel("Drum Kit"));
+    for (int i = 0; i < DRUMKIT_COUNT; ++i) {
+        auto* kitItem = new DrumKitMenuItem;
+        kitItem->module = this;
+        kitItem->kitType = (DrumKitType)i;
+        menu->addChild(kitItem);
+    }
     menu->addChild(new rack::MenuSeparator());
     menu->addChild(rack::createMenuLabel("Tempo range"));
     static const char* rangeLabels[TEMPO_RANGE_COUNT] = {
@@ -162,4 +191,4 @@ void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
         item->text = rangeLabels[i];
         menu->addChild(item);
     }
-}
+};

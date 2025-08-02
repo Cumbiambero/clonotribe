@@ -1,4 +1,13 @@
+
+#include <rack.hpp>
 #include "../clonotribe.hpp"
+using namespace rack;
+using namespace rack::app;
+using namespace rack::componentlibrary;
+using namespace rack::math;
+using namespace rack::window;
+using namespace rack::engine;
+using namespace rack::ui;
 
 struct MainPanel : ModuleWidget {
     TransparentButton* createButton(Vec pos, Vec size, Module* module, int paramId) {
