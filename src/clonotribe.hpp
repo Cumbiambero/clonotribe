@@ -30,7 +30,7 @@ struct Clonotribe : rack::Module {
     static float processEnvelope(int envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
     float processOutput(
         float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
-        float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep
+        float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep, float distortion
     );
     
     void handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered);
@@ -114,6 +114,7 @@ struct Clonotribe : rack::Module {
     NoiseGenerator noiseGenerator;
     
     DrumProcessor drumProcessor;
+    Distortion distortionProcessor;
     DrumKitType selectedDrumKit = DRUMKIT_ORIGINAL;
 
     void setDrumKit(DrumKitType kit) {
@@ -173,7 +174,7 @@ struct Clonotribe : rack::Module {
         drumProcessor.setSampleRate(APP->engine->getSampleRate());
     }
 
-    auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, int, int, int, int, int, int>;
+    auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, int, int, int, int, int, int>;
     void updateDSPState(float volume, float rhythmVolume, float lfoIntensity, int ribbonMode, float octave);
     void handleMainTriggers();
     void handleDrumSelectionAndTempo(float tempo);

@@ -1,4 +1,5 @@
 #pragma once
+#include "../../fastmath.hpp"
 #include "../../noise.hpp"
 #include "../base/base.hpp"
 

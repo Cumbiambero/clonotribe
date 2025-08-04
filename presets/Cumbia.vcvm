@@ -1,7 +1,7 @@
 {
   "plugin": "Clonotribe",
   "model": "Clonotribe",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "params": [
     {
       "value": 5.0,

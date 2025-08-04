@@ -1,8 +1,7 @@
 #include "../clonotribe.hpp"
 #include <tuple>
 
-auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, int, int, int, int, int, int> {
-    // Only read parameters periodically, not every sample
+auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, int, int, int, int, int, int> {
     if (paramCache.needsUpdate()) {
         paramCache.cutoff = params[PARAM_VCF_CUTOFF_KNOB].getValue();
         paramCache.lfoIntensity = params[PARAM_LFO_INTERVAL_KNOB].getValue();
@@ -12,6 +11,7 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
         paramCache.rhythmVolume = params[PARAM_RHYTHM_VOLUME_KNOB].getValue();
         paramCache.tempo = params[PARAM_SEQUENCER_TEMPO_KNOB].getValue();
         paramCache.volume = params[PARAM_VCA_LEVEL_KNOB].getValue();
+        paramCache.distortion = params[PARAM_DISTORTION_KNOB].getValue();
         
         float octaveSwitch = (float) params[PARAM_VCO_OCTAVE_KNOB].getValue();
         paramCache.octave = octaveSwitch - 3.0f;
@@ -28,7 +28,7 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
     
     return {paramCache.cutoff, paramCache.lfoIntensity, paramCache.lfoRate, paramCache.noiseLevel, 
             paramCache.resonance, paramCache.rhythmVolume, paramCache.tempo, paramCache.volume, 
-            paramCache.octave, paramCache.envelopeType, paramCache.lfoMode, paramCache.lfoTarget, 
+            paramCache.octave, paramCache.distortion, paramCache.envelopeType, paramCache.lfoMode, paramCache.lfoTarget, 
             paramCache.lfoWaveform, paramCache.ribbonMode, paramCache.waveform};
 }
 
@@ -144,7 +144,7 @@ auto Clonotribe::processInputTriggers(float inputPitch, float gate, bool gateTim
 
 void Clonotribe::process(const ProcessArgs& args) {
     // 1. Read all parameters and state
-    auto [cutoff, lfoIntensity, lfoRate, noiseLevel, resonance, rhythmVolume, tempo, volume, octave, envelopeType, lfoMode, lfoTarget, lfoWaveform, ribbonMode, waveform] = readParameters();
+    auto [cutoff, lfoIntensity, lfoRate, noiseLevel, resonance, rhythmVolume, tempo, volume, octave, distortion, envelopeType, lfoMode, lfoTarget, lfoWaveform, ribbonMode, waveform] = readParameters();
 
     // 2. Update DSP/UI state
     updateDSPState(volume, rhythmVolume, lfoIntensity, ribbonMode, octave);
@@ -340,7 +340,7 @@ void Clonotribe::process(const ProcessArgs& args) {
 
         float finalOutput = processOutput(
             filteredSignal, volume, envValue, ribbonVolumeAutomation,
-            rhythmVolume, args.sampleTime, noiseGenerator, seqOutput.step
+            rhythmVolume, args.sampleTime, noiseGenerator, seqOutput.step, distortion
         );
         
         // Gentle output limiting to prevent clipping and distortion

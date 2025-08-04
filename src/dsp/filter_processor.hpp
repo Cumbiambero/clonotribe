@@ -5,15 +5,13 @@ namespace clonotribe {
 
 class FilterProcessor final {
 private:
+    static constexpr float CUTOFF_THRESHOLD = 0.01f;
+    static constexpr float RESONANCE_THRESHOLD = 0.01f;
+
     VCF* filter;
     
-    // Cached parameters
     float lastCutoff = -1.0f;
     float lastResonance = -1.0f;
-    
-    // Update thresholds for smooth operation
-    static constexpr float CUTOFF_THRESHOLD = 0.01f;    // Increased for more stable operation
-    static constexpr float RESONANCE_THRESHOLD = 0.01f; // Increased for more stable operation
     
 public:
     explicit FilterProcessor(VCF& vcf) noexcept : filter(&vcf) {}

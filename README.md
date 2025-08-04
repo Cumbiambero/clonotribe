@@ -19,6 +19,7 @@ I'm currentyly working on improving the filter. Other parts also need improvemen
 - **8-step Sequencer**: Full recording, playback, and pattern editing (expandable to 16 steps)
 - **Ribbon Controller**: Multi-mode pitch control
 - **CV/Gate Integration**: Full CV input/output with recording capabilities
+- **Distortion**: Add some overdrive to the synth voice
 
 ## Components
 
@@ -74,6 +75,9 @@ I'm currentyly working on improving the filter. Other parts also need improvemen
 - **Gate Output**: Outputs current gate state with proper timing
 - **Audio Input**: External audio mixing capability
 - **Sync Input/Output**: External sync or internal sync generation
+
+### Distortion
+- Adds effect pedal inspired drive to the synth part (not to the drums)
 
 ## Usage
 

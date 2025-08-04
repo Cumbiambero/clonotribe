@@ -8,6 +8,7 @@
 #include "sequencer.hpp"
 #include "vcf.hpp"
 #include "vco.hpp"
+#include "distortion.hpp"
 
 namespace dsp {
     using SchmittTrigger = rack::dsp::SchmittTrigger;

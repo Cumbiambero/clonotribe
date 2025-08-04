@@ -27,12 +27,16 @@ float Clonotribe::processEnvelope(int envelopeType, Envelope& envelope, float sa
 
 float Clonotribe::processOutput(
     float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
-    float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep
+    float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep, float distortion
 ) {
     // Apply VCA (volume and envelope) with ribbon controller volume automation
     float volumeModulation = 1.0f + (ribbonVolumeAutomation * 0.5f); // ±50% volume change
     volumeModulation = std::clamp(volumeModulation, 0.1f, 2.0f);
-    float finalOutput = filteredSignal * volume * envValue * volumeModulation;
+    float synthOutput = filteredSignal * volume * envValue * volumeModulation;
+
+    if (distortion > 0.0f) {
+        synthOutput = distortionProcessor.process(synthOutput, distortion);
+    }
 
     float drumMix = 0.0f;
     if (rhythmVolume > 0.0f) {
@@ -55,6 +59,6 @@ float Clonotribe::processOutput(
         drumMix = (kickOut * 0.7f + snareOut * 0.6f + hihatOut * 0.5f) * rhythmVolume;
     }
     
-    float synthLevel = finalOutput * 0.8f; // Slightly reduce synth to make room for drums
+    float synthLevel = synthOutput * 0.8f;
     return synthLevel + drumMix;
 }
