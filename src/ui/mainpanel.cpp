@@ -25,14 +25,15 @@ struct MainPanel : ModuleWidget {
         addParam(createParamCentered<CKSSThree>(mm2px(Vec(123.0f, 62.5f)), module, Clonotribe::PARAM_LFO_WAVEFORM_SWITCH));
 
         addParam(createParamCentered<OctaveKnob>(mm2px(Vec(15.0f, 42.0f)), module, Clonotribe::PARAM_VCO_OCTAVE_KNOB));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0f, 24.0f)), module, Clonotribe::PARAM_DISTORTION_KNOB)); 
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(56.5f, 42.0f)), module, Clonotribe::PARAM_VCF_CUTOFF_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(77.0f, 42.0f)), module, Clonotribe::PARAM_VCA_LEVEL_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(98.0f, 42.0f)), module, Clonotribe::PARAM_LFO_RATE_KNOB));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(119.0f, 42.0f)), module, Clonotribe::PARAM_LFO_INTERVAL_KNOB));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(119.0f, 42.0f)), module, Clonotribe::PARAM_LFO_INTERVAL_KNOB));        
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0f, 42.0f)), module, Clonotribe::PARAM_RHYTHM_VOLUME_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.0f, 62.5f)), module, Clonotribe::PARAM_NOISE_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(56.5f, 62.5f)), module, Clonotribe::PARAM_VCF_PEAK_KNOB));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0f, 62.5f)), module, Clonotribe::PARAM_SEQUENCER_TEMPO_KNOB));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0f, 62.5f)), module, Clonotribe::PARAM_SEQUENCER_TEMPO_KNOB));        
     }
 
     void setupButtons(Clonotribe* module) {

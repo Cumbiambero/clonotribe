@@ -39,6 +39,7 @@ struct Clonotribe : rack::Module {
         PARAM_VCA_LEVEL_KNOB,
         PARAM_VCO_WAVEFORM_SWITCH,
         PARAM_RHYTHM_VOLUME_KNOB,
+        PARAM_DISTORTION_KNOB,
         PARAM_SNARE_BUTTON,
         PARAM_FLUX_BUTTON,
         PARAM_REC_BUTTON,

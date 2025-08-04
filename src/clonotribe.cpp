@@ -102,6 +102,7 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         configParam(PARAM_LFO_INTERVAL_KNOB, 0.0f, 1.0f, 0.0f, "LFO Intensity");
         configParam(PARAM_RHYTHM_VOLUME_KNOB, 0.0f, 1.0f, 0.0f, "Rhythm Volume");
         configParam(PARAM_SEQUENCER_TEMPO_KNOB, 0.0f, 1.0f, 0.5f, "Sequencer Tempo", " BPM", 0.0f, 600.0f, 10.0f);
+        configParam(PARAM_DISTORTION_KNOB, 0.0f, 1.0f, 0.5f, "Distortion");
         
         configButton(PARAM_SNARE_BUTTON, "Snare (F7)");
         configButton(PARAM_FLUX_BUTTON, "Flux (Tab)");
