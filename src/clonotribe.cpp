@@ -370,3 +370,60 @@ void Clonotribe::processBypass(const ProcessArgs& args) {
         lights[i].setBrightness(0.0f);
     }
 }
+
+void Clonotribe::onRandomize(const RandomizeEvent& e) {
+    Module::onRandomize(e);
+    
+    int stepCount = sequencer.getStepCount();
+    for (int i = 0; i < stepCount; i++) {
+        // Random pitch (-2 to +2 octaves)
+        sequencer.steps[i].pitch = rack::random::uniform() * 4.0f - 2.0f;
+        
+        // Random gate (70% chance of being active)
+        sequencer.steps[i].gate = (rack::random::uniform() > 0.3f) ? 5.0f : 0.0f;
+        
+        // Random gate time (0.1 to 0.9)
+        sequencer.steps[i].gateTime = 0.1f + rack::random::uniform() * 0.8f;
+        
+        // Random muting (20% chance of being muted)
+        sequencer.steps[i].muted = (rack::random::uniform() < 0.2f);
+        
+        // Don't skip steps in randomization (keep all steps active)
+        sequencer.steps[i].skipped = false;
+    }
+    
+    for (int drum = 0; drum < 3; drum++) {
+        for (int step = 0; step < 8; step++) {
+            float probability;
+            switch (drum) {
+                case 0: // Kick - more likely on beats 1 and 3
+                    probability = ((step % 4) == 0 || (step % 4) == 2) ? 0.8f : 0.3f;
+                    break;
+                case 1: // Snare - more likely on beats 2 and 4
+                    probability = ((step % 4) == 1 || (step % 4) == 3) ? 0.7f : 0.2f;
+                    break;
+                case 2: // Hi-hat - more evenly distributed
+                    probability = 0.6f;
+                    break;
+                default:
+                    probability = 0.5f;
+            }
+            
+            drumPatterns[drum][step] = (rack::random::uniform() < probability);
+        }
+    }
+    
+    // Sometimes enable 16-step mode for more complex patterns
+    if (rack::random::uniform() < 0.3f) {
+        sequencer.setSixteenStepMode(true);
+    } else {
+        sequencer.setSixteenStepMode(false);
+    }
+    
+    // Randomly enable flux mode (20% chance)
+    sequencer.fluxMode = (rack::random::uniform() < 0.2f);
+    
+    // Randomly select a drum kit
+    int randomKit = static_cast<int>(rack::random::uniform() * DRUMKIT_COUNT);
+    setDrumKit(static_cast<DrumKitType>(randomKit));
+}

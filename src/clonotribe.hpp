@@ -170,6 +170,7 @@ struct Clonotribe : rack::Module {
     Clonotribe();
     void process(const ProcessArgs& args) override;
     void processBypass(const ProcessArgs& args) override;
+    void onRandomize(const RandomizeEvent& e) override;
     
     void onSampleRateChange() override {
         drumProcessor.setSampleRate(APP->engine->getSampleRate());

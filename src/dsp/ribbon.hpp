@@ -5,7 +5,6 @@
 
 namespace clonotribe {
 
-// DSP-side Ribbon controller for pitch, gate, and modulation
 class Ribbon {
 public:
     enum class Mode { Key = 0, Narrow = 1, Wide = 2 };
