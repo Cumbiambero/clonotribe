@@ -340,3 +340,33 @@ void Clonotribe::dataFromJson(json_t* rootJ) {
         selectedTempoRange = static_cast<TempoRange>(json_integer_value(selectedTempoRangeJ));
     }
 }
+
+void Clonotribe::processBypass(const ProcessArgs& args) {
+    if (inputs[INPUT_AUDIO_CONNECTOR].isConnected()) {
+        outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(inputs[INPUT_AUDIO_CONNECTOR].getVoltage());
+    } else {
+        outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(0.0f);
+    }
+    
+    if (inputs[INPUT_CV_CONNECTOR].isConnected()) {
+        outputs[OUTPUT_CV_CONNECTOR].setVoltage(inputs[INPUT_CV_CONNECTOR].getVoltage());
+    } else {
+        outputs[OUTPUT_CV_CONNECTOR].setVoltage(0.0f);
+    }
+    
+    if (inputs[INPUT_GATE_CONNECTOR].isConnected()) {
+        outputs[OUTPUT_GATE_CONNECTOR].setVoltage(inputs[INPUT_GATE_CONNECTOR].getVoltage());
+    } else {
+        outputs[OUTPUT_GATE_CONNECTOR].setVoltage(0.0f);
+    }
+    
+    if (inputs[INPUT_SYNC_CONNECTOR].isConnected()) {
+        outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(inputs[INPUT_SYNC_CONNECTOR].getVoltage());
+    } else {
+        outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(0.0f);
+    }
+    
+    for (int i = 0; i < LIGHTS_LEN; i++) {
+        lights[i].setBrightness(0.0f);
+    }
+}
