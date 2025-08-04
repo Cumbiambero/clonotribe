@@ -332,11 +332,23 @@ void Clonotribe::process(const ProcessArgs& args) {
         
         // Mix with audio input if connected
         float audioIn = inputs[INPUT_AUDIO_CONNECTOR].getVoltage();
-        mixedSignal += audioIn * 1.5f; // Even higher gain for testing
+        mixedSignal += audioIn * 1.5f;
+        
+        // Auto-gate: If audio input is present and strong enough, open the gate
+        bool audioGateActive = false;
+        if (inputs[INPUT_AUDIO_CONNECTOR].isConnected() && std::abs(audioIn) > 0.1f) {
+            audioGateActive = true;
+            // Trigger envelope if we have strong audio input signal or envelope is not active
+            if (envelope.stage == clonotribe::Envelope::Stage::Off || std::abs(audioIn) > 2.0f) {
+                envelope.trigger();
+            }
+        }
 
         float filteredSignal = filterProcessor.process(mixedSignal, cutoff + cutoffMod, resonance);
 
-        float envValue = processEnvelope(envelopeType, envelope, args.sampleTime, finalSequencerGate);
+        // Use audio-triggered gate if active, otherwise use sequencer gate
+        float effectiveGate = audioGateActive ? 5.0f : finalSequencerGate;
+        float envValue = processEnvelope(envelopeType, envelope, args.sampleTime, effectiveGate);
 
         float finalOutput = processOutput(
             filteredSignal, volume, envValue, ribbonVolumeAutomation,
