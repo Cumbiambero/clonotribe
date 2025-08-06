@@ -1,4 +1,4 @@
-# ClonoTribe - KORG monotribe VCV Rack Module
+# Clonotribe - KORG monotribe VCV Rack Module
 
 A module heavily inspired by the KORG monotribe analog synthesizer, including the firmware 2.1 features.
 
@@ -20,6 +20,7 @@ I'm currentyly working on improving the filter. Other parts also need improvemen
 - **Ribbon Controller**: Multi-mode pitch control
 - **CV/Gate Integration**: Full CV input/output with recording capabilities
 - **Distortion**: Add some overdrive to the synth voice
+- **CV controlable**: Most params can be set by CV
 
 ## Components
 
