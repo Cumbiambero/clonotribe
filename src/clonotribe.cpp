@@ -122,10 +122,16 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         configButton(PARAM_PLAY_BUTTON, "Play (Space)");
         configButton(PARAM_GATE_TIME_BUTTON, "Gate Time (F10)");
         
-        configInput(INPUT_CV_CONNECTOR, "CV");
-        configInput(INPUT_GATE_CONNECTOR, "Gate");
+        configInput(INPUT_CV_CONNECTOR, "CV VCO");
+        configInput(INPUT_GATE_CONNECTOR, "Gate VCO");
         configInput(INPUT_AUDIO_CONNECTOR, "Audio");
         configInput(INPUT_SYNC_CONNECTOR, "Sync");
+        configInput(INPUT_VCO_OCTAVE_CONNECTOR, "Octave (CV)");
+        configInput(INPUT_VCF_CUTOFF_CONNECTOR, "VCF Cutoff (CV)");
+        configInput(INPUT_VCF_PEAK_CONNECTOR, "VCF Peak (CV)");
+        configInput(INPUT_LFO_RATE_CONNECTOR, "LFO Rate (CV)");
+        configInput(INPUT_LFO_INTERVAL_CONNECTOR, "LFO Interval (CV)");
+        configInput(INPUT_DISTORTION_CONNECTOR, "Distortion (CV)");
         
         configOutput(OUTPUT_CV_CONNECTOR, "CV");
         configOutput(OUTPUT_GATE_CONNECTOR, "Gate");

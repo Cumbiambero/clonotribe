@@ -2,18 +2,33 @@
 #include <tuple>
 
 auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, int, int, int, int, int, int> {
+    auto getParamWithCV = [this](int paramId, int inputId) -> float {
+        float value = params[paramId].getValue();
+        if (inputs[inputId].isConnected()) {
+            float cvVoltage = inputs[inputId].getVoltage();
+            value = std::clamp((cvVoltage + 5.0f) * 0.1f, 0.0f, 1.0f);
+            getParamQuantity(paramId)->setDisplayValue(value);
+        }
+        return value;
+    };
+
     if (paramCache.needsUpdate()) {
-        paramCache.cutoff = params[PARAM_VCF_CUTOFF_KNOB].getValue();
-        paramCache.lfoIntensity = params[PARAM_LFO_INTERVAL_KNOB].getValue();
-        paramCache.lfoRate = params[PARAM_LFO_RATE_KNOB].getValue();
+        paramCache.cutoff = getParamWithCV(PARAM_VCF_CUTOFF_KNOB, INPUT_VCF_CUTOFF_CONNECTOR);
+        paramCache.lfoIntensity = getParamWithCV(PARAM_LFO_INTERVAL_KNOB, INPUT_LFO_INTERVAL_CONNECTOR);
+        paramCache.lfoRate = getParamWithCV(PARAM_LFO_RATE_KNOB, INPUT_LFO_RATE_CONNECTOR);
         paramCache.noiseLevel = params[PARAM_NOISE_KNOB].getValue();
-        paramCache.resonance = params[PARAM_VCF_PEAK_KNOB].getValue();
+        paramCache.resonance = getParamWithCV(PARAM_VCF_PEAK_KNOB, INPUT_VCF_PEAK_CONNECTOR);
         paramCache.rhythmVolume = params[PARAM_RHYTHM_VOLUME_KNOB].getValue();
         paramCache.tempo = params[PARAM_SEQUENCER_TEMPO_KNOB].getValue();
         paramCache.volume = params[PARAM_VCA_LEVEL_KNOB].getValue();
-        paramCache.distortion = params[PARAM_DISTORTION_KNOB].getValue();
+        paramCache.distortion = getParamWithCV(PARAM_DISTORTION_KNOB, INPUT_DISTORTION_CONNECTOR);
         
-        float octaveSwitch = (float) params[PARAM_VCO_OCTAVE_KNOB].getValue();
+        float octaveSwitch = params[PARAM_VCO_OCTAVE_KNOB].getValue();
+        if (inputs[INPUT_VCO_OCTAVE_CONNECTOR].isConnected()) {
+            float cvVoltage = inputs[INPUT_VCO_OCTAVE_CONNECTOR].getVoltage();
+            octaveSwitch = std::clamp((cvVoltage + 5.0f) * 0.5f, 0.0f, 5.0f);
+            getParamQuantity(PARAM_VCO_OCTAVE_KNOB)->setDisplayValue(octaveSwitch);
+        }
         paramCache.octave = octaveSwitch - 3.0f;
         
         paramCache.envelopeType = (int) params[PARAM_ENVELOPE_FORM_SWITCH].getValue();
