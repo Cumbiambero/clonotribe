@@ -10,6 +10,10 @@ using namespace rack::engine;
 using namespace rack::ui;
 
 struct MainPanel : ModuleWidget {
+    ParamWidget* tempoKnob = nullptr;
+    ParamWidget* lfoRateKnob = nullptr;
+    ParamWidget* lfoModeSwitch = nullptr;
+
     TransparentButton* createButton(Vec pos, Vec size, Module* module, int paramId) {
         auto* button = createParam<TransparentButton>(pos, module, paramId);
         button->box.size = size;
@@ -21,19 +25,27 @@ struct MainPanel : ModuleWidget {
         addParam(createParamCentered<CKSSThree>(mm2px(Vec(35.0f, 62.5f)), module, Clonotribe::PARAM_RIBBON_RANGE_SWITCH));
         addParam(createParamCentered<CKSSThree>(mm2px(Vec(77.0f, 62.5f)), module, Clonotribe::PARAM_ENVELOPE_FORM_SWITCH));
         addParam(createParamCentered<CKSSThree>(mm2px(Vec(94.0f, 62.5f)), module, Clonotribe::PARAM_LFO_TARGET_SWITCH));
-        addParam(createParamCentered<CKSSThree>(mm2px(Vec(109.0f, 62.5f)), module, Clonotribe::PARAM_LFO_MODE_SWITCH));
+        
+        lfoModeSwitch = createParamCentered<CKSSThree>(mm2px(Vec(109.0f, 62.5f)), module, Clonotribe::PARAM_LFO_MODE_SWITCH);
+        addParam(lfoModeSwitch);
+        
         addParam(createParamCentered<CKSSThree>(mm2px(Vec(123.0f, 62.5f)), module, Clonotribe::PARAM_LFO_WAVEFORM_SWITCH));
 
         addParam(createParamCentered<OctaveKnob>(mm2px(Vec(15.0f, 42.0f)), module, Clonotribe::PARAM_VCO_OCTAVE_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0f, 20.0f)), module, Clonotribe::PARAM_DISTORTION_KNOB)); 
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(56.5f, 42.0f)), module, Clonotribe::PARAM_VCF_CUTOFF_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(77.0f, 42.0f)), module, Clonotribe::PARAM_VCA_LEVEL_KNOB));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(98.0f, 42.0f)), module, Clonotribe::PARAM_LFO_RATE_KNOB));
+        
+        lfoRateKnob = createParamCentered<RoundBlackKnob>(mm2px(Vec(98.0f, 42.0f)), module, Clonotribe::PARAM_LFO_RATE_KNOB);
+        addParam(lfoRateKnob);
+        
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(119.0f, 42.0f)), module, Clonotribe::PARAM_LFO_INTERVAL_KNOB));        
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0f, 42.0f)), module, Clonotribe::PARAM_RHYTHM_VOLUME_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.0f, 62.5f)), module, Clonotribe::PARAM_NOISE_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(56.5f, 62.5f)), module, Clonotribe::PARAM_VCF_PEAK_KNOB));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0f, 62.5f)), module, Clonotribe::PARAM_SEQUENCER_TEMPO_KNOB));        
+        
+        tempoKnob = createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0f, 62.5f)), module, Clonotribe::PARAM_SEQUENCER_TEMPO_KNOB);
+        addParam(tempoKnob);
     }
 
     void setupButtons(Clonotribe* module) {
@@ -104,6 +116,30 @@ struct MainPanel : ModuleWidget {
         setupOutputs(module);
         setupLights(module);
         addChild(new RibbonController(module));
+    }
+
+    void hideParamsForConnectedInputs() {
+        Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
+        if (!clonotribeModule) return;
+
+        if (tempoKnob) {
+            tempoKnob->visible = !clonotribeModule->inputs[Clonotribe::INPUT_SYNC_CONNECTOR].isConnected();
+        }
+
+        bool lfoRateConnected = clonotribeModule->inputs[Clonotribe::INPUT_LFO_RATE_CONNECTOR].isConnected();
+        
+        if (lfoRateKnob) {
+            lfoRateKnob->visible = !lfoRateConnected;
+        }
+        
+        if (lfoModeSwitch) {
+            lfoModeSwitch->visible = !lfoRateConnected;
+        }
+    }
+
+    void step() override {
+        hideParamsForConnectedInputs();
+        ModuleWidget::step();
     }
 
     void handleHoverKey(const event::HoverKey& e) {
