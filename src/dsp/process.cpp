@@ -14,7 +14,7 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
 
     if (paramCache.needsUpdate()) {
         paramCache.cutoff = getParamWithCV(PARAM_VCF_CUTOFF_KNOB, INPUT_VCF_CUTOFF_CONNECTOR);
-        paramCache.lfoIntensity = getParamWithCV(PARAM_LFO_INTERVAL_KNOB, INPUT_LFO_INTERVAL_CONNECTOR);
+        paramCache.lfoIntensity = getParamWithCV(PARAM_LFO_INTERVAL_KNOB, INPUT_LFO_INTENSITY_CONNECTOR);
         paramCache.lfoRate = getParamWithCV(PARAM_LFO_RATE_KNOB, INPUT_LFO_RATE_CONNECTOR);
         paramCache.noiseLevel = params[PARAM_NOISE_KNOB].getValue();
         paramCache.resonance = getParamWithCV(PARAM_VCF_PEAK_KNOB, INPUT_VCF_PEAK_CONNECTOR);

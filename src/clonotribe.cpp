@@ -130,7 +130,7 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         configInput(INPUT_VCF_CUTOFF_CONNECTOR, "VCF Cutoff (CV)");
         configInput(INPUT_VCF_PEAK_CONNECTOR, "VCF Peak (CV)");
         configInput(INPUT_LFO_RATE_CONNECTOR, "LFO Rate (CV)");
-        configInput(INPUT_LFO_INTERVAL_CONNECTOR, "LFO Interval (CV)");
+        configInput(INPUT_LFO_INTENSITY_CONNECTOR, "LFO Interval (CV)");
         configInput(INPUT_DISTORTION_CONNECTOR, "Distortion (CV)");
         
         configOutput(OUTPUT_CV_CONNECTOR, "CV");
