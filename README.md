@@ -12,7 +12,7 @@ I'm currentyly working on improving the filter. Other parts also need improvemen
 ## Features
 
 - **Analog-style VCO**: Square, Triangle, and Sawtooth waveforms with octave control
-- **MS-20 Filter**: Classic Korg low-pass filter with cutoff and resonance controls
+- **VCF**: Classic Korg low-pass filter with cutoff and resonance controls
 - **LFO**: Multi-waveform LFO with  multiple targets and modes
 - **Envelope Generator**: Attack/Gate/Decay modes
 - **Simple Drum Machine**: Kick, Snare, and Hi-hat
@@ -53,6 +53,7 @@ I'm currentyly working on improving the filter. Other parts also need improvemen
 - **Hi-Hat**: Metallic hi-hat sound with noise filtering
 - Individual 8-step patterns per drum part
 - Volume control and mixing
+- There are 3 different drumkits to choose from (original, TR 808 and latin)
 
 ### Sequencer
 - 8-step sequencer with individual step control (switchable to 16 steps)
