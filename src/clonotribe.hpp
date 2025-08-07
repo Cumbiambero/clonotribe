@@ -90,6 +90,10 @@ struct Clonotribe : rack::Module {
         OUTPUT_GATE_CONNECTOR,
         OUTPUT_AUDIO_CONNECTOR,
         OUTPUT_SYNC_CONNECTOR,
+        OUTPUT_SYNTH_CONNECTOR,
+        OUTPUT_BASSDRUM_CONNECTOR,
+        OUTPUT_SNARE_CONNECTOR,
+        OUTPUT_HIHAT_CONNECTOR,
         OUTPUTS_LEN
     };
     

@@ -137,6 +137,10 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         configOutput(OUTPUT_GATE_CONNECTOR, "Gate");
         configOutput(OUTPUT_AUDIO_CONNECTOR, "Audio");
         configOutput(OUTPUT_SYNC_CONNECTOR, "Sync (Clock)");
+        configOutput(OUTPUT_SYNTH_CONNECTOR, "Synth");
+        configOutput(OUTPUT_BASSDRUM_CONNECTOR, "Bass Drum");
+        configOutput(OUTPUT_SNARE_CONNECTOR, "Snare");
+        configOutput(OUTPUT_HIHAT_CONNECTOR, "Hi-Hat");
 };
 
 struct TempoRangeItem : rack::MenuItem {

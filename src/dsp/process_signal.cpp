@@ -57,7 +57,20 @@ float Clonotribe::processOutput(
         }
         
         drumMix = (kickOut * 0.7f + snareOut * 0.6f + hihatOut * 0.5f) * rhythmVolume;
+        
+        // Set individual drum outputs
+        outputs[OUTPUT_BASSDRUM_CONNECTOR].setVoltage(std::clamp(kickOut * rhythmVolume * 4.0f, -10.0f, 10.0f));
+        outputs[OUTPUT_SNARE_CONNECTOR].setVoltage(std::clamp(snareOut * rhythmVolume * 4.0f, -10.0f, 10.0f));
+        outputs[OUTPUT_HIHAT_CONNECTOR].setVoltage(std::clamp(hihatOut * rhythmVolume * 4.0f, -10.0f, 10.0f));
+    } else {
+        // Set drum outputs to zero when rhythm volume is off
+        outputs[OUTPUT_BASSDRUM_CONNECTOR].setVoltage(0.0f);
+        outputs[OUTPUT_SNARE_CONNECTOR].setVoltage(0.0f);
+        outputs[OUTPUT_HIHAT_CONNECTOR].setVoltage(0.0f);
     }
+    
+    // Set synth output
+    outputs[OUTPUT_SYNTH_CONNECTOR].setVoltage(std::clamp(synthOutput * 4.0f, -10.0f, 10.0f));
     
     float synthLevel = synthOutput * 0.8f;
     return synthLevel + drumMix;

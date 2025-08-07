@@ -82,10 +82,14 @@ struct MainPanel : ModuleWidget {
     }
 
     void setupOutputs(Clonotribe* module) {
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(95.0f, 10.0f)), module, Clonotribe::OUTPUT_SYNTH_CONNECTOR));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(104.0f, 10.0f)), module, Clonotribe::OUTPUT_BASSDRUM_CONNECTOR));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(113.0f, 10.0f)), module, Clonotribe::OUTPUT_SNARE_CONNECTOR));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(122.0f, 10.0f)), module, Clonotribe::OUTPUT_HIHAT_CONNECTOR));
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 20.0f)), module, Clonotribe::OUTPUT_AUDIO_CONNECTOR));
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 30.0f)), module, Clonotribe::OUTPUT_CV_CONNECTOR));
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 40.0f)), module, Clonotribe::OUTPUT_GATE_CONNECTOR));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 50.0f)), module, Clonotribe::OUTPUT_SYNC_CONNECTOR));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 50.0f)), module, Clonotribe::OUTPUT_SYNC_CONNECTOR));        
     }
 
     void setupLights(Clonotribe* module) {
