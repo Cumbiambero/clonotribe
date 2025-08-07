@@ -15,7 +15,13 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
     if (paramCache.needsUpdate()) {
         paramCache.cutoff = getParamWithCV(PARAM_VCF_CUTOFF_KNOB, INPUT_VCF_CUTOFF_CONNECTOR);
         paramCache.lfoIntensity = getParamWithCV(PARAM_LFO_INTERVAL_KNOB, INPUT_LFO_INTENSITY_CONNECTOR);
-        paramCache.lfoRate = getParamWithCV(PARAM_LFO_RATE_KNOB, INPUT_LFO_RATE_CONNECTOR);
+        
+        if (!inputs[INPUT_LFO_RATE_CONNECTOR].isConnected()) {
+            paramCache.lfoRate = params[PARAM_LFO_RATE_KNOB].getValue();
+        } else {
+            paramCache.lfoRate = params[PARAM_LFO_RATE_KNOB].getValue();
+        }
+        
         paramCache.noiseLevel = params[PARAM_NOISE_KNOB].getValue();
         paramCache.resonance = getParamWithCV(PARAM_VCF_PEAK_KNOB, INPUT_VCF_PEAK_CONNECTOR);
         paramCache.rhythmVolume = params[PARAM_RHYTHM_VOLUME_KNOB].getValue();
@@ -278,28 +284,52 @@ void Clonotribe::process(const ProcessArgs& args) {
                 lfo.trigger();
             }
         }
+        
+        // Handle LFO clock input - when connected, sync LFO to clock regardless of mode
+        bool shouldTriggerLfoFromClock = false;
+        bool useClockInput = inputs[INPUT_LFO_RATE_CONNECTOR].isConnected();
+        
+        if (useClockInput) {
+            float clockVoltage = inputs[INPUT_LFO_RATE_CONNECTOR].getVoltage();
+            if (lfoClockTrigger.process(rack::math::rescale(clockVoltage, 0.1f, 2.f, 0.f, 1.f))) {
+                shouldTriggerLfoFromClock = true;
+            }
+        }
+        
+        if (shouldTriggerLfoFromClock) {
+            // Reset LFO phase on each clock pulse
+            lfo.phase = 0.0f;
+        }
 
         static float cachedLfoRate = -1.0f;
         static int cachedLfoMode = -1;
         static bool cachedSampleAndHold = false;
+        static bool cachedClockInput = false;
         
-        if (cachedLfoRate != lfoRate || cachedLfoMode != lfoMode || cachedSampleAndHold != lfoSampleAndHoldMode) {
+        if (cachedLfoRate != lfoRate || cachedLfoMode != lfoMode || cachedSampleAndHold != lfoSampleAndHoldMode || cachedClockInput != useClockInput) {
             float actualLfoRate = 1.0f;
             bool isOneShot = false;
             bool isSampleAndHold = lfoSampleAndHoldMode && (lfoMode == 0);
             
-            // Use lookup table for common rates instead of rescale calculations
-            switch (lfoMode) {
-                case 0: // 1-Shot (or Sample & Hold when enabled)
-                    actualLfoRate = 1.0f + lfoRate * 4.0f; // Simplified calculation
-                    isOneShot = !isSampleAndHold;
-                    break;
-                case 1: // Slow
-                    actualLfoRate = 0.05f + lfoRate * 17.95f;
-                    break;
-                case 2: // Fast
-                    actualLfoRate = 1.0f + lfoRate * 4999.0f;
-                    break;
+            if (useClockInput) {
+                // When using clock input, set LFO to free-running mode at 1Hz
+                // The clock input will control the timing by resetting phase
+                actualLfoRate = 1.0f;
+                isOneShot = false;  // Always free-running when using clock
+            } else {
+                // Use knob control for rate when no clock input
+                switch (lfoMode) {
+                    case 0: // 1-Shot (or Sample & Hold when enabled)
+                        actualLfoRate = 1.0f + lfoRate * 4.0f;
+                        isOneShot = !isSampleAndHold;
+                        break;
+                    case 1: // Slow
+                        actualLfoRate = 0.05f + lfoRate * 17.95f;
+                        break;
+                    case 2: // Fast
+                        actualLfoRate = 1.0f + lfoRate * 4999.0f;
+                        break;
+                }
             }
             
             lfo.setRate(actualLfoRate);
@@ -310,6 +340,7 @@ void Clonotribe::process(const ProcessArgs& args) {
             cachedLfoRate = lfoRate;
             cachedLfoMode = lfoMode;
             cachedSampleAndHold = lfoSampleAndHoldMode;
+            cachedClockInput = useClockInput;
         }
         
         float lfoValue = lfo.process(args.sampleTime, static_cast<clonotribe::LFO::Waveform>(lfoWaveform));

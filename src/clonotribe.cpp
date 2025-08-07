@@ -125,18 +125,18 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         configInput(INPUT_CV_CONNECTOR, "CV VCO");
         configInput(INPUT_GATE_CONNECTOR, "Gate VCO");
         configInput(INPUT_AUDIO_CONNECTOR, "Audio");
-        configInput(INPUT_SYNC_CONNECTOR, "Sync");
+        configInput(INPUT_SYNC_CONNECTOR, "Sync (Clock)");
         configInput(INPUT_VCO_OCTAVE_CONNECTOR, "Octave (CV)");
         configInput(INPUT_VCF_CUTOFF_CONNECTOR, "VCF Cutoff (CV)");
         configInput(INPUT_VCF_PEAK_CONNECTOR, "VCF Peak (CV)");
-        configInput(INPUT_LFO_RATE_CONNECTOR, "LFO Rate (CV)");
-        configInput(INPUT_LFO_INTENSITY_CONNECTOR, "LFO Interval (CV)");
+        configInput(INPUT_LFO_RATE_CONNECTOR, "LFO Rate (Clock)");
+        configInput(INPUT_LFO_INTENSITY_CONNECTOR, "LFO Intensity (CV)");
         configInput(INPUT_DISTORTION_CONNECTOR, "Distortion (CV)");
         
         configOutput(OUTPUT_CV_CONNECTOR, "CV");
         configOutput(OUTPUT_GATE_CONNECTOR, "Gate");
         configOutput(OUTPUT_AUDIO_CONNECTOR, "Audio");
-        configOutput(OUTPUT_SYNC_CONNECTOR, "Sync");
+        configOutput(OUTPUT_SYNC_CONNECTOR, "Sync (Clock)");
 };
 
 struct TempoRangeItem : rack::MenuItem {
@@ -430,6 +430,6 @@ void Clonotribe::onRandomize(const RandomizeEvent& e) {
     sequencer.fluxMode = (rack::random::uniform() < 0.2f);
     
     // Randomly select a drum kit
-    int randomKit = static_cast<int>(rack::random::uniform() * DRUMKIT_COUNT);
+    int randomKit = static_cast<int>(rack::random::uniform() * static_cast<float>(DRUMKIT_COUNT));
     setDrumKit(static_cast<DrumKitType>(randomKit));
 }

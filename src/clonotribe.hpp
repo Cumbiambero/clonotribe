@@ -156,6 +156,7 @@ struct Clonotribe : rack::Module {
     dsp::SchmittTrigger syncHalfTempoTrigger;
     dsp::SchmittTrigger stepTriggers[8];
     dsp::SchmittTrigger drumTriggers[4];
+    dsp::SchmittTrigger lfoClockTrigger;
     dsp::PulseGenerator syncPulse;
 
     int selectedDrumPart = 0; // 0=synth, 1=kick, 2=snare, 3=hihat
