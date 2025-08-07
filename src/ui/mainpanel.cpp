@@ -107,6 +107,15 @@ struct MainPanel : ModuleWidget {
     }
 
     void handleHoverKey(const event::HoverKey& e) {
+        // Disable keyboard shortcuts when CV or GATE inputs are connected to prevent MIDI-CV interference
+        Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
+        if (!clonotribeModule) return;
+        
+        if (clonotribeModule->inputs[Clonotribe::INPUT_CV_CONNECTOR].isConnected() || 
+            clonotribeModule->inputs[Clonotribe::INPUT_GATE_CONNECTOR].isConnected()) {
+            return; // Skip all keyboard handling when CV/GATE inputs are connected
+        }
+        
         if (e.action == GLFW_PRESS || e.action == GLFW_REPEAT) {
             Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
             if (!clonotribeModule) return;
@@ -181,8 +190,12 @@ struct MainPanel : ModuleWidget {
                     break;
             }
         } else if (e.action == GLFW_RELEASE) {
-            Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
-            if (!clonotribeModule) return;
+            // Disable keyboard shortcuts when CV or GATE inputs are connected to prevent MIDI-CV interference
+            if (clonotribeModule->inputs[Clonotribe::INPUT_CV_CONNECTOR].isConnected() || 
+                clonotribeModule->inputs[Clonotribe::INPUT_GATE_CONNECTOR].isConnected()) {
+                return;
+            }
+            
             switch (e.key) {
                 case GLFW_KEY_F5:
                     clonotribeModule->params[Clonotribe::PARAM_SYNTH_BUTTON].setValue(0.0f);
