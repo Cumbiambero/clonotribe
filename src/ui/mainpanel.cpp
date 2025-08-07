@@ -13,6 +13,7 @@ struct MainPanel : ModuleWidget {
     ParamWidget* tempoKnob = nullptr;
     ParamWidget* lfoRateKnob = nullptr;
     ParamWidget* lfoModeSwitch = nullptr;
+    bool keyboardShortcutsEnabled = false;
 
     TransparentButton* createButton(Vec pos, Vec size, Module* module, int paramId) {
         auto* button = createParam<TransparentButton>(pos, module, paramId);
@@ -147,12 +148,17 @@ struct MainPanel : ModuleWidget {
     }
 
     void handleHoverKey(const event::HoverKey& e) {
-        // Disable keyboard shortcuts when CV or GATE inputs are connected to prevent MIDI-CV interference
+        if (!keyboardShortcutsEnabled) {
+            return;
+        }
+        
         Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
         if (!clonotribeModule) return;
         
         if (clonotribeModule->inputs[Clonotribe::INPUT_CV_CONNECTOR].isConnected() || 
             clonotribeModule->inputs[Clonotribe::INPUT_GATE_CONNECTOR].isConnected()) {
+            keyboardShortcutsEnabled = false;
+            e.consume(this);
             return; // Skip all keyboard handling when CV/GATE inputs are connected
         }
         
@@ -230,12 +236,6 @@ struct MainPanel : ModuleWidget {
                     break;
             }
         } else if (e.action == GLFW_RELEASE) {
-            // Disable keyboard shortcuts when CV or GATE inputs are connected to prevent MIDI-CV interference
-            if (clonotribeModule->inputs[Clonotribe::INPUT_CV_CONNECTOR].isConnected() || 
-                clonotribeModule->inputs[Clonotribe::INPUT_GATE_CONNECTOR].isConnected()) {
-                return;
-            }
-            
             switch (e.key) {
                 case GLFW_KEY_F5:
                     clonotribeModule->params[Clonotribe::PARAM_SYNTH_BUTTON].setValue(0.0f);
@@ -300,6 +300,10 @@ struct MainPanel : ModuleWidget {
 
     void appendContextMenu(rack::ui::Menu* menu) override {
         ModuleWidget::appendContextMenu(menu);
+        
+        menu->addChild(new MenuSeparator);
+        menu->addChild(createBoolPtrMenuItem("Keyboard Shortcuts", "", &keyboardShortcutsEnabled));
+        
         Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
         if (clonotribeModule) {
             clonotribeModule->appendContextMenu(menu);
