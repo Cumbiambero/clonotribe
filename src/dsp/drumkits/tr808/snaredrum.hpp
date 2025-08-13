@@ -28,10 +28,10 @@ public:
         if (!triggered) return 0.0f;
         
         const float invSampleRate = 1.0f / sampleRate;
+    float accentGain = 0.8f + accent * 0.6f;
         
-        // TR-808 snare uses two sine wave oscillators
-        const float freq1 = 330.0f; // Primary tone
-        const float freq2 = 185.0f; // Secondary tone (slightly detuned)
+    const float freq1 = 330.0f;
+    const float freq2 = 180.0f;
         
         // Generate tone oscillators
         tone1Phase += freq1 * invSampleRate * 2.0f * clonotribe::FastMath::PI;
@@ -51,34 +51,29 @@ public:
         // Generate filtered noise for snare buzz
         float rawNoise = noise.process();
         
-        // Bandpass filter for snare character (around 1-2kHz)
-        const float cutoff = 0.15f; // Normalized frequency
+    const float cutoff = 0.17f;
         bandpassState1 += (rawNoise - bandpassState1) * cutoff;
         bandpassState2 += (bandpassState1 - bandpassState2) * cutoff;
         float bandpassOut = bandpassState1 - bandpassState2;
         
-        // High-pass filter to remove low frequencies from noise
-        const float hpCutoff = 0.05f;
+    const float hpCutoff = 0.06f;
         highpassState += (bandpassOut - highpassState) * hpCutoff;
         float filteredNoise = (bandpassOut - highpassState) * noiseEnv;
         
-        // Mix tone and noise components (authentic TR-808 balance)
-        float output = toneSum * 0.4f + filteredNoise * 0.8f;
+    float output = toneSum * 0.35f + filteredNoise * 0.85f;
         
-        // TR-808 snare envelope characteristics
-        toneEnv *= 0.993f;   // Fast tone decay
-        noiseEnv *= 0.985f;  // Slower noise decay
-        ampEnv *= 0.988f;    // Overall amplitude
+    toneEnv *= 0.993f;
+    noiseEnv *= 0.9855f;
+    ampEnv *= 0.9885f;
         
         if (ampEnv < 0.001f) {
             triggered = false;
         }
         
-        // Apply amplitude envelope and soft saturation
         output *= ampEnv;
-        output = clonotribe::FastMath::fastTanh(output * 2.0f);
+    output = clonotribe::FastMath::fastTanh(output * 2.1f);
         
-        return output * 1.5f;
+    return output * 1.5f * accentGain;
     }
     
 private:

@@ -9,7 +9,6 @@ namespace original {
 class HiHat : public drumkits::HiHat {
 public:
     void reset() override {
-        // Original monotribe hi-hat: metallic but not overly harsh
         env = 1.0f;
         shimmerEnv = 1.0f;
         phase1 = 0.0f;
@@ -30,8 +29,8 @@ public:
         if (!triggered) return 0.0f;
         
         const float invSampleRate = 1.0f / sampleRate;
+    float accentGain = 0.7f + accent * 0.6f;
         
-        // Original monotribe hi-hat: 4 sine waves for metallic character
         const float freq1 = 7200.0f;  // Primary metallic
         const float freq2 = 8800.0f;  // Secondary metallic
         const float freq3 = 11200.0f; // High sparkle
@@ -57,35 +56,29 @@ public:
         
         float metallicSum = metallic1 + metallic2 + metallic3 + metallic4;
         
-        // Generate filtered noise
         float rawNoise = noise.process();
         
-        // High-pass filter for brightness
         const float hpCutoff = 0.2f;
         highpass += (rawNoise - highpass) * hpCutoff;
         float brightNoise = (rawNoise - highpass) * env;
         
-        // Bandpass filter for classic hi-hat character
-        const float bpCutoff = 0.3f;
+    const float bpCutoff = 0.32f;
         bandpass1 += (brightNoise - bandpass1) * bpCutoff;
         bandpass2 += (bandpass1 - bandpass2) * bpCutoff;
         float filteredNoise = bandpass1 - bandpass2;
         
-        // Mix metallic tones with filtered noise (original monotribe balance)
-        float output = metallicSum * 0.6f + filteredNoise * 0.7f;
+    float output = metallicSum * 0.55f + filteredNoise * 0.75f;
         
-        // Original-style decay
-        env *= 0.9890f;        // Medium decay
-        shimmerEnv *= 0.9920f; // Longer shimmer tail
+    env *= 0.9895f;
+    shimmerEnv *= 0.9925f;
         
         if (env < 0.001f && shimmerEnv < 0.001f) {
             triggered = false;
         }
         
-        // Light saturation for character
-        output = clonotribe::FastMath::fastTanh(output * 1.5f);
+    output = clonotribe::FastMath::fastTanh(output * 1.6f);
         
-        return output * 1.0f;
+    return output * 1.0f * accentGain;
     }
     
 private:

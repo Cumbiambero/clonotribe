@@ -9,13 +9,13 @@ namespace original {
 class KickDrum : public drumkits::KickDrum {
 public:
     void reset() override {
-        // Original monotribe kick: organic, warm, analog character
         pitchEnv = 1.0f;
         ampEnv = 1.0f;
         subEnv = 1.0f;
         clickEnv = 1.0f;
         phase = 0.0f;
         subPhase = 0.0f;
+    hpNoiseState = 0.0f;
         triggered = true;
     }
     
@@ -27,19 +27,17 @@ public:
         if (!triggered) return 0.0f;
         
         const float invSampleRate = 1.0f / sampleRate;
+        float accentGain = 0.75f + accent * 0.5f;
         
-        // Original monotribe character: warm, slightly detuned
-        float pitchMod = 90.0f * pitchEnv * pitchEnv; // Wider pitch sweep
-        float freq = 55.0f + pitchMod; // Lower base frequency
+        float pitchMod = 110.0f * pitchEnv * pitchEnv;
+        float freq = 58.0f + pitchMod;
         
-        // Main oscillator with slight analog drift
-        float analogDrift = 1.0f + noise.process() * 0.002f; // Subtle drift
+        float analogDrift = 1.0f + noise.process() * 0.002f;
         phase += freq * analogDrift * invSampleRate * 2.0f * clonotribe::FastMath::PI;
         if (phase >= 2.0f * clonotribe::FastMath::PI) {
             phase -= 2.0f * clonotribe::FastMath::PI;
         }
         
-        // Sub-oscillator for depth (essential for analog character)
         subPhase += (freq * 0.5f) * invSampleRate * 2.0f * clonotribe::FastMath::PI;
         if (subPhase >= 2.0f * clonotribe::FastMath::PI) {
             subPhase -= 2.0f * clonotribe::FastMath::PI;
@@ -48,26 +46,26 @@ public:
         float mainSine = clonotribe::FastMath::fastSin(phase);
         float subSine = clonotribe::FastMath::fastSin(subPhase) * subEnv * 0.8f;
         
-        // Organic click attack
-        float click = clickEnv > 0.85f ? (clickEnv - 0.85f) * 6.67f : 0.0f;
+        float n = noise.process();
+        const float hpCut = 0.25f;
+        hpNoiseState += (n - hpNoiseState) * hpCut;
+        float hpNoise = n - hpNoiseState;
+        float click = (clickEnv > 0.85f ? (clickEnv - 0.85f) * 6.67f : 0.0f) + hpNoise * 0.12f * clickEnv;
         
-        // Mix with analog-style proportions
         float output = (mainSine * ampEnv + subSine + click * 0.25f);
         
-        // Organic envelope decay (slightly irregular)
-        float envDecay = 0.9983f + noise.process() * 0.0001f; // Slight irregularity
-        pitchEnv *= 0.9990f;  // Medium pitch decay
-        ampEnv *= envDecay;   // Slightly irregular amplitude decay
-        subEnv *= 0.9988f;    // Slower sub decay for warmth
-        clickEnv *= 0.990f;   // Click decay
+        float envDecay = 0.9983f + noise.process() * 0.0001f;
+        pitchEnv *= 0.9988f;
+        ampEnv *= envDecay;
+        subEnv *= 0.9987f;
+        clickEnv *= 0.988f;
         
         if (ampEnv < 0.001f) {
             triggered = false;
         }
         
-        // Warm saturation characteristic of analog circuits
-        output = clonotribe::FastMath::fastTanh(output * 1.3f) * 0.9f;
-        return output * 1.8f; // Good level
+        output = clonotribe::FastMath::fastTanh(output * 1.35f) * 0.9f;
+        return output * 1.8f * accentGain;
     }
     
 private:
@@ -77,6 +75,7 @@ private:
     float clickEnv = 0.0f;
     float phase = 0.0f;
     float subPhase = 0.0f;
+    float hpNoiseState = 0.0f;
     float sampleRate = 44100.0f;
     bool triggered = false;
 };

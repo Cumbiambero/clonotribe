@@ -32,9 +32,9 @@ public:
         if (!triggered) return 0.0f;
         
         const float invSampleRate = 1.0f / sampleRate;
+    float accentGain = 0.75f + accent * 0.7f;
         
-        // TR-808 hi-hat uses 6 square wave oscillators with specific frequencies
-        const float freqs[6] = {325.0f, 380.0f, 445.0f, 520.0f, 610.0f, 715.0f};
+    const float freqs[6] = {418.0f, 539.0f, 707.0f, 869.0f, 1131.0f, 1319.0f};
         float phases[6] = {osc1Phase, osc2Phase, osc3Phase, osc4Phase, osc5Phase, osc6Phase};
         
         float squareSum = 0.0f;
@@ -55,9 +55,8 @@ public:
         osc1Phase = phases[0]; osc2Phase = phases[1]; osc3Phase = phases[2];
         osc4Phase = phases[3]; osc5Phase = phases[4]; osc6Phase = phases[5];
         
-        // Two bandpass filters for metallic character
-        const float bp1Cutoff = 0.25f; // Around 5.5kHz
-        const float bp2Cutoff = 0.35f; // Around 7.7kHz
+    const float bp1Cutoff = 0.23f;
+    const float bp2Cutoff = 0.34f;
         
         // First bandpass filter
         bandpass1State1 += (squareSum - bandpass1State1) * bp1Cutoff;
@@ -69,26 +68,22 @@ public:
         bandpass2State2 += (bandpass2State1 - bandpass2State2) * bp2Cutoff;
         float bp2Out = bandpass2State1 - bandpass2State2;
         
-        // High-pass filter for crisp attack
-        const float hpCutoff = 0.08f;
+    const float hpCutoff = 0.07f;
         highpassState += (bp2Out - highpassState) * hpCutoff;
         float filteredSignal = bp2Out - highpassState;
         
-        // Apply envelope and mix with subtle noise
-        float noiseComponent = noise.process() * 0.15f * env;
+    float noiseComponent = noise.process() * 0.12f * env;
         float output = (filteredSignal + noiseComponent) * env;
         
-        // TR-808 hi-hat decay (quite fast)
-        env *= 0.9915f;
+    env *= 0.9905f;
         
         if (env < 0.001f) {
             triggered = false;
         }
         
-        // Soft saturation for analog character
-        output = clonotribe::FastMath::fastTanh(output * 3.0f);
+    output = clonotribe::FastMath::fastTanh(output * 2.8f);
         
-        return output * 0.8f;
+    return output * 0.85f * accentGain;
     }
     
 private:

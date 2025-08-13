@@ -29,9 +29,9 @@ public:
         if (!triggered) return 0.0f;
         
         const float invSampleRate = 1.0f / sampleRate;
+    float accentGain = 0.8f + accent * 0.6f;
         
-        // Higher-pitched tone for Latin character
-        const float toneFreq = 280.0f; // Brighter than typical snare
+    const float toneFreq = 300.0f;
         
         // Generate tone component
         tonePhase += toneFreq * invSampleRate * 2.0f * clonotribe::FastMath::PI;
@@ -44,40 +44,34 @@ public:
         // Generate bright, crispy noise
         float rawNoise = noise.process();
         
-        // High-pass filter for brightness
-        const float hpCutoff = 0.12f; // Remove low frequencies
+    const float hpCutoff = 0.14f;
         highpassState += (rawNoise - highpassState) * hpCutoff;
         float brightNoise = (rawNoise - highpassState) * noiseEnv;
         
-        // Bandpass filter for mid-frequency crack
-        const float bpCutoff = 0.2f; // Around 4.4kHz
+    const float bpCutoff = 0.22f;
         bandpassState1 += (brightNoise - bandpassState1) * bpCutoff;
         bandpassState2 += (bandpassState1 - bandpassState2) * bpCutoff;
         float crackNoise = (bandpassState1 - bandpassState2) * cracklEnv;
         
-        // Additional crackle filter for texture
-        const float crackleCutoff = 0.35f;
+    const float crackleCutoff = 0.38f;
         crackleFilter += (crackNoise - crackleFilter) * crackleCutoff;
         float textureNoise = crackleFilter;
         
-        // Mix components: less body, more crack and brightness
-        float output = tone * 0.25f + brightNoise * 0.5f + crackNoise * 0.7f + textureNoise * 0.3f;
+    float output = tone * 0.2f + brightNoise * 0.55f + crackNoise * 0.75f + textureNoise * 0.25f;
         
-        // Latin-style envelopes: quick, crisp decay
-        toneEnv *= 0.995f;     // Quick tone decay
-        noiseEnv *= 0.988f;    // Medium noise decay
-        cracklEnv *= 0.992f;   // Medium crackle decay
-        ampEnv *= 0.990f;      // Overall amplitude
+    toneEnv *= 0.9945f;
+    noiseEnv *= 0.9875f;
+    cracklEnv *= 0.9915f;
+    ampEnv *= 0.9905f;
         
         if (ampEnv < 0.001f) {
             triggered = false;
         }
         
-        // Apply amplitude envelope and sharp saturation for snap
         output *= ampEnv;
-        output = clonotribe::FastMath::fastTanh(output * 2.5f);
+    output = clonotribe::FastMath::fastTanh(output * 2.6f);
         
-        return output * 1.3f;
+    return output * 1.35f * accentGain;
     }
     
 private:

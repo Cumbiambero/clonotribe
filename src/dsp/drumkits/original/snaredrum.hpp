@@ -9,7 +9,6 @@ namespace original {
 class SnareDrum : public drumkits::SnareDrum {
 public:
     void reset() override {
-        // Original monotribe snare: balanced tone and noise
         ampEnv = 1.0f;
         toneEnv = 1.0f;
         noiseEnv = 1.0f;
@@ -19,6 +18,7 @@ public:
         noiseFilter1 = 0.0f;
         noiseFilter2 = 0.0f;
         bodyFilter = 0.0f;
+    hpState = 0.0f;
         triggered = true;
     }
     
@@ -30,10 +30,10 @@ public:
         if (!triggered) return 0.0f;
         
         const float invSampleRate = 1.0f / sampleRate;
+    float accentGain = 0.75f + accent * 0.5f;
         
-        // Original monotribe snare frequencies (fundamental + harmonic)
-        const float freq1 = 220.0f;  // Fundamental tone
-        const float freq2 = 350.0f;  // Harmonic for body
+    const float freq1 = 210.0f;
+    const float freq2 = 330.0f;
         
         // Generate dual-tone body
         tonePhase1 += freq1 * invSampleRate * 2.0f * clonotribe::FastMath::PI;
@@ -45,41 +45,39 @@ public:
         float tone1 = clonotribe::FastMath::fastSin(tonePhase1) * toneEnv;
         float tone2 = clonotribe::FastMath::fastSin(tonePhase2) * toneEnv * 0.6f;
         
-        // Body filter for warmth
         float toneSum = tone1 + tone2;
-        bodyFilter += (toneSum - bodyFilter) * 0.8f; // Smooth body tone
+    bodyFilter += (toneSum - bodyFilter) * 0.7f;
         
-        // Generate noise component
         float rawNoise = noise.process();
         
-        // Two-stage noise filtering for classic snare buzz
-        const float cutoff1 = 0.3f; // Initial filtering
-        const float cutoff2 = 0.15f; // Final shaping
+    const float cutoff1 = 0.28f;
+    const float cutoff2 = 0.18f;
         
         noiseFilter1 += (rawNoise - noiseFilter1) * cutoff1;
         noiseFilter2 += (noiseFilter1 - noiseFilter2) * cutoff2;
         float buzzNoise = (noiseFilter1 - noiseFilter2) * buzzEnv;
         
-        // Mix components with classic snare balance
-        float bodyTone = bodyFilter * 0.5f;
-        float snareNoise = buzzNoise * 0.7f;
+    const float hpCut = 0.05f;
+    hpState += (buzzNoise - hpState) * hpCut;
+    buzzNoise -= hpState;
+        
+    float bodyTone = bodyFilter * 0.45f;
+    float snareNoise = buzzNoise * 0.75f;
         float output = bodyTone + snareNoise;
         
-        // Original-style envelope decay
-        toneEnv *= 0.994f;   // Medium tone decay
-        buzzEnv *= 0.986f;   // Slower buzz decay for classic tail
-        noiseEnv *= 0.988f;  // Noise envelope
-        ampEnv *= 0.990f;    // Overall amplitude
+    toneEnv *= 0.9935f;
+    buzzEnv *= 0.985f;
+    noiseEnv *= 0.988f;
+    ampEnv *= 0.990f;
         
         if (ampEnv < 0.001f && buzzEnv < 0.001f) {
             triggered = false;
         }
         
-        // Apply amplitude envelope and gentle saturation
         output *= ampEnv;
         output = clonotribe::FastMath::fastTanh(output * 1.6f);
         
-        return output * 1.4f;
+        return output * 1.4f * accentGain;
     }
     
 private:
@@ -92,6 +90,7 @@ private:
     float noiseFilter1 = 0.0f;
     float noiseFilter2 = 0.0f;
     float bodyFilter = 0.0f;
+    float hpState = 0.0f;
     float sampleRate = 44100.0f;
     bool triggered = false;
 };

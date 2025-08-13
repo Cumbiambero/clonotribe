@@ -14,6 +14,7 @@ public:
         clickEnv = 1.0f;
         phase = 0.0f;
         subPhase = 0.0f;
+    hpState = 0.0f;
         triggered = true;
     }
     
@@ -26,9 +27,9 @@ public:
         
         // TR-808 kick synthesis with proper envelopes
         const float invSampleRate = 1.0f / sampleRate;
+    float accentGain = 0.8f + accent * 0.6f;
         
-        // Authentic TR-808 pitch envelope: fast exponential decay
-        float pitchMod = 60.0f * pitchEnv * pitchEnv * pitchEnv; // 60Hz base + pitch mod
+    float pitchMod = 60.0f * pitchEnv * pitchEnv * pitchEnv;
         float freq = 60.0f + pitchMod;
         
         // Main oscillator
@@ -46,24 +47,25 @@ public:
         float mainSine = clonotribe::FastMath::fastSin(phase);
         float subSine = clonotribe::FastMath::fastSin(subPhase) * 0.6f;
         
-        // Attack click (essential for 808 character)
-        float click = clickEnv > 0.8f ? (clickEnv - 0.8f) * 5.0f : 0.0f;
+    float n = noise.process();
+    const float hpCut = 0.25f;
+    hpState += (n - hpState) * hpCut;
+    float hpNoise = n - hpState;
+    float click = (clickEnv > 0.8f ? (clickEnv - 0.8f) * 5.0f : 0.0f) + hpNoise * 0.08f * clickEnv;
         
         // Mix oscillators
         float output = (mainSine + subSine + click * 0.3f) * ampEnv * ampEnv;
         
-        // Authentic TR-808 envelope decay rates
-        pitchEnv *= 0.9992f;  // Very fast pitch decay
-        ampEnv *= 0.9985f;    // Slower amplitude decay
-        clickEnv *= 0.992f;   // Medium click decay
+    pitchEnv *= 0.9992f;
+    ampEnv *= 0.9986f;
+    clickEnv *= 0.9915f;
         
         if (ampEnv < 0.001f) {
             triggered = false;
         }
         
-        // Soft saturation for analog character
-        output = clonotribe::FastMath::fastTanh(output * 1.5f);
-        return output * 2.0f; // Final gain
+        output = clonotribe::FastMath::fastTanh(output * 1.55f);
+        return output * 2.0f * accentGain;
     }
     
 private:
@@ -72,6 +74,7 @@ private:
     float clickEnv = 0.0f;
     float phase = 0.0f;
     float subPhase = 0.0f;
+    float hpState = 0.0f;
     float sampleRate = 44100.0f;
     bool triggered = false;
 };

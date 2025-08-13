@@ -30,11 +30,11 @@ public:
         if (!triggered) return 0.0f;
         
         const float invSampleRate = 1.0f / sampleRate;
+    float accentGain = 0.8f + accent * 0.6f;
         
-        // Shaker-like metallic tones (like maracas/tambourine)
-        const float freq1 = 2500.0f;  // High metallic
-        const float freq2 = 4200.0f;  // Higher metallic
-        const float freq3 = 6800.0f;  // Very high shimmer
+    const float freq1 = 2300.0f;
+    const float freq2 = 4000.0f;
+    const float freq3 = 7200.0f;
         
         // Generate metallic tones
         phase1 += freq1 * invSampleRate * 2.0f * clonotribe::FastMath::PI;
@@ -56,14 +56,12 @@ public:
         // High-frequency noise for texture
         float rawNoise = noise.process();
         
-        // High-pass filter for brightness
-        const float hpCutoff = 0.3f; // Very high cutoff
+    const float hpCutoff = 0.27f;
         highpassState += (rawNoise - highpassState) * hpCutoff;
         float brightNoise = (rawNoise - highpassState) * env;
         
-        // Two bandpass filters for shaker character
-        const float bp1Cutoff = 0.4f;  // Around 8.8kHz
-        const float bp2Cutoff = 0.5f;  // Around 11kHz
+    const float bp1Cutoff = 0.38f;
+    const float bp2Cutoff = 0.48f;
         
         // First bandpass
         bandpass1State1 += (brightNoise - bandpass1State1) * bp1Cutoff;
@@ -75,21 +73,18 @@ public:
         bandpass2State2 += (bandpass2State1 - bandpass2State2) * bp2Cutoff;
         float bp2Out = bandpass2State1 - bandpass2State2;
         
-        // Mix metallic tones with filtered noise
-        float output = metallicSum * 0.6f + bp2Out * 0.8f;
+    float output = metallicSum * 0.55f + bp2Out * 0.85f;
         
-        // Shaker-style decay: medium length with shimmer tail
-        env *= 0.9885f;        // Medium decay
-        shimmerEnv *= 0.9935f; // Longer shimmer tail
+    env *= 0.9890f;
+    shimmerEnv *= 0.9940f;
         
         if (env < 0.001f && shimmerEnv < 0.001f) {
             triggered = false;
         }
         
-        // Light saturation for character
-        output = clonotribe::FastMath::fastTanh(output * 2.0f);
+    output = clonotribe::FastMath::fastTanh(output * 2.1f);
         
-        return output * 0.9f;
+    return output * 0.95f * accentGain;
     }
     
 private:
