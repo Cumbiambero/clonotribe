@@ -353,7 +353,7 @@ void Clonotribe::process(const ProcessArgs& args) {
         bool modulateVCO = (lfoTarget == 1 || lfoTarget == 2);
         
         if (modulateVCF) cutoffMod = lfoValue * lfoIntensity * 0.5f;
-        if (modulateVCO) pitchMod = lfoValue * lfoIntensity * 0.2f;
+        if (modulateVCO) pitchMod = lfoValue * lfoIntensity * 4.0f;
 
         vco.setPitch(finalPitch + pitchMod);
         

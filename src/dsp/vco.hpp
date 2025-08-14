@@ -1,5 +1,6 @@
 #pragma once
 #include <rack.hpp>
+#include <cmath>
 #include "fastmath.hpp"
 
 namespace clonotribe {
@@ -24,7 +25,15 @@ struct VCO final {
     }
 
     void setPitch(float pitch) noexcept {
-        freq = rack::dsp::FREQ_C4 * std::pow(2.0f, static_cast<float>(pitch));
+        if (!std::isfinite(pitch)) {
+            pitch = 0.0f;
+        }
+        pitch = std::clamp(pitch, -10.0f, 10.0f);
+        freq = rack::dsp::FREQ_C4 * std::pow(2.0f, pitch);
+        if (!std::isfinite(freq)) {
+            freq = rack::dsp::FREQ_C4;
+        }
+        freq = std::clamp(freq, 0.1f, 48000.0f);
         active = freq > 1.0f;
     }
 
@@ -48,6 +57,11 @@ struct VCO final {
         if (!active) return lastSaw;
 
         const auto dt = freq * sampleTime;
+        if (dt > 1.0f) {
+            phase = 0.0f;
+            return lastSaw;
+        }
+        
         phase += dt;
         if (phase >= 1.0f) phase -= 1.0f;
 
@@ -66,7 +80,13 @@ struct VCO final {
     [[nodiscard]] float processTriangle(float sampleTime) noexcept {
         if (!active) return 0.0f;
 
-        phase += freq * sampleTime;
+        const auto dt = freq * sampleTime;
+        if (dt > 1.0f) {
+            phase = 0.0f;
+            return 0.0f;
+        }
+
+        phase += dt;
         if (phase >= 1.0f) phase -= 1.0f;
 
         float triangle;
@@ -88,7 +108,13 @@ struct VCO final {
     [[nodiscard]] float processSquare(float sampleTime) noexcept {
         if (!active) return 0.0f;
 
-        phase += freq * sampleTime;
+        const auto dt = freq * sampleTime;
+        if (dt > 1.0f) {
+            phase = 0.0f;
+            return 0.0f;
+        }
+
+        phase += dt;
         if (phase >= 1.0f) phase -= 1.0f;
 
         float square = (phase < 0.5f) ? 1.0f : -1.0f;
