@@ -80,6 +80,7 @@ struct MainPanel : ModuleWidget {
         addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 90.0f)), module, Clonotribe::INPUT_LFO_RATE_CONNECTOR));
         addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 100.0f)), module, Clonotribe::INPUT_LFO_INTENSITY_CONNECTOR));
         addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 110.f)), module, Clonotribe::INPUT_DISTORTION_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 120.f)), module, Clonotribe::INPUT_VCA_CONNECTOR));
     }
 
     void setupOutputs(Clonotribe* module) {
