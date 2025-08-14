@@ -126,10 +126,16 @@ struct Clonotribe : rack::Module {
     DrumProcessor drumProcessor;
     Distortion distortionProcessor;
     DrumKitType selectedDrumKit = DRUMKIT_ORIGINAL;
+    NoiseType selectedNoiseType = NoiseType::WHITE;
 
     void setDrumKit(DrumKitType kit) {
         selectedDrumKit = kit;
         drumProcessor.setDrumKit(static_cast<DrumProcessor::DrumKitType>(kit));
+    }
+    
+    void setNoiseType(NoiseType type) {
+        selectedNoiseType = type;
+        noiseGenerator.setNoiseType(type);
     }
     
     void triggerKick() { drumProcessor.triggerKick(); }

@@ -83,6 +83,8 @@ void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& 
 
 Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
+        
+        noiseGenerator.setNoiseType(NoiseType::WHITE);
                
         configSwitch(PARAM_VCO_WAVEFORM_SWITCH, 0.0f, 2.0f, 0.0f, "VCO Waveform", {"Square", "Triangle", "Sawtooth"});
         configSwitch(PARAM_RIBBON_RANGE_SWITCH, 0.0f, 2.0f, 0.0f, "Ribbon Controller Range", {"Key", "Narrow", "Wide"});
@@ -181,6 +183,20 @@ struct DrumKitMenuItem : rack::MenuItem {
     }
 };
 
+struct NoiseTypeMenuItem : rack::MenuItem {
+    Clonotribe* module;
+    NoiseType noiseType;
+    void onAction(const rack::event::Action& e) override {
+        module->setNoiseType(noiseType);
+    }
+    void step() override {
+        static const char* noiseLabels[] = {"White", "Pink"};
+        text = noiseLabels[static_cast<int>(noiseType)];
+        rightText = (module->selectedNoiseType == noiseType) ? "✔" : "";
+        MenuItem::step();
+    }
+};
+
 void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
     menu->addChild(new rack::MenuSeparator());
     menu->addChild(rack::createMenuLabel("Drum Kit"));
@@ -189,6 +205,14 @@ void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
         kitItem->module = this;
         kitItem->kitType = (DrumKitType)i;
         menu->addChild(kitItem);
+    }
+    menu->addChild(new rack::MenuSeparator());
+    menu->addChild(rack::createMenuLabel("Noise Type"));
+    for (int i = 0; i < 2; ++i) {
+        auto* noiseItem = new NoiseTypeMenuItem;
+        noiseItem->module = this;
+        noiseItem->noiseType = static_cast<NoiseType>(i);
+        menu->addChild(noiseItem);
     }
     menu->addChild(new rack::MenuSeparator());
     menu->addChild(rack::createMenuLabel("Tempo range"));
@@ -246,6 +270,7 @@ json_t* Clonotribe::dataToJson() {
     json_object_set_new(rootJ, "syncHalfTempo", json_boolean(syncHalfTempo));
     json_object_set_new(rootJ, "selectedDrumKit", json_integer(selectedDrumKit));
     json_object_set_new(rootJ, "selectedTempoRange", json_integer(selectedTempoRange));
+    json_object_set_new(rootJ, "selectedNoiseType", json_integer(static_cast<int>(selectedNoiseType)));
     
     return rootJ;
 }
@@ -348,6 +373,11 @@ void Clonotribe::dataFromJson(json_t* rootJ) {
     json_t* selectedTempoRangeJ = json_object_get(rootJ, "selectedTempoRange");
     if (selectedTempoRangeJ) {
         selectedTempoRange = static_cast<TempoRange>(json_integer_value(selectedTempoRangeJ));
+    }
+    
+    json_t* selectedNoiseTypeJ = json_object_get(rootJ, "selectedNoiseType");
+    if (selectedNoiseTypeJ) {
+        setNoiseType(static_cast<NoiseType>(json_integer_value(selectedNoiseTypeJ)));
     }
 }
 
