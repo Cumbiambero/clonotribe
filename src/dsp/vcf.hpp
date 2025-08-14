@@ -40,29 +40,51 @@ public:
         }
 
         float cutoff = calculateCutoff(cutoffParam);
-        cutoff *= (1.f + 0.005f * noiseGen.process());
-        cutoff = std::clamp(cutoff, 20.f, sampleRate * 0.4f);
+        cutoff = std::clamp(cutoff, 20.f, sampleRate * 0.35f);
 
         float resonance = calculateResonance(resonanceParam);
         float f = 2.f * FastMath::fastSin(FastMath::PI * cutoff * invSampleRate);
         f = std::clamp(f, 0.f, 0.9f);
 
-        float hp = saturate(input - resonance * s2 - s1);
+        float drive = 1.0f + resonanceParam * 1.2f;
+        float drivenInput = saturate(input * drive);
+        
+        float hp = saturate(drivenInput - resonance * s2 - s1);
         s1 += f * saturate(hp);
         s2 += f * saturate(s1);
 
         float output = s2;
-        if (cutoffParam < 0.3f) {
-            output *= cutoffParam * 3.33f;
+        if (cutoffParam < 0.4f) {
+            if (cutoffParam < 0.3f) {
+                output *= 0.0f;
+            } else {
+                float fadeRange = cutoffParam - 0.3f;
+                float fadeAmount = fadeRange * 10.0f;
+                fadeAmount = fadeAmount * fadeAmount;
+                output *= 0.01f + fadeAmount * 0.99f;
+            }
+        }
+
+        if (resonanceParam > 0.75f) {
+            float oscGain = (resonanceParam - 0.75f) * 4.0f;
+            oscPhase += 2.0f * FastMath::PI * cutoff * invSampleRate;
+            if (oscPhase >= 2.0f * FastMath::PI) oscPhase -= 2.0f * FastMath::PI;
+            float oscSig = FastMath::fastSin(oscPhase) * oscGain * 0.15f;
+
+            if (cutoff > sampleRate * 0.25f) {
+                oscSig *= 0.5f;
+            }
+            output = output * (1.0f - oscGain * 0.3f) + oscSig;
         }
 
         if (std::abs(output) < 1e-30f) output = 0.f;
 
-        return saturate(output * 1.5f);
+        return saturate(output * (1.1f + resonanceParam * 0.3f));
     }
 
     void reset() noexcept {
         s1 = s2 = 0.f;
+        oscPhase = 0.f;
     }
     
 private:
@@ -71,6 +93,7 @@ private:
     float resonanceParam = 0.f;
     float sampleRate = 44100.f;
     float invSampleRate = 1.f/44100.f;
+    float oscPhase = 0.f;
     bool active = true;
 
     NoiseGenerator noiseGen;
@@ -82,12 +105,16 @@ private:
 
     [[nodiscard]] inline float calculateResonance(float param) const noexcept {
         param = std::clamp(param, 0.f, 1.f);
-        return param * 5.0f;
+        return param * param * 6.0f + param * 1.5f;
     }
 
     [[nodiscard]] inline float saturate(float x) const noexcept {
-        x = std::clamp(x, -5.f, 5.f);
-        return x / (1.f + std::abs(x));
+        x = std::clamp(x, -4.f, 4.f);
+        if (x > 0.0f) {
+            return x / (1.0f + x * 0.4f);
+        } else {
+            return x / (1.0f + std::abs(x) * 0.5f);
+        }
     }    
 };
 }
