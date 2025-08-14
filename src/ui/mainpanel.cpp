@@ -70,17 +70,18 @@ struct MainPanel : ModuleWidget {
     }
 
     void setupInputs(Clonotribe* module) {
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 20.0f)), module, Clonotribe::INPUT_AUDIO_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 30.0f)), module, Clonotribe::INPUT_CV_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 40.0f)), module, Clonotribe::INPUT_GATE_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 50.0f)), module, Clonotribe::INPUT_SYNC_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 60.0f)), module, Clonotribe::INPUT_VCO_OCTAVE_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 70.0f)), module, Clonotribe::INPUT_VCF_CUTOFF_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 80.0f)), module, Clonotribe::INPUT_VCF_PEAK_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 90.0f)), module, Clonotribe::INPUT_LFO_RATE_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 100.0f)), module, Clonotribe::INPUT_LFO_INTENSITY_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 110.f)), module, Clonotribe::INPUT_DISTORTION_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 120.f)), module, Clonotribe::INPUT_VCA_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 18.0f)), module, Clonotribe::INPUT_AUDIO_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 27.0f)), module, Clonotribe::INPUT_CV_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 36.0f)), module, Clonotribe::INPUT_GATE_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 45.0f)), module, Clonotribe::INPUT_SYNC_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 54.0f)), module, Clonotribe::INPUT_VCO_OCTAVE_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 63.0f)), module, Clonotribe::INPUT_VCF_CUTOFF_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 72.0f)), module, Clonotribe::INPUT_VCF_PEAK_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 81.0f)), module, Clonotribe::INPUT_LFO_RATE_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 90.0f)), module, Clonotribe::INPUT_LFO_INTENSITY_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 99.0f)), module, Clonotribe::INPUT_DISTORTION_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 108.0f)), module, Clonotribe::INPUT_VCA_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 117.0f)), module, Clonotribe::INPUT_NOISE_CONNECTOR));
     }
 
     void setupOutputs(Clonotribe* module) {
@@ -88,10 +89,10 @@ struct MainPanel : ModuleWidget {
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(104.0f, 10.0f)), module, Clonotribe::OUTPUT_BASSDRUM_CONNECTOR));
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(113.0f, 10.0f)), module, Clonotribe::OUTPUT_SNARE_CONNECTOR));
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(122.0f, 10.0f)), module, Clonotribe::OUTPUT_HIHAT_CONNECTOR));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 20.0f)), module, Clonotribe::OUTPUT_AUDIO_CONNECTOR));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 30.0f)), module, Clonotribe::OUTPUT_CV_CONNECTOR));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 40.0f)), module, Clonotribe::OUTPUT_GATE_CONNECTOR));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 50.0f)), module, Clonotribe::OUTPUT_SYNC_CONNECTOR));        
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 18.0f)), module, Clonotribe::OUTPUT_AUDIO_CONNECTOR));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 27.0f)), module, Clonotribe::OUTPUT_CV_CONNECTOR));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 36.0f)), module, Clonotribe::OUTPUT_GATE_CONNECTOR));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 45.0f)), module, Clonotribe::OUTPUT_SYNC_CONNECTOR));        
     }
 
     void setupLights(Clonotribe* module) {

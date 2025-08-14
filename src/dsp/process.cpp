@@ -21,8 +21,8 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
         } else {
             paramCache.lfoRate = params[PARAM_LFO_RATE_KNOB].getValue();
         }
-        
-        paramCache.noiseLevel = params[PARAM_NOISE_KNOB].getValue();
+
+        paramCache.noiseLevel = getParamWithCV(PARAM_NOISE_KNOB, INPUT_NOISE_CONNECTOR);
         paramCache.resonance = getParamWithCV(PARAM_VCF_PEAK_KNOB, INPUT_VCF_PEAK_CONNECTOR);
         paramCache.rhythmVolume = params[PARAM_RHYTHM_VOLUME_KNOB].getValue();
         paramCache.tempo = params[PARAM_SEQUENCER_TEMPO_KNOB].getValue();

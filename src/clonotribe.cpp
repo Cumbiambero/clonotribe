@@ -96,7 +96,7 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         configParam(PARAM_VCO_OCTAVE_KNOB, 0.0f, 5.0f, 2.0f, "VCO Octave");
         getParamQuantity(PARAM_VCO_OCTAVE_KNOB)->snapEnabled = true;
 
-        configParam(PARAM_NOISE_KNOB, 0.0f, 1.0f, 0.0f, "Noise Level", "%", 0.0f, 100.0f);
+        configParam(PARAM_NOISE_KNOB, 0.0f, 1.0f, 0.0f, "Noise Level");
         configParam(PARAM_VCF_CUTOFF_KNOB, 0.0f, 1.0f, 0.7f, "VCF Cutoff");
         configParam(PARAM_VCF_PEAK_KNOB, 0.0f, 1.0f, 0.0f, "VCF Peak (Resonance)");
         configParam(PARAM_VCA_LEVEL_KNOB, 0.0f, 1.0f, 0.8f, "VCA Level");
@@ -135,7 +135,8 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         configInput(INPUT_LFO_RATE_CONNECTOR, "LFO Rate (Clock)");
         configInput(INPUT_LFO_INTENSITY_CONNECTOR, "LFO Intensity (CV)");
         configInput(INPUT_DISTORTION_CONNECTOR, "Distortion (CV)");
-        
+        configInput(INPUT_NOISE_CONNECTOR, "Noise (CV)");
+
         configOutput(OUTPUT_CV_CONNECTOR, "CV");
         configOutput(OUTPUT_GATE_CONNECTOR, "Gate");
         configOutput(OUTPUT_AUDIO_CONNECTOR, "Audio");

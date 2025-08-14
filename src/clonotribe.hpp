@@ -83,6 +83,7 @@ struct Clonotribe : rack::Module {
         INPUT_LFO_RATE_CONNECTOR,
         INPUT_LFO_INTENSITY_CONNECTOR,
         INPUT_DISTORTION_CONNECTOR,
+        INPUT_NOISE_CONNECTOR,
         INPUTS_LEN
     };
     
