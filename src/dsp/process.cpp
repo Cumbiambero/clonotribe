@@ -71,6 +71,8 @@ void Clonotribe::handleMainTriggers() {
     if (playPressed) {
         if (sequencer.playing) {
             sequencer.stop();
+            envelope.gateOff();
+            gateActive = false;
         } else {
             sequencer.play();
         }
