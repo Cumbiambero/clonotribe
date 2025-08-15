@@ -13,7 +13,6 @@ struct MainPanel : ModuleWidget {
     ParamWidget* tempoKnob = nullptr;
     ParamWidget* lfoRateKnob = nullptr;
     ParamWidget* lfoModeSwitch = nullptr;
-    bool keyboardShortcutsEnabled = false;
 
     TransparentButton* createButton(Vec pos, Vec size, Module* module, int paramId) {
         auto* button = createParam<TransparentButton>(pos, module, paramId);
@@ -150,19 +149,8 @@ struct MainPanel : ModuleWidget {
     }
 
     void handleHoverKey(const event::HoverKey& e) {
-        if (!keyboardShortcutsEnabled) {
-            return;
-        }
-        
         Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
         if (!clonotribeModule) return;
-        
-        if (clonotribeModule->inputs[Clonotribe::INPUT_CV_CONNECTOR].isConnected() || 
-            clonotribeModule->inputs[Clonotribe::INPUT_GATE_CONNECTOR].isConnected()) {
-            keyboardShortcutsEnabled = false;
-            e.consume(this);
-            return; // Skip all keyboard handling when CV/GATE inputs are connected
-        }
         
         if (e.action == GLFW_PRESS || e.action == GLFW_REPEAT) {
             Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
@@ -291,7 +279,6 @@ struct MainPanel : ModuleWidget {
                     clonotribeModule->params[Clonotribe::PARAM_SEQUENCER_8_BUTTON].setValue(0.0f);
                     break;
             }
-            e.consume(this);
         }
     }
 
@@ -302,10 +289,6 @@ struct MainPanel : ModuleWidget {
 
     void appendContextMenu(rack::ui::Menu* menu) override {
         ModuleWidget::appendContextMenu(menu);
-        
-        menu->addChild(new MenuSeparator);
-        menu->addChild(createBoolPtrMenuItem("Keyboard Shortcuts", "", &keyboardShortcutsEnabled));
-        
         Clonotribe* clonotribeModule = dynamic_cast<Clonotribe*>(module);
         if (clonotribeModule) {
             clonotribeModule->appendContextMenu(menu);

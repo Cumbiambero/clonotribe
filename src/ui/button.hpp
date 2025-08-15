@@ -25,7 +25,6 @@ struct TransparentButton final : rack::app::ParamWidget {
             if (getParamQuantity()) {
                 getParamQuantity()->setValue(1.0f);
             }
-            e.consume(this);
         }
         rack::app::ParamWidget::onButton(e);
     }
