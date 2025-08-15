@@ -1,26 +1,26 @@
 # Clonotribe - KORG monotribe VCV Rack Module
 
-A module heavily inspired by the KORG monotribe analog synthesizer, including the firmware 2.1 features.
+A module heavily inspired by the KORG monotribe analog synthesizer, including relevant firmware 2.1 features.
 
-Please be aware that this is still work in progress. Specially in achieving the authentical sound there are a lot of improvements needed. Everyone is invited to bring this to perfection.
+Please be aware that this is still work in progress. Specially in achieving the authentical sound there are improvements needed. Everyone is invited to contribute and bring this to perfection.
 
 The monotribe is a great little box and I hope that this tribute will bring some fun to the community.
-
-I'm currentyly working on improving the filter. Other parts also need improvements. There is also documentation missing.
-
 
 ## Features
 
 - **Analog-style VCO**: Square, Triangle, and Sawtooth waveforms with octave control
-- **VCF**: Classic Korg low-pass filter with cutoff and resonance controls
+- **VCF**: Classic Korg low-pass filter with cutoff and resonance (peak) controls
 - **LFO**: Multi-waveform LFO with  multiple targets and modes
-- **Envelope Generator**: Attack/Gate/Decay modes
-- **Simple Drum Machine**: Kick, Snare, and Hi-hat
+- **Envelope Generator**: Very simple implementation like on the monotribe itself
+- **Simple Drum Machine**: Kick, Snare and Hi-hat
 - **8-step Sequencer**: Full recording, playback, and pattern editing (expandable to 16 steps)
 - **Ribbon Controller**: Multi-mode pitch control
 - **CV/Gate Integration**: Full CV input/output with recording capabilities
 - **Distortion**: Add some overdrive to the synth voice
 - **CV controlable**: Most params can be set by CV
+- **Delay**: Simple delay can be applied to the synth voice
+- **Keyboard shortcuts**: The sequencer keys are mapped to the computer keyboard. Hover over them to see the mapping.
+
 
 ## Components
 
@@ -28,12 +28,12 @@ I'm currentyly working on improving the filter. Other parts also need improvemen
 - Square, Triangle, and Sawtooth waveforms
 - 5-octave range control
 - CV input with 1V/octave standard
-- Noise generator with level control
+- Noise generator with level control. Also it can be switched between white and pink noise (from context menu)
 
 ### VCF (Voltage Controlled Filter) 
 - MS-20 style low-pass filter
 - Cutoff frequency control (80Hz - 8kHz)
-- Resonance (Peak) control up to self-oscillation
+- Resonance (peak) control up to self-oscillation
 - LFO modulation support
 
 ### LFO (Low Frequency Oscillator)
@@ -48,12 +48,12 @@ I'm currentyly working on improving the filter. Other parts also need improvemen
 - LFO trigger integration in 1-Shot mode
 
 ### Drum Machine
-- **Kick Drum**: Analog-style bass drum with proper volume
-- **Snare Drum**: Authentic snare with noise and tone components
-- **Hi-Hat**: Metallic hi-hat sound with noise filtering
+- **BD**: Bass drum (kick)
+- **SN**: Snare drum
+- **HH**: Hi hat
 - Individual 8-step patterns per drum part
 - Volume control and mixing
-- There are 3 different drumkits to choose from (original, TR 808 and latin)
+- There are 3 different drumkits to choose from (original, TR 808 and latin). Use the context menu for it (right click)
 
 ### Sequencer
 - 8-step sequencer with individual step control (switchable to 16 steps)
@@ -80,6 +80,9 @@ I'm currentyly working on improving the filter. Other parts also need improvemen
 
 ### Distortion
 - Adds effect pedal inspired drive to the synth part (not to the drums)
+
+### Delay
+- Time and amount can be controlled
 
 ## Usage
 
