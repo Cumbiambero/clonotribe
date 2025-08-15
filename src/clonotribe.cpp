@@ -98,13 +98,15 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
 
         configParam(PARAM_NOISE_KNOB, 0.0f, 1.0f, 0.0f, "Noise Level");
         configParam(PARAM_VCF_CUTOFF_KNOB, 0.0f, 1.0f, 0.7f, "VCF Cutoff");
-        configParam(PARAM_VCF_PEAK_KNOB, 0.0f, 1.0f, 0.0f, "VCF Peak (Resonance)");
+        configParam(PARAM_VCF_PEAK_KNOB, 0.0f, 1.0f, 0.1f, "VCF Peak (Resonance)");
         configParam(PARAM_VCA_LEVEL_KNOB, 0.0f, 1.0f, 0.8f, "VCA Level");
         configParam(PARAM_LFO_RATE_KNOB, 0.0f, 1.0f, 0.0f, "LFO Rate");
         configParam(PARAM_LFO_INTERVAL_KNOB, 0.0f, 1.0f, 0.0f, "LFO Intensity");
         configParam(PARAM_RHYTHM_VOLUME_KNOB, 0.0f, 1.0f, 0.0f, "Rhythm Volume");
         configParam(PARAM_SEQUENCER_TEMPO_KNOB, 0.0f, 1.0f, 0.5f, "Sequencer Tempo", " BPM", 0.0f, 600.0f, 10.0f);
         configParam(PARAM_DISTORTION_KNOB, 0.0f, 1.0f, 0.0f, "Distortion");
+        configParam(PARAM_DELAY_TIME_KNOB, 0.0f, 1.0f, 0.0f, "Delay Time", " s", 0.0f, 1.99f, 0.01f);
+        configParam(PARAM_DELAY_AMOUNT_KNOB, 0.0f, 1.0f, 0.0f, "Delay Amount");
         
         configButton(PARAM_SNARE_BUTTON, "Snare (F7)");
         configButton(PARAM_FLUX_BUTTON, "Flux (Tab)");
@@ -135,6 +137,8 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         configInput(INPUT_LFO_RATE_CONNECTOR, "LFO Rate (Clock)");
         configInput(INPUT_LFO_INTENSITY_CONNECTOR, "LFO Intensity (CV)");
         configInput(INPUT_DISTORTION_CONNECTOR, "Distortion (CV)");
+        configInput(INPUT_DELAY_TIME_CONNECTOR, "Delay Clock (Clock)");
+        configInput(INPUT_DELAY_AMOUNT_CONNECTOR, "Delay Amount (CV)");
         configInput(INPUT_NOISE_CONNECTOR, "Noise (CV)");
 
         configOutput(OUTPUT_CV_CONNECTOR, "CV");
@@ -145,6 +149,9 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         configOutput(OUTPUT_BASSDRUM_CONNECTOR, "Bass Drum");
         configOutput(OUTPUT_SNARE_CONNECTOR, "Snare");
         configOutput(OUTPUT_HIHAT_CONNECTOR, "Hi-Hat");
+        
+        // Initialize delay processor
+        delayProcessor.clear();
 };
 
 struct TempoRangeItem : rack::MenuItem {

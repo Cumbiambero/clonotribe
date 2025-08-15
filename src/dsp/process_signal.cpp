@@ -27,7 +27,8 @@ float Clonotribe::processEnvelope(int envelopeType, Envelope& envelope, float sa
 
 float Clonotribe::processOutput(
     float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
-    float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep, float distortion
+    float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep, float distortion,
+    float delayClock, float delayTime, float delayAmount
 ) {
     float volumeModulation = 1.0f + (ribbonVolumeAutomation * 0.5f);
     volumeModulation = std::clamp(volumeModulation, 0.1f, 2.0f);
@@ -47,6 +48,10 @@ float Clonotribe::processOutput(
             distortedSignal /= compressionFactor;
         }
         synthOutput = distortedSignal;
+    }
+    
+    if (delayAmount > 0.0f && delayTime > 0.001f) {
+        synthOutput = delayProcessor.process(synthOutput, delayClock, delayTime, delayAmount);
     }
 
     float drumMix = 0.0f;

@@ -28,6 +28,8 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
         paramCache.tempo = params[PARAM_SEQUENCER_TEMPO_KNOB].getValue();
         paramCache.volume = getParamWithCV(PARAM_VCA_LEVEL_KNOB, INPUT_VCA_CONNECTOR);
         paramCache.distortion = getParamWithCV(PARAM_DISTORTION_KNOB, INPUT_DISTORTION_CONNECTOR);
+        paramCache.delayTime = params[PARAM_DELAY_TIME_KNOB].getValue(); // Manual delay time (when clock not connected)
+        paramCache.delayAmount = getParamWithCV(PARAM_DELAY_AMOUNT_KNOB, INPUT_DELAY_AMOUNT_CONNECTOR);
         
         float octaveSwitch = params[PARAM_VCO_OCTAVE_KNOB].getValue();
         if (inputs[INPUT_VCO_OCTAVE_CONNECTOR].isConnected()) {
@@ -398,9 +400,16 @@ void Clonotribe::process(const ProcessArgs& args) {
         float effectiveGate = audioGateActive ? 5.0f : finalSequencerGate;
         float envValue = processEnvelope(envelopeType, envelope, args.sampleTime, effectiveGate);
 
+        // Get delay clock signal - use sequencer sync output if no external clock
+        float delayClock = outputs[OUTPUT_SYNC_CONNECTOR].getVoltage();
+        if (inputs[INPUT_DELAY_TIME_CONNECTOR].isConnected()) {
+            delayClock = inputs[INPUT_DELAY_TIME_CONNECTOR].getVoltage();
+        }
+
         float finalOutput = processOutput(
             filteredSignal, volume, envValue, ribbonVolumeAutomation,
-            rhythmVolume, args.sampleTime, noiseGenerator, seqOutput.step, distortion
+            rhythmVolume, args.sampleTime, noiseGenerator, seqOutput.step, distortion,
+            delayClock, paramCache.delayTime, paramCache.delayAmount
         );
         
         // Gentle output limiting to prevent clipping and distortion

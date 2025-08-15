@@ -8,6 +8,7 @@
 #include "dsp/sequencer_state_manager.hpp"
 #include "dsp/drum_processor.hpp"
 #include "dsp/filter_processor.hpp"
+#include "dsp/delay.hpp"
 #include "ui/ui.hpp"
 
 using namespace clonotribe;
@@ -30,7 +31,8 @@ struct Clonotribe : rack::Module {
     static float processEnvelope(int envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
     float processOutput(
         float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
-        float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep, float distortion
+        float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep, float distortion,
+        float delayClock, float delayTime, float delayAmount
     );
     
     void handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered);
@@ -40,6 +42,8 @@ struct Clonotribe : rack::Module {
         PARAM_VCO_WAVEFORM_SWITCH,
         PARAM_RHYTHM_VOLUME_KNOB,
         PARAM_DISTORTION_KNOB,
+        PARAM_DELAY_TIME_KNOB,
+        PARAM_DELAY_AMOUNT_KNOB,
         PARAM_SNARE_BUTTON,
         PARAM_FLUX_BUTTON,
         PARAM_REC_BUTTON,
@@ -83,6 +87,8 @@ struct Clonotribe : rack::Module {
         INPUT_LFO_RATE_CONNECTOR,
         INPUT_LFO_INTENSITY_CONNECTOR,
         INPUT_DISTORTION_CONNECTOR,
+        INPUT_DELAY_TIME_CONNECTOR,
+        INPUT_DELAY_AMOUNT_CONNECTOR,
         INPUT_NOISE_CONNECTOR,
         INPUTS_LEN
     };
@@ -127,6 +133,7 @@ struct Clonotribe : rack::Module {
     
     DrumProcessor drumProcessor;
     Distortion distortionProcessor;
+    Delay delayProcessor;
     DrumKitType selectedDrumKit = DRUMKIT_ORIGINAL;
     NoiseType selectedNoiseType = NoiseType::WHITE;
 
@@ -193,6 +200,12 @@ struct Clonotribe : rack::Module {
     
     void onSampleRateChange() override {
         drumProcessor.setSampleRate(APP->engine->getSampleRate());
+        delayProcessor.setSampleRate(APP->engine->getSampleRate());
+    }
+
+    void onReset() override {
+        Module::onReset();
+        delayProcessor.clear();
     }
 
     auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, int, int, int, int, int, int>;

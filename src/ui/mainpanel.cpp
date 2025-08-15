@@ -13,6 +13,7 @@ struct MainPanel : ModuleWidget {
     ParamWidget* tempoKnob = nullptr;
     ParamWidget* lfoRateKnob = nullptr;
     ParamWidget* lfoModeSwitch = nullptr;
+    ParamWidget* delayTimeKnob = nullptr;
 
     TransparentButton* createButton(Vec pos, Vec size, Module* module, int paramId) {
         auto* button = createParam<TransparentButton>(pos, module, paramId);
@@ -31,16 +32,20 @@ struct MainPanel : ModuleWidget {
         
         addParam(createParamCentered<CKSSThree>(mm2px(Vec(123.0f, 62.5f)), module, Clonotribe::PARAM_LFO_WAVEFORM_SWITCH));
 
+        delayTimeKnob = createParamCentered<RoundBlackKnob>(mm2px(Vec(98.0f, 12.0f)), module, Clonotribe::PARAM_DELAY_TIME_KNOB);
+        addParam(delayTimeKnob);
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(119.0f, 12.0f)), module, Clonotribe::PARAM_DELAY_AMOUNT_KNOB));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0f, 12.0f)), module, Clonotribe::PARAM_DISTORTION_KNOB));
+
         addParam(createParamCentered<OctaveKnob>(mm2px(Vec(15.0f, 42.0f)), module, Clonotribe::PARAM_VCO_OCTAVE_KNOB));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0f, 20.0f)), module, Clonotribe::PARAM_DISTORTION_KNOB)); 
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(56.5f, 42.0f)), module, Clonotribe::PARAM_VCF_CUTOFF_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(77.0f, 42.0f)), module, Clonotribe::PARAM_VCA_LEVEL_KNOB));
         
         lfoRateKnob = createParamCentered<RoundBlackKnob>(mm2px(Vec(98.0f, 42.0f)), module, Clonotribe::PARAM_LFO_RATE_KNOB);
         addParam(lfoRateKnob);
-        
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(119.0f, 42.0f)), module, Clonotribe::PARAM_LFO_INTERVAL_KNOB));        
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0f, 42.0f)), module, Clonotribe::PARAM_RHYTHM_VOLUME_KNOB));
+
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.0f, 62.5f)), module, Clonotribe::PARAM_NOISE_KNOB));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(56.5f, 62.5f)), module, Clonotribe::PARAM_VCF_PEAK_KNOB));
         
@@ -69,6 +74,8 @@ struct MainPanel : ModuleWidget {
     }
 
     void setupInputs(Clonotribe* module) {
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(46.0f, 10.0f)), module, Clonotribe::INPUT_DELAY_TIME_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(55.0f, 10.0f)), module, Clonotribe::INPUT_DELAY_AMOUNT_CONNECTOR));
         addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 18.0f)), module, Clonotribe::INPUT_AUDIO_CONNECTOR));
         addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 27.0f)), module, Clonotribe::INPUT_CV_CONNECTOR));
         addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 36.0f)), module, Clonotribe::INPUT_GATE_CONNECTOR));
@@ -76,18 +83,18 @@ struct MainPanel : ModuleWidget {
         addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 54.0f)), module, Clonotribe::INPUT_VCO_OCTAVE_CONNECTOR));
         addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 63.0f)), module, Clonotribe::INPUT_VCF_CUTOFF_CONNECTOR));
         addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 72.0f)), module, Clonotribe::INPUT_VCF_PEAK_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 81.0f)), module, Clonotribe::INPUT_LFO_RATE_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 90.0f)), module, Clonotribe::INPUT_LFO_INTENSITY_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 99.0f)), module, Clonotribe::INPUT_DISTORTION_CONNECTOR));
-        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 108.0f)), module, Clonotribe::INPUT_VCA_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 81.0f)), module, Clonotribe::INPUT_VCA_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 90.0f)), module, Clonotribe::INPUT_LFO_RATE_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 99.0f)), module, Clonotribe::INPUT_LFO_INTENSITY_CONNECTOR));
+        addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 108.0f)), module, Clonotribe::INPUT_DISTORTION_CONNECTOR));        
         addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(172.0f, 117.0f)), module, Clonotribe::INPUT_NOISE_CONNECTOR));
     }
 
     void setupOutputs(Clonotribe* module) {
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(95.0f, 10.0f)), module, Clonotribe::OUTPUT_SYNTH_CONNECTOR));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(104.0f, 10.0f)), module, Clonotribe::OUTPUT_BASSDRUM_CONNECTOR));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(113.0f, 10.0f)), module, Clonotribe::OUTPUT_SNARE_CONNECTOR));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(122.0f, 10.0f)), module, Clonotribe::OUTPUT_HIHAT_CONNECTOR));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(10.0f, 10.0f)), module, Clonotribe::OUTPUT_SYNTH_CONNECTOR));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(19.0f, 10.0f)), module, Clonotribe::OUTPUT_BASSDRUM_CONNECTOR));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(28.0f, 10.0f)), module, Clonotribe::OUTPUT_SNARE_CONNECTOR));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(37.0f, 10.0f)), module, Clonotribe::OUTPUT_HIHAT_CONNECTOR));
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 18.0f)), module, Clonotribe::OUTPUT_AUDIO_CONNECTOR));
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 27.0f)), module, Clonotribe::OUTPUT_CV_CONNECTOR));
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(163.0f, 36.0f)), module, Clonotribe::OUTPUT_GATE_CONNECTOR));
@@ -140,6 +147,11 @@ struct MainPanel : ModuleWidget {
         
         if (lfoModeSwitch) {
             lfoModeSwitch->visible = !lfoRateConnected;
+        }
+
+        // Hide delay time knob when clock input is connected
+        if (delayTimeKnob) {
+            delayTimeKnob->visible = !clonotribeModule->inputs[Clonotribe::INPUT_DELAY_TIME_CONNECTOR].isConnected();
         }
     }
 

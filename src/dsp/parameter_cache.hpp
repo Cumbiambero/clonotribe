@@ -13,6 +13,8 @@ struct ParameterCache {
     float volume;
     float octave;
     float distortion;
+    float delayTime;
+    float delayAmount;
     
     int envelopeType;
     int lfoMode;
