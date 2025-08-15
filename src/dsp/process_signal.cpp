@@ -31,10 +31,22 @@ float Clonotribe::processOutput(
 ) {
     float volumeModulation = 1.0f + (ribbonVolumeAutomation * 0.5f);
     volumeModulation = std::clamp(volumeModulation, 0.1f, 2.0f);
+    
     float synthOutput = filteredSignal * volume * envValue * volumeModulation;
-
+    
     if (distortion > 0.0f) {
-        synthOutput = distortionProcessor.process(synthOutput, distortion);
+        float driveGain = 1.0f + (distortion * 2.0f);
+        float drivenSignal = synthOutput * driveGain;
+        float distortedSignal = distortionProcessor.process(drivenSignal, distortion);
+        float outputLevel = std::abs(synthOutput);
+        float distortedLevel = std::abs(distortedSignal);
+        
+        if (outputLevel > 0.0001f && distortedLevel > outputLevel * 3.0f) {
+            float excessGain = distortedLevel / (outputLevel * 2.5f);
+            float compressionFactor = 1.0f + std::sqrt(excessGain - 1.0f) * 0.5f;
+            distortedSignal /= compressionFactor;
+        }
+        synthOutput = distortedSignal;
     }
 
     float drumMix = 0.0f;
