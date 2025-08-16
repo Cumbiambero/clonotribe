@@ -87,9 +87,9 @@ The monotribe is a great little box and I hope that this tribute will bring some
 ## Usage
 
 ### Basic Operation
-1. **Select Part**: Use SYNTH/KICK/SNARE/HIHAT buttons to select active part
+1. **Select Part**: Use SYNTH/BD/SN/HH (F5 to F8) buttons to select active part
 2. **Pattern Programming**: Use step buttons 1-8 to program patterns
-3. **Playback**: Press PLAY to start/stop sequencer
+3. **Playback**: Press PLAY (space) to start/stop sequencer
 4. **Recording**: Press REC to record CV/Gate or ribbon input
 5. **Flux Mode**: Press FLUX for real-time pattern editing
 
@@ -104,13 +104,14 @@ The monotribe is a great little box and I hope that this tribute will bring some
 - **Gate Time**: In synth mode, use GATE TIME to cycle through gate lengths
 - **Recording**: Works with CV/Gate input, ribbon controller, or both
 - **External Sync**: Connect clock to SYNC IN for external timing
+- Use the numers 1 to 8 to de/acrivate individual steps
 
 ## Building
 
 This module requires VCV Rack SDK v2.
 
 ```bash
-cd ClonoTribe
+cd Clonotribe
 make clean
 make
 make install
