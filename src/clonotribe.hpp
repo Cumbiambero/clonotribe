@@ -8,6 +8,8 @@
 #include "dsp/sequencer_state_manager.hpp"
 #include "dsp/drum_processor.hpp"
 #include "dsp/filter_processor.hpp"
+#include "dsp/vcf/ladder.hpp"
+#include "dsp/vcf/filter_type.hpp"
 #include "dsp/delay.hpp"
 #include "ui/ui.hpp"
 
@@ -72,6 +74,7 @@ struct Clonotribe : rack::Module {
         PARAM_SEQUENCER_8_BUTTON,
         PARAM_PLAY_BUTTON,
         PARAM_GATE_TIME_BUTTON,
+        PARAM_ACCENT_GLIDE_KNOB,
         PARAMS_LEN
     };
     
@@ -90,6 +93,7 @@ struct Clonotribe : rack::Module {
         INPUT_DELAY_TIME_CONNECTOR,
         INPUT_DELAY_AMOUNT_CONNECTOR,
         INPUT_NOISE_CONNECTOR,
+        INPUT_ACCENT_GLIDE_CONNECTOR,
         INPUTS_LEN
     };
     
@@ -125,7 +129,7 @@ struct Clonotribe : rack::Module {
     };
 
     VCO vco;
-    VCF vcf;
+    MS20Filter vcf;
     LFO lfo;
     Envelope envelope;
     Sequencer sequencer;
@@ -152,6 +156,11 @@ struct Clonotribe : rack::Module {
     void triggerHihat() { drumProcessor.triggerHihat(); }
     Ribbon ribbon;
     FilterProcessor filterProcessor;
+    LadderFilter ladderFilter;
+    FilterType selectedFilterType = FILTER_MS20;
+    void setFilterType(FilterType type) {
+        selectedFilterType = type;
+    }
     RibbonController ribbonController;
     
     ParameterCache paramCache;

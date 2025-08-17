@@ -83,8 +83,6 @@ void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& 
 
 Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        
-        noiseGenerator.setNoiseType(NoiseType::WHITE);
                
         configSwitch(PARAM_VCO_WAVEFORM_SWITCH, 0.0f, 2.0f, 0.0f, "VCO Waveform", {"Square", "Triangle", "Sawtooth"});
         configSwitch(PARAM_RIBBON_RANGE_SWITCH, 0.0f, 2.0f, 0.0f, "Ribbon Controller Range", {"Key", "Narrow", "Wide"});
@@ -107,6 +105,7 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         configParam(PARAM_DISTORTION_KNOB, 0.0f, 1.0f, 0.0f, "Distortion");
         configParam(PARAM_DELAY_TIME_KNOB, 0.0f, 1.0f, 0.0f, "Delay Time", " s", 0.0f, 1.99f, 0.01f);
         configParam(PARAM_DELAY_AMOUNT_KNOB, 0.0f, 1.0f, 0.0f, "Delay Amount");
+        configParam(PARAM_ACCENT_GLIDE_KNOB, 0.0f, 1.0f, 0.0f, "Accent/Glide Amount");
         
         configButton(PARAM_SNARE_BUTTON, "Snare (F7)");
         configButton(PARAM_FLUX_BUTTON, "Flux (Tab)");
@@ -140,6 +139,7 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         configInput(INPUT_DELAY_TIME_CONNECTOR, "Delay Clock (Clock)");
         configInput(INPUT_DELAY_AMOUNT_CONNECTOR, "Delay Amount (CV)");
         configInput(INPUT_NOISE_CONNECTOR, "Noise (CV)");
+        configInput(INPUT_ACCENT_GLIDE_CONNECTOR, "Accent/Glide (CV)");
 
         configOutput(OUTPUT_CV_CONNECTOR, "CV");
         configOutput(OUTPUT_GATE_CONNECTOR, "Gate");
@@ -150,7 +150,9 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
         configOutput(OUTPUT_SNARE_CONNECTOR, "Snare");
         configOutput(OUTPUT_HIHAT_CONNECTOR, "Hi-Hat");
         
-        // Initialize delay processor
+        noiseGenerator.setNoiseType(NoiseType::WHITE);
+        filterProcessor.setPointers(&vcf, &ladderFilter);
+        filterProcessor.setType(selectedFilterType);
         delayProcessor.clear();
 };
 
@@ -206,7 +208,30 @@ struct NoiseTypeMenuItem : rack::MenuItem {
     }
 };
 
+struct FilterTypeMenuItem : rack::MenuItem {
+    Clonotribe* module;
+    FilterType filterType;
+    void onAction(const rack::event::Action& e) override {
+        module->setFilterType(filterType);
+    }
+    void step() override {
+        static const char* filterLabels[] = {"Default (MS-20)", "Ladder (TB-303)"};
+        text = filterLabels[static_cast<int>(filterType)];
+        rightText = (module->selectedFilterType == filterType) ? "✔" : "";
+        MenuItem::step();
+    }
+};
+
 void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
+    filterProcessor.setType(selectedFilterType);
+    menu->addChild(new rack::MenuSeparator());
+    menu->addChild(rack::createMenuLabel("Filter Type"));
+    for (int i = 0; i < FILTER_TYPE_COUNT; ++i) {
+        auto* filterItem = new FilterTypeMenuItem;
+        filterItem->module = this;
+        filterItem->filterType = static_cast<FilterType>(i);
+        menu->addChild(filterItem);
+    }
     menu->addChild(new rack::MenuSeparator());
     menu->addChild(rack::createMenuLabel("Drum Kit"));
     for (int i = 0; i < DRUMKIT_COUNT; ++i) {

@@ -170,6 +170,11 @@ auto Clonotribe::processInputTriggers(float inputPitch, float gate, bool gateTim
 void Clonotribe::process(const ProcessArgs& args) {
     // 1. Read all parameters and state
     auto [cutoff, lfoIntensity, lfoRate, noiseLevel, resonance, rhythmVolume, tempo, volume, octave, distortion, envelopeType, lfoMode, lfoTarget, lfoWaveform, ribbonMode, waveform] = readParameters();
+    paramCache.accentGlideAmount = params[PARAM_ACCENT_GLIDE_KNOB].getValue();
+    if (inputs[INPUT_ACCENT_GLIDE_CONNECTOR].isConnected()) {
+        float cv = inputs[INPUT_ACCENT_GLIDE_CONNECTOR].getVoltage();
+        paramCache.accentGlideAmount = std::clamp((cv + 5.0f) * 0.1f, 0.0f, 1.0f);
+    }
 
     // 2. Update DSP/UI state
     updateDSPState(volume, rhythmVolume, lfoIntensity, ribbonMode, octave);
@@ -249,25 +254,36 @@ void Clonotribe::process(const ProcessArgs& args) {
         float finalSequencerGate = finalGate;
         
         if (sequencer.playing) {
-            // Gate Time Hold feature: CV input or ribbon controller can override pitch during sequencer playback
+            int stepIdx = seqOutput.step;
+            bool accent = sequencer.isStepAccent(stepIdx);
+            bool glide = sequencer.isStepGlide(stepIdx);
+            float accentAmount = accent ? paramCache.accentGlideAmount : 0.0f;
+            float glideAmount = glide ? paramCache.accentGlideAmount : 0.0f;
+            static float lastPitch = 0.0f;
             if (ribbon.touching && !gateTimeHeld) {
-                // Normal ribbon behavior: override pitch (but not when GATE TIME is held)
-                finalPitch = ribbon.getCV(); // Use ribbon pitch
-                // When ribbon is touched, still use sequencer gate timing (Gate Time Hold)
+                finalPitch = ribbon.getCV();
                 finalSequencerGate = seqOutput.gate;
             } else if (gate > 1.0f) {
-                finalPitch = inputPitch; // Use CV input pitch when gate is active
-                // When CV gate is active, use the larger of CV gate or sequencer gate
+                finalPitch = inputPitch;
                 finalSequencerGate = std::max(gate, seqOutput.gate);
             } else {
-                finalPitch = seqOutput.pitch; // Use sequencer pitch
-                finalSequencerGate = seqOutput.gate; // Use sequencer gate timing
+                if (glideAmount > 0.0f) {
+                    finalPitch = lastPitch + (seqOutput.pitch - lastPitch) * glideAmount;
+                } else {
+                    finalPitch = seqOutput.pitch;
+                }
+                finalSequencerGate = seqOutput.gate;
+            }
+            lastPitch = finalPitch;
+            // Accent: boost filter cutoff and envelope
+            if (accentAmount > 0.0f) {
+                cutoff += accentAmount * 0.3f;
+                resonance += accentAmount * 0.2f;
             }
         } else {
-            // When sequencer is not playing, use the manual inputs (CV/Gate or ribbon)
             finalPitch = finalInputPitch;
             finalSequencerGate = finalGate;
-        } 
+        }
         
         // Handle envelope triggering for sequencer playback
         bool shouldTriggerEnv = false;

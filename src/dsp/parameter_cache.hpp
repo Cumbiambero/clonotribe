@@ -4,6 +4,7 @@ namespace clonotribe {
 
 struct ParameterCache {
     float cutoff;
+    float accentGlideAmount = 0.0f;
     float lfoIntensity;
     float lfoRate;
     float noiseLevel;

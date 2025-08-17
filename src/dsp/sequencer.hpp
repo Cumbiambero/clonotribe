@@ -15,7 +15,25 @@ struct Sequencer final {
         float pitch = 0.0f;
         float gate = 0.0f;
         float gateTime = 0.5f;
+        bool accent = false;
+        bool glide = false;
     };
+
+    // Accent/Glide step methods moved to Sequencer
+    void setStepAccent(int step, bool value) noexcept {
+        if (step >= 0 && step < getStepCount()) steps[step].accent = value;
+    }
+    bool isStepAccent(int step) const noexcept {
+        if (step >= 0 && step < getStepCount()) return steps[step].accent;
+        return false;
+    }
+    void setStepGlide(int step, bool value) noexcept {
+        if (step >= 0 && step < getStepCount()) steps[step].glide = value;
+    }
+    bool isStepGlide(int step) const noexcept {
+        if (step >= 0 && step < getStepCount()) return steps[step].glide;
+        return false;
+    }
 
     std::array<Step, kMaxSteps> steps{};
     std::array<float, kFluxBufferSize> fluxBuffer{};
