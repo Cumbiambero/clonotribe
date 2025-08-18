@@ -21,17 +21,29 @@ public:
 
     [[nodiscard]] float process(float input, float cutoff, float resonance) noexcept {
         if (std::abs(input) < 1e-30f) input = 0.0f;
+        
+        float smoothedCutoff = cutoff;
+        float smoothedResonance = resonance;
+        
+        if (std::abs(cutoff - lastCutoff) > CUTOFF_THRESHOLD) {
+            smoothedCutoff = lastCutoff + (cutoff - lastCutoff) * 0.2f;
+            lastCutoff = smoothedCutoff;
+        } else {
+            lastCutoff = cutoff;
+        }
+        
+        if (std::abs(resonance - lastResonance) > RESONANCE_THRESHOLD) {
+            smoothedResonance = lastResonance + (resonance - lastResonance) * 0.2f;
+            lastResonance = smoothedResonance;
+        } else {
+            lastResonance = resonance;
+        }
+        
         switch (filterType) {
             case FILTER_MS20:
                 if (vcf) {
-                    if (std::abs(cutoff - lastCutoff) > CUTOFF_THRESHOLD) {
-                        vcf->setCutoff(cutoff);
-                        lastCutoff = cutoff;
-                    }
-                    if (std::abs(resonance - lastResonance) > RESONANCE_THRESHOLD) {
-                        vcf->setResonance(resonance);
-                        lastResonance = resonance;
-                    }
+                    vcf->setCutoff(smoothedCutoff);
+                    vcf->setResonance(smoothedResonance);
                     float output = vcf->process(input);
                     if (std::abs(output) < 1e-30f) output = 0.0f;
                     return output;
@@ -39,14 +51,8 @@ public:
                 break;
             case FILTER_LADDER:
                 if (ladder) {
-                    if (std::abs(cutoff - lastCutoff) > CUTOFF_THRESHOLD) {
-                        ladder->setCutoff(cutoff);
-                        lastCutoff = cutoff;
-                    }
-                    if (std::abs(resonance - lastResonance) > RESONANCE_THRESHOLD) {
-                        ladder->setResonance(resonance);
-                        lastResonance = resonance;
-                    }
+                    ladder->setCutoff(smoothedCutoff);
+                    ladder->setResonance(smoothedResonance);
                     float output = ladder->process(input);
                     if (std::abs(output) < 1e-30f) output = 0.0f;
                     return output;
@@ -54,14 +60,8 @@ public:
                 break;
             case FILTER_MOOG:
                 if (moog) {
-                    if (std::abs(cutoff - lastCutoff) > CUTOFF_THRESHOLD) {
-                        moog->setCutoff(cutoff);
-                        lastCutoff = cutoff;
-                    }
-                    if (std::abs(resonance - lastResonance) > RESONANCE_THRESHOLD) {
-                        moog->setResonance(resonance);
-                        lastResonance = resonance;
-                    }
+                    moog->setCutoff(smoothedCutoff);
+                    moog->setResonance(smoothedResonance);
                     float output = moog->process(input);
                     if (std::abs(output) < 1e-30f) output = 0.0f;
                     return output;

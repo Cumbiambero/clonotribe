@@ -47,6 +47,7 @@ float Clonotribe::processOutput(
             float compressionFactor = 1.0f + std::sqrt(excessGain - 1.0f) * 0.5f;
             distortedSignal /= compressionFactor;
         }
+        
         synthOutput = distortedSignal;
     }
     

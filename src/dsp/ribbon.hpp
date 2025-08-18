@@ -20,7 +20,6 @@ public:
     float getPosition() const noexcept { return position; }
 
     [[nodiscard]] float getCV() const noexcept {
-        // Map position to CV depending on mode
         switch (mode) {
             case Mode::Key: {
                 int step = static_cast<int>(position * 12.0f);
@@ -38,15 +37,12 @@ public:
         return touching ? 10.0f : 0.0f;
     }
     [[nodiscard]] float getGateTimeMod() const noexcept {
-        // 0.0f (short) to 1.0f (long)
         return position;
     }
     [[nodiscard]] float getVolumeAutomation() const noexcept {
-        // -1.0f (min) to +1.0f (max)
         return (position - 0.5f) * 2.0f;
     }
     [[nodiscard]] float getDrumRollIntensity() const noexcept {
-        // 0.0f (min) to 1.0f (max)
         return position;
     }
     bool touching = false;

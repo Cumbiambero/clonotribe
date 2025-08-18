@@ -9,6 +9,33 @@
 #include "dsp/drumkits/latin/snaredrum.hpp"
 #include "dsp/drumkits/latin/hihat.hpp"
 
+void Clonotribe::cycleStepAccentGlide(int step) {
+    if (step < 0 || step >= sequencer.getStepCount()) return;
+    
+    // Get current state
+    bool accent = sequencer.isStepAccent(step);
+    bool glide = sequencer.isStepGlide(step);
+    
+    // Cycle through states: none -> accent -> glide -> accent+glide -> none
+    if (!accent && !glide) {
+        // From none to accent
+        sequencer.setStepAccent(step, true);
+        sequencer.setStepGlide(step, false);
+    } else if (accent && !glide) {
+        // From accent to glide
+        sequencer.setStepAccent(step, false);
+        sequencer.setStepGlide(step, true);
+    } else if (!accent && glide) {
+        // From glide to accent+glide
+        sequencer.setStepAccent(step, true);
+        sequencer.setStepGlide(step, true);
+    } else {
+        // From accent+glide to none
+        sequencer.setStepAccent(step, false);
+        sequencer.setStepGlide(step, false);
+    }
+}
+
 void Clonotribe::toggleActiveStep(int step) {
     int idx = step;
     if (sequencer.isInSixteenStepMode()) {
@@ -20,49 +47,35 @@ void Clonotribe::toggleActiveStep(int step) {
 }
 
 
-void Clonotribe::handleStepButtons() {
+void Clonotribe::handleStepButtons(float sampleTime) {
     for (int i = 0; i < 8; ++i) {
         float btnVal = params[PARAM_SEQUENCER_1_BUTTON + i].getValue();
         bool rising = (stepPrevVal[i] <= 0.5f && btnVal > 0.5f);
+
         if (rising) {
-            stepCtrlLatch[i] = (btnVal > 0.70f && btnVal < 0.95f);
-        }
-        if (btnVal <= 0.0f && stepPrevVal[i] > 0.0f) {
-            stepCtrlLatch[i] = false;
-        }
-        if (rising) {
-            bool ctrlHeldForThisPress = stepCtrlLatch[i];
+            bool isCtrlClick = (btnVal >= 0.85f && btnVal < 0.95f);
+            
             int idx = i;
             if (sequencer.isInSixteenStepMode()) idx = sequencer.getStepIndex(i, false);
+            
             if (selectedDrumPart == 0 && idx >= 0 && idx < sequencer.getStepCount()) {
-                if (ctrlHeldForThisPress) {
-                    bool a = sequencer.isStepAccent(idx);
-                    bool g = sequencer.isStepGlide(idx);
-                    if (!a && !g) { a = true; g = false; }
-                    else if (a && !g) { a = false; g = true; }
-                    else if (!a && g) { a = true; g = true; }
-                    else { a = false; g = false; }
-                    sequencer.setStepAccent(idx, a);
-                    sequencer.setStepGlide(idx, g);
-                    selectedStepForEditing = i; 
-                }
-                else if (activeStepActive) {
-                    bool currentSkip = sequencer.isStepSkipped(idx);
-                    sequencer.setStepSkipped(idx, !currentSkip);
-                    selectedStepForEditing = i; 
+                if (isCtrlClick) {
+                    cycleStepAccentGlide(idx);
+                } else if (activeStepActive) {
+                    sequencer.toggleStepSkipped(idx);
                 } else {
-                    bool current = sequencer.isStepMuted(idx);
-                    sequencer.setStepMuted(idx, !current);
-                    selectedStepForEditing = i;
+                    sequencer.toggleStepMuted(idx);
                 }
+                selectedStepForEditing = i;
             } else if (selectedDrumPart != 0) {
                 int drumIdx = selectedDrumPart - 1;
-                if (drumIdx >= 0 && drumIdx < 3 && i >= 0 && i < 8) {
+                if (drumIdx >= 0 && drumIdx < 3) {
                     drumPatterns[drumIdx][i] = !drumPatterns[drumIdx][i];
                 }
             }
         }
-    stepPrevVal[i] = btnVal;
+
+        stepPrevVal[i] = btnVal;
     }
 }
 
@@ -87,9 +100,8 @@ void Clonotribe::toggleStepInCurrentMode(int step) {
 void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& seqOutput) {
     for (int i = 0; i < 8; ++i) {
         int mainIdx = sequencer.isInSixteenStepMode() ? sequencer.getStepIndex(i, false) : i;
-        bool accent = (mainIdx >= 0 && mainIdx < sequencer.getStepCount()) && sequencer.isStepAccent(mainIdx);
-        bool glide = (mainIdx >= 0 && mainIdx < sequencer.getStepCount()) && sequencer.isStepGlide(mainIdx);
         int base = LIGHT_SEQUENCER_1_R + i * 3;
+        
         if (activeStepActive) {
             bool notSkipped = (mainIdx >= 0 && mainIdx < sequencer.getStepCount()) && !sequencer.steps[mainIdx].skipped;
             lights[base + 0].setBrightness(notSkipped ? 1.0f : 0.0f);
@@ -98,29 +110,46 @@ void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& 
         } else {
             bool isPlaying = false;
             bool notMuted = false;
+            
             if (selectedDrumPart == 0) {
                 notMuted = !sequencer.isStepMuted(mainIdx);
                 isPlaying = sequencer.playing && (seqOutput.step == mainIdx);
+                
+                float baseBrightness = 0.0f;
+                if (notMuted) baseBrightness = isPlaying ? 1.0f : 0.3f;
+                
+                float red = baseBrightness, green = 0.0f, blue = 0.0f;
+                
+                if (notMuted) {
+                    bool accent = sequencer.isStepAccent(mainIdx);
+                    bool glide = sequencer.isStepGlide(mainIdx);
+                    
+                    if (accent && glide) {
+                        red = green = blue = baseBrightness;
+                    } else if (accent) {
+                        red = 0.0f;
+                        green = baseBrightness;
+                        blue = 0.0f;
+                    } else if (glide) {
+                        red = 0.0f;
+                        green = 0.0f;
+                        blue = baseBrightness;
+                    }
+                }
+                
+                lights[base + 0].setBrightness(red);
+                lights[base + 1].setBrightness(green);
+                lights[base + 2].setBrightness(blue);
             } else {
                 int drumIdx = selectedDrumPart - 1;
-                notMuted = (drumIdx >= 0 && drumIdx < 3 && i >= 0 && i < 8) ? drumPatterns[drumIdx][i] : false;
+                notMuted = (drumIdx >= 0 && drumIdx < 3) ? drumPatterns[drumIdx][i] : false;
                 isPlaying = sequencer.playing && (seqOutput.step == i);
+                
+                float brightness = notMuted ? (isPlaying ? 1.0f : 0.3f) : 0.0f;
+                lights[base + 0].setBrightness(brightness);
+                lights[base + 1].setBrightness(0.0f);
+                lights[base + 2].setBrightness(0.0f);
             }
-            float baseBrightness = 0.0f;
-            if (notMuted) baseBrightness = isPlaying ? 1.0f : 0.3f;
-            float red = baseBrightness, green = 0.0f, blue = 0.0f;
-            if (selectedDrumPart == 0) {
-                if (notMuted) {
-                    if (accent && glide) { red = baseBrightness; green = baseBrightness; blue = baseBrightness; }
-                    else if (accent) { red = 0.0f; green = baseBrightness; blue = 0.0f; }
-                    else if (glide) { red = 0.0f; green = 0.0f; blue = baseBrightness; }
-                }
-            } else {
-                green = 0.0f; blue = 0.0f;
-            }
-            lights[base + 0].setBrightness(red);
-            lights[base + 1].setBrightness(green);
-            lights[base + 2].setBrightness(blue);
         }
     }
 }
@@ -198,6 +227,10 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
     filterProcessor.setPointers(&vcf, &ladderFilter, &moogFilter);
     filterProcessor.setType(selectedFilterType);
     delayProcessor.clear();
+    
+    dcBlocker.setSampleRate(APP->engine->getSampleRate());
+    dcBlocker.setCutoff(60.0f);
+    dcBlocker.reset();
 }
 
 void Clonotribe::process(const ProcessArgs& args) {
@@ -207,15 +240,13 @@ void Clonotribe::process(const ProcessArgs& args) {
     handleMainTriggers();
     handleDrumSelectionAndTempo(tempo);
     handleActiveStep();
-    handleStepButtons();
+    handleStepButtons(args.sampleTime);
     bool gateTimeHeld = params[PARAM_GATE_TIME_BUTTON].getValue() > 0.5f;
     this->gateTimeHeld = gateTimeHeld;
     handleSpecialGateTimeButtons(gateTimeHeld);
 
-    // Ribbon gate time mod
     float ribbonGateTimeMod = gateTimesLocked ? 0.5f : (gateTimeHeld && ribbon.touching ? ribbon.getGateTimeMod() : 0.5f);
 
-    // Drum rolls (in drum mode)
     handleDrumRolls(args, gateTimeHeld);
 
     float syncSignal = inputs[INPUT_SYNC_CONNECTOR].getVoltage();
@@ -229,7 +260,6 @@ void Clonotribe::process(const ProcessArgs& args) {
 
     bool cvGateTriggered = gateTrigger.process(gate > 1.0f);
 
-    // Pass ribbonGateTimeMod to sequencer for synth gate time mod
     auto seqOutput = sequencer.process(args.sampleTime, inputPitch, gate, syncSignal, ribbonGateTimeMod, paramCache.accentGlideAmount);
     handleSequencerAndDrumState(seqOutput, inputPitch, gate, cvGateTriggered);
 
@@ -258,7 +288,10 @@ void Clonotribe::process(const ProcessArgs& args) {
         gateActive = false;
     }
 
-    float accentBoost = (!ribbonOverride && seqOutput.accent) ? (0.2f * paramCache.accentGlideAmount) : 0.0f;
+    float accentBoost = 0.0f;
+    if (!ribbonOverride && seqOutput.accent && paramCache.accentGlideAmount > 0.0f) {
+        accentBoost = 0.2f * paramCache.accentGlideAmount;
+    }
     float effectiveCutoff = std::clamp(cutoff + accentBoost, 0.0f, 1.0f);
 
     float lfoFreq = rack::math::rescale(lfoRate, 0.0f, 1.0f, LFO::MIN_FREQ, LFO::MAX_FREQ);
@@ -294,10 +327,16 @@ void Clonotribe::process(const ProcessArgs& args) {
     if (!vcoProcessFunction) {
         vcoProcessFunction = &VCO::processSquare;
     }
+    
     float vcoOutput = (vco.*vcoProcessFunction)(args.sampleTime);
     float noise = noiseGenerator.process() * noiseLevel;
     float mixedSignal = vcoOutput + noise;
-    float filteredSignal = filterProcessor.process(mixedSignal, std::clamp(effectiveCutoff + lfoToVCF, 0.0f, 1.0f), resonance);
+    
+    float filteredSignal = filterProcessor.process(
+        mixedSignal, 
+        std::clamp(effectiveCutoff + lfoToVCF, 0.0f, 1.0f), 
+        resonance
+    );
     float envValue = processEnvelope(envelopeType, envelope, args.sampleTime, finalGate);
     float delayClock = inputs[INPUT_DELAY_TIME_CONNECTOR].isConnected() ? inputs[INPUT_DELAY_TIME_CONNECTOR].getVoltage() : 0.0f;
     float finalOutput = processOutput(
@@ -317,12 +356,24 @@ void Clonotribe::process(const ProcessArgs& args) {
     } else {
         outputs[OUTPUT_LFO_RATE_CONNECTOR].setVoltage(0.0f);
     }
-    finalOutput = dcBlocker.process(finalOutput);
+    
+    // Apply very gentle taming of the signal to prevent crackling
+    // This is critical to prevent the vinyl-like crackle artifacts
+    finalOutput = finalOutput * 0.95f;
+    
     if (distortion <= 0.1f) {
-        finalOutput = clonotribe::FastMath::fastTanh(finalOutput * 0.8f) * 1.2f;
+        // Apply a very gentle soft clipping
+        finalOutput = clonotribe::FastMath::fastTanh(finalOutput * 0.7f) * 1.3f;
     }
 
-    outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(std::clamp(finalOutput * 4.0f, -10.0f, 10.0f));
+    // Apply noise reduction to eliminate the vinyl-like crackle
+    float noiseReducedOutput = finalOutput;
+    if (std::abs(finalOutput) < 0.0015f) {
+        float reduction = std::abs(finalOutput) / 0.0015f;
+        noiseReducedOutput = finalOutput * reduction * reduction;
+    }
+
+    outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(std::clamp(noiseReducedOutput * 4.0f, -10.0f, 10.0f));
     outputs[OUTPUT_CV_CONNECTOR].setVoltage(finalPitch);
     outputs[OUTPUT_GATE_CONNECTOR].setVoltage(finalGate);
     bool syncOut = syncPulse.process(args.sampleTime);
@@ -688,13 +739,13 @@ void Clonotribe::onRandomize(const RandomizeEvent& e) {
         for (int step = 0; step < 8; step++) {
             float probability;
             switch (drum) {
-                case 0: // Kick - likely on beats 1 and 3
+                case 0:
                     probability = ((step % 4) == 0 || (step % 4) == 2) ? 0.8f : 0.3f;
                     break;
-                case 1: // Snare - more likely on beats 2 and 4
+                case 1:
                     probability = ((step % 4) == 1 || (step % 4) == 3) ? 0.7f : 0.2f;
                     break;
-                case 2: // Hi-hat - more evenly distributed
+                case 2:
                     probability = 0.6f;
                     break;
                 default:

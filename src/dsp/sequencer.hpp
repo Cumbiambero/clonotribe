@@ -214,19 +214,22 @@ struct Sequencer final {
                 } else {
                     output.pitch = steps[currentStep].pitch;
                 }
+                
                 if (output.glide && accentGlideAmount > 0.0f) {
                     if (!hasGlideState) {
                         glideStatePitch = output.pitch;
                         hasGlideState = true;
                     } else {
-                        float alpha = std::clamp(accentGlideAmount, 0.0f, 1.0f);
-                        glideStatePitch = glideStatePitch + (output.pitch - glideStatePitch) * alpha;
+                        float glideSpeed = std::clamp(accentGlideAmount, 0.0f, 1.0f);
+                        glideStatePitch += (output.pitch - glideStatePitch) * glideSpeed;
                     }
+                    
                     output.pitch = glideStatePitch;
                 } else {
                     glideStatePitch = output.pitch;
                     hasGlideState = true;
                 }
+                
                 float effectiveGateTime = std::clamp(steps[currentStep].gateTime * ribbonGateTimeMod, 0.1f, 1.0f);
                 float stepProgress = externalSync ? (stepTimer / 0.1f) : (stepTimer / stepDuration);
                 output.gate = (stepProgress < effectiveGateTime) ? 5.0f : 0.0f;

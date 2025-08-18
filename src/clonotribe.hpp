@@ -275,9 +275,10 @@ private:
     void enableAllActiveSteps();
     void handleActiveStep();
     void handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld);
-    void handleStepButtons();
+    void handleStepButtons(float sampleTime);
     void toggleStepInCurrentMode(int step);
     void toggleActiveStep(int step);
     void updateStepLights(const Sequencer::SequencerOutput& seqOutput);
     bool isStepActiveInCurrentMode(int step);
+    void cycleStepAccentGlide(int step);
 };

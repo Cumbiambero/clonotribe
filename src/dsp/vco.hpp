@@ -16,7 +16,7 @@ struct VCO final {
     rack::dsp::RCFilter antiAlias{};
     float dcBlockerY{0.0f};
     float dcBlockerX{0.0f};
-    static constexpr float dcBlockerAlpha = 0.995f;
+    static constexpr float dcBlockerAlpha = 0.9997f; // Less aggressive DC blocking
 
     constexpr VCO() noexcept = default;
 
