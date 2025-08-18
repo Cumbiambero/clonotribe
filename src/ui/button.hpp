@@ -2,6 +2,10 @@
 #include <rack.hpp>
 
 namespace clonotribe {
+
+// Transparent button encodes modifier state in its value:
+// 0.9 => pressed with Ctrl, 1.0 => pressed without Ctrl, 0.0 => released
+
 struct TransparentButton final : rack::app::ParamWidget {
     bool pressed = false;
 
@@ -20,10 +24,18 @@ struct TransparentButton final : rack::app::ParamWidget {
     }
 
     void onButton(const rack::event::Button& e) override {
-        if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
-            pressed = true;
-            if (getParamQuantity()) {
-                getParamQuantity()->setValue(1.0f);
+        if (e.button == GLFW_MOUSE_BUTTON_LEFT) {
+            if (e.action == GLFW_PRESS) {
+                pressed = true;
+                if (auto* q = getParamQuantity()) {
+                    int mods = APP->window->getMods();
+                    bool ctrl = (mods & RACK_MOD_CTRL) != 0;
+                    q->setValue(ctrl ? 0.9f : 1.0f);
+                }
+            } else if (e.action == GLFW_RELEASE) {
+                if (getParamQuantity()) {
+                    getParamQuantity()->setValue(0.0f);
+                }
             }
         }
         rack::app::ParamWidget::onButton(e);
@@ -32,8 +44,10 @@ struct TransparentButton final : rack::app::ParamWidget {
     void onDragStart(const rack::event::DragStart& e) override {
         if (e.button == GLFW_MOUSE_BUTTON_LEFT) {
             pressed = true;
-            if (getParamQuantity()) {
-                getParamQuantity()->setValue(1.0f);
+            if (auto* q = getParamQuantity()) {
+                int mods = APP->window->getMods();
+                bool ctrl = (mods & RACK_MOD_CTRL) != 0;
+                q->setValue(ctrl ? 0.9f : 1.0f);
             }
         }
         rack::app::ParamWidget::onDragStart(e);
@@ -49,4 +63,5 @@ struct TransparentButton final : rack::app::ParamWidget {
         ParamWidget::onDragEnd(e);
     }
 };
+
 }

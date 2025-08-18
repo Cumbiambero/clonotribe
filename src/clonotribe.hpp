@@ -11,6 +11,7 @@
 #include "dsp/vcf/ladder.hpp"
 #include "dsp/vcf/filter_type.hpp"
 #include "dsp/delay.hpp"
+#include "dsp/dc_blocker.hpp"
 #include "ui/ui.hpp"
 
 using namespace clonotribe;
@@ -106,6 +107,7 @@ struct Clonotribe : rack::Module {
         OUTPUT_BASSDRUM_CONNECTOR,
         OUTPUT_SNARE_CONNECTOR,
         OUTPUT_HIHAT_CONNECTOR,
+        OUTPUT_LFO_RATE_CONNECTOR,        
         OUTPUTS_LEN
     };
     
@@ -114,17 +116,33 @@ struct Clonotribe : rack::Module {
         LIGHT_BASSDRUM,
         LIGHT_SNARE,
         LIGHT_HIGHHAT,
-        LIGHT_SEQUENCER_1,
-        LIGHT_SEQUENCER_2,
-        LIGHT_SEQUENCER_3,
-        LIGHT_SEQUENCER_4,
-        LIGHT_SEQUENCER_5,
-        LIGHT_SEQUENCER_6,
-        LIGHT_SEQUENCER_7,
-        LIGHT_SEQUENCER_8,
         LIGHT_FLUX,
         LIGHT_REC,
         LIGHT_PLAY,
+        LIGHT_SEQUENCER_1_R,
+        LIGHT_SEQUENCER_1_G,
+        LIGHT_SEQUENCER_1_B,
+        LIGHT_SEQUENCER_2_R,
+        LIGHT_SEQUENCER_2_G,
+        LIGHT_SEQUENCER_2_B,
+        LIGHT_SEQUENCER_3_R,
+        LIGHT_SEQUENCER_3_G,
+        LIGHT_SEQUENCER_3_B,
+        LIGHT_SEQUENCER_4_R,
+        LIGHT_SEQUENCER_4_G,
+        LIGHT_SEQUENCER_4_B,
+        LIGHT_SEQUENCER_5_R,
+        LIGHT_SEQUENCER_5_G,
+        LIGHT_SEQUENCER_5_B,
+        LIGHT_SEQUENCER_6_R,
+        LIGHT_SEQUENCER_6_G,
+        LIGHT_SEQUENCER_6_B,
+        LIGHT_SEQUENCER_7_R,
+        LIGHT_SEQUENCER_7_G,
+        LIGHT_SEQUENCER_7_B,
+        LIGHT_SEQUENCER_8_R,
+        LIGHT_SEQUENCER_8_G,
+        LIGHT_SEQUENCER_8_B,
         LIGHTS_LEN
     };
 
@@ -157,9 +175,12 @@ struct Clonotribe : rack::Module {
     Ribbon ribbon;
     FilterProcessor filterProcessor;
     LadderFilter ladderFilter;
+    MoogFilter moogFilter;
     FilterType selectedFilterType = FILTER_MS20;
     void setFilterType(FilterType type) {
         selectedFilterType = type;
+        filterProcessor.setType(type);
+        filterProcessor.setPointers(&vcf, &ladderFilter, &moogFilter);
     }
     RibbonController ribbonController;
     
@@ -184,8 +205,13 @@ struct Clonotribe : rack::Module {
     dsp::SchmittTrigger syncHalfTempoTrigger;
     dsp::SchmittTrigger stepTriggers[8];
     dsp::SchmittTrigger drumTriggers[4];
-    dsp::SchmittTrigger lfoClockTrigger;
+    dsp::SchmittTrigger ribbonGateTrigger;
     dsp::PulseGenerator syncPulse;
+    dsp::PulseGenerator lfoRatePulse;
+    DcBlocker dcBlocker;
+    bool stepCtrlLatch[8] = {false,false,false,false,false,false,false,false};
+    float stepPrevVal[8] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+
 
     int selectedDrumPart = 0; // 0=synth, 1=kick, 2=snare, 3=hihat
     int selectedStepForEditing = 0;
@@ -210,6 +236,7 @@ struct Clonotribe : rack::Module {
     void onSampleRateChange() override {
         drumProcessor.setSampleRate(APP->engine->getSampleRate());
         delayProcessor.setSampleRate(APP->engine->getSampleRate());
+    dcBlocker.setSampleRate(APP->engine->getSampleRate());
     }
 
     void onReset() override {

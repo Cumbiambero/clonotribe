@@ -19,7 +19,6 @@ struct Sequencer final {
         bool glide = false;
     };
 
-    // Accent/Glide step methods moved to Sequencer
     void setStepAccent(int step, bool value) noexcept {
         if (step >= 0 && step < getStepCount()) steps[step].accent = value;
     }
@@ -46,11 +45,13 @@ struct Sequencer final {
     float lastRecordedPitch = 0.0f;
     float stepDuration = 0.25f;
     float stepTimer = 0.0f;
+    float glideStatePitch = 0.0f;
     bool externalSync = false;
     bool fluxMode = false;
     bool playing = false;
     bool recording = false;
     bool sixteenStepMode = false;
+    bool hasGlideState = false;
 
     rack::dsp::SchmittTrigger gateTrigger;
     rack::dsp::SchmittTrigger syncTrigger;
@@ -154,8 +155,10 @@ struct Sequencer final {
         float gate = 0.0f;
         bool stepChanged = false;
         int step = 0;
+        bool accent = false;
+        bool glide = false;
     };
-    SequencerOutput process(float sampleTime, float inputPitch = 0.0f, float inputGate = 0.0f, float syncSignal = 0.0f, float ribbonGateTimeMod = 0.5f) {
+    SequencerOutput process(float sampleTime, float inputPitch = 0.0f, float inputGate = 0.0f, float syncSignal = 0.0f, float ribbonGateTimeMod = 0.5f, float accentGlideAmount = 0.0f) {
         SequencerOutput output;
         if (!playing) return output;
         bool wasNewStep = false;
@@ -193,6 +196,8 @@ struct Sequencer final {
                 output.pitch = 0.0f;
                 output.gate = 0.0f;
             } else {
+                output.accent = steps[currentStep].accent;
+                output.glide = steps[currentStep].glide;
                 if (fluxMode && fluxSampleCount > 0) {
                     int samplesPerStep = fluxSampleCount / getStepCount();
                     if (samplesPerStep > 0) {
@@ -209,6 +214,19 @@ struct Sequencer final {
                 } else {
                     output.pitch = steps[currentStep].pitch;
                 }
+                if (output.glide && accentGlideAmount > 0.0f) {
+                    if (!hasGlideState) {
+                        glideStatePitch = output.pitch;
+                        hasGlideState = true;
+                    } else {
+                        float alpha = std::clamp(accentGlideAmount, 0.0f, 1.0f);
+                        glideStatePitch = glideStatePitch + (output.pitch - glideStatePitch) * alpha;
+                    }
+                    output.pitch = glideStatePitch;
+                } else {
+                    glideStatePitch = output.pitch;
+                    hasGlideState = true;
+                }
                 float effectiveGateTime = std::clamp(steps[currentStep].gateTime * ribbonGateTimeMod, 0.1f, 1.0f);
                 float stepProgress = externalSync ? (stepTimer / 0.1f) : (stepTimer / stepDuration);
                 output.gate = (stepProgress < effectiveGateTime) ? 5.0f : 0.0f;
@@ -216,6 +234,8 @@ struct Sequencer final {
         } else {
             output.pitch = 0.0f;
             output.gate = 0.0f;
+            output.accent = false;
+            output.glide = false;
         }
         return output;
     }

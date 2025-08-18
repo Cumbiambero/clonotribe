@@ -35,10 +35,12 @@ void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOut
                 sequencer.recordNoteToStep(nextStep, finalInputPitch, finalGate > 1.0f ? finalGate : 5.0f, 0.8f);
                 sequencer.recordingStep = (nextStep + 1) % stepCount;
             }
+        } else if (sequencer.playing && ribbon.touching && seqOutput.stepChanged) {
+            // While ribbon overrides notes, capture the held ribbon note on each new step
+            sequencer.recordNote(finalInputPitch, finalGate > 1.0f ? finalGate : 5.0f, 0.8f);
         }
     }
 
-    // Trigger drums on step changes and generate sync pulses
     if (sequencer.playing && seqOutput.stepChanged) {
         int currentStep = seqOutput.step;
 
@@ -57,6 +59,6 @@ void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOut
             if (drumPatterns[1][drumStepIndex]) triggerSnare();
             if (drumPatterns[2][drumStepIndex]) triggerHihat();
         }
-        syncPulse.trigger(1e-3f); // Generate sync pulse on step change (1ms pulse)
+        syncPulse.trigger(1e-3f);
     }
 }
