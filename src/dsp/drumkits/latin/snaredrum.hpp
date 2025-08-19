@@ -26,55 +26,52 @@ public:
     }
     
     float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {
-        if (!triggered) return 0.0f;
+        if (!triggered) {
+            return 0.0f;
+        }
         
-        const float invSampleRate = 1.0f / sampleRate;
-    float accentGain = 0.8f + accent * 0.6f;
+        float invSampleRate = 1.0f / sampleRate;
+        float accentGain = 0.8f + accent * 0.6f;
         
-    const float toneFreq = 300.0f;
-        
-        // Generate tone component
-        tonePhase += toneFreq * invSampleRate * 2.0f * clonotribe::FastMath::PI;
+        tonePhase += FREQ * invSampleRate * 2.0f * clonotribe::FastMath::PI;
         if (tonePhase >= 2.0f * clonotribe::FastMath::PI) {
             tonePhase -= 2.0f * clonotribe::FastMath::PI;
         }
         
         float tone = clonotribe::FastMath::fastSin(tonePhase) * toneEnv;
-        
-        // Generate bright, crispy noise
         float rawNoise = noise.process();
         
-    const float hpCutoff = 0.14f;
-        highpassState += (rawNoise - highpassState) * hpCutoff;
+        highpassState += (rawNoise - highpassState) * HP_CUTOFF;
         float brightNoise = (rawNoise - highpassState) * noiseEnv;
-        
-    const float bpCutoff = 0.22f;
-        bandpassState1 += (brightNoise - bandpassState1) * bpCutoff;
-        bandpassState2 += (bandpassState1 - bandpassState2) * bpCutoff;
+
+        bandpassState1 += (brightNoise - bandpassState1) * BP_CUTOFF;
+        bandpassState2 += (bandpassState1 - bandpassState2) * BP_CUTOFF;
         float crackNoise = (bandpassState1 - bandpassState2) * cracklEnv;
         
-    const float crackleCutoff = 0.38f;
-        crackleFilter += (crackNoise - crackleFilter) * crackleCutoff;
-        float textureNoise = crackleFilter;
-        
-    float output = tone * 0.2f + brightNoise * 0.55f + crackNoise * 0.75f + textureNoise * 0.25f;
-        
-    toneEnv *= 0.9945f;
-    noiseEnv *= 0.9875f;
-    cracklEnv *= 0.9915f;
-    ampEnv *= 0.9905f;
+        crackleFilter += (crackNoise - crackleFilter) * CRACKLE_CUTOFF;
+        float textureNoise = crackleFilter;        
+        float output = tone * 0.2f + brightNoise * 0.55f + crackNoise * 0.75f + textureNoise * 0.25f;
+
+        toneEnv *= 0.9945f;
+        noiseEnv *= 0.9875f;
+        cracklEnv *= 0.9915f;
+        ampEnv *= 0.9905f;
         
         if (ampEnv < 0.001f) {
             triggered = false;
         }
         
         output *= ampEnv;
-    output = clonotribe::FastMath::fastTanh(output * 2.6f);
-        
-    return output * 1.35f * accentGain;
+        output = clonotribe::FastMath::fastTanh(output * 2.6f);        
+        return output * 1.35f * accentGain;
     }
     
 private:
+    static constexpr float FREQ = 300.0f;
+    static constexpr float HP_CUTOFF = 0.14f;
+    static constexpr float BP_CUTOFF = 0.22f;
+    static constexpr float CRACKLE_CUTOFF = 0.38f;
+
     float ampEnv = 0.0f;
     float toneEnv = 0.0f;
     float noiseEnv = 0.0f;

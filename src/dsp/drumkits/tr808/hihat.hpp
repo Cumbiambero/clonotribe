@@ -29,64 +29,57 @@ public:
     }
     
     float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {
-        if (!triggered) return 0.0f;
+        if (!triggered) {
+            return 0.0f;
+        }
         
-        const float invSampleRate = 1.0f / sampleRate;
-    float accentGain = 0.75f + accent * 0.7f;
-        
-    const float freqs[6] = {418.0f, 539.0f, 707.0f, 869.0f, 1131.0f, 1319.0f};
+        float invSampleRate = 1.0f / sampleRate;
+        float accentGain = 0.75f + accent * 0.7f;
         float phases[6] = {osc1Phase, osc2Phase, osc3Phase, osc4Phase, osc5Phase, osc6Phase};
-        
         float squareSum = 0.0f;
         
-        // Generate square waves
         for (int i = 0; i < 6; i++) {
-            phases[i] += freqs[i] * invSampleRate * 2.0f * clonotribe::FastMath::PI;
+            phases[i] += FREQUENCIES[i] * invSampleRate * 2.0f * clonotribe::FastMath::PI;
             if (phases[i] >= 2.0f * clonotribe::FastMath::PI) {
                 phases[i] -= 2.0f * clonotribe::FastMath::PI;
             }
             
-            // Square wave generation
             float square = (phases[i] < clonotribe::FastMath::PI) ? 1.0f : -1.0f;
             squareSum += square * (1.0f / 6.0f); // Normalize
         }
         
-        // Update phases
         osc1Phase = phases[0]; osc2Phase = phases[1]; osc3Phase = phases[2];
         osc4Phase = phases[3]; osc5Phase = phases[4]; osc6Phase = phases[5];
         
-    const float bp1Cutoff = 0.23f;
-    const float bp2Cutoff = 0.34f;
-        
-        // First bandpass filter
-        bandpass1State1 += (squareSum - bandpass1State1) * bp1Cutoff;
-        bandpass1State2 += (bandpass1State1 - bandpass1State2) * bp1Cutoff;
+        bandpass1State1 += (squareSum - bandpass1State1) * BP1_CUTOFF;
+        bandpass1State2 += (bandpass1State1 - bandpass1State2) * BP1_CUTOFF;
         float bp1Out = bandpass1State1 - bandpass1State2;
         
-        // Second bandpass filter
-        bandpass2State1 += (bp1Out - bandpass2State1) * bp2Cutoff;
-        bandpass2State2 += (bandpass2State1 - bandpass2State2) * bp2Cutoff;
+        bandpass2State1 += (bp1Out - bandpass2State1) * BP2_CUTOFF;
+        bandpass2State2 += (bandpass2State1 - bandpass2State2) * BP2_CUTOFF;
         float bp2Out = bandpass2State1 - bandpass2State2;
         
-    const float hpCutoff = 0.07f;
-        highpassState += (bp2Out - highpassState) * hpCutoff;
-        float filteredSignal = bp2Out - highpassState;
-        
-    float noiseComponent = noise.process() * 0.12f * env;
+        highpassState += (bp2Out - highpassState) * HP_CUTOFF;
+        float filteredSignal = bp2Out - highpassState;        
+        float noiseComponent = noise.process() * 0.12f * env;
         float output = (filteredSignal + noiseComponent) * env;
         
-    env *= 0.9905f;
+        env *= 0.9905f;
         
         if (env < 0.001f) {
             triggered = false;
         }
         
-    output = clonotribe::FastMath::fastTanh(output * 2.8f);
-        
-    return output * 0.85f * accentGain;
+         output = clonotribe::FastMath::fastTanh(output * 2.8f);
+         return output * 0.85f * accentGain;
     }
     
 private:
+    static constexpr float FREQUENCIES[6] = {418.0f, 539.0f, 707.0f, 869.0f, 1131.0f, 1319.0f};
+    static constexpr float HP_CUTOFF = 0.07f;
+    static constexpr float BP1_CUTOFF = 0.23f;
+    static constexpr float BP2_CUTOFF = 0.34f;
+
     float env = 0.0f;
     float osc1Phase = 0.0f;
     float osc2Phase = 0.0f;
