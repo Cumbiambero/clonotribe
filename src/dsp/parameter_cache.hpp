@@ -2,7 +2,7 @@
 
 
 #include "envelope.hpp"
-#include "sequencer_state_manager.hpp"
+#include "sequencer/sequencer_state_manager.hpp"
 
 namespace clonotribe {
 

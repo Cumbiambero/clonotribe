@@ -1,25 +1,27 @@
 #pragma once
-#include "drumkits/base/base.hpp"
-#include "drumkits/original/kickdrum.hpp"
-#include "drumkits/original/snaredrum.hpp"
-#include "drumkits/original/hihat.hpp"
-#include "drumkits/tr808/kickdrum.hpp"
-#include "drumkits/tr808/snaredrum.hpp"
-#include "drumkits/tr808/hihat.hpp"
-#include "drumkits/latin/kickdrum.hpp"
-#include "drumkits/latin/snaredrum.hpp"
-#include "drumkits/latin/hihat.hpp"
-#include "noise.hpp"
+#include "../base/base.hpp"
+#include "../original/kickdrum.hpp"
+#include "../original/snaredrum.hpp"
+#include "../original/hihat.hpp"
+#include "../tr808/kickdrum.hpp"
+#include "../tr808/snaredrum.hpp"
+#include "../tr808/hihat.hpp"
+#include "../latin/kickdrum.hpp"
+#include "../latin/snaredrum.hpp"
+#include "../latin/hihat.hpp"
+#include "../../noise.hpp"
 
 namespace clonotribe {
 
+enum class DrumKitType {
+    ORIGINAL = 0,
+    TR808 = 1,
+    LATIN = 2,
+    SIZE = 3
+};
+
 class DrumProcessor {
 public:
-    enum class DrumKitType {
-        ORIGINAL = 0,
-        TR808 = 1,
-        LATIN = 2
-    };
     
     DrumProcessor() {
         setDrumKit(DrumKitType::ORIGINAL);

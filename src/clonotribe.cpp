@@ -415,7 +415,7 @@ struct DrumKitMenuItem : rack::MenuItem {
         module->setDrumKit(kitType);
     }
     void step() override {
-    static const char* kitLabels[static_cast<int>(DrumKitType::COUNT)] = {"Original", "TR-808", "Latin"};
+    static const char* kitLabels[static_cast<int>(DrumKitType::SIZE)] = {"Original", "TR-808", "Latin"};
     text = kitLabels[static_cast<int>(kitType)];
         rightText = (module->selectedDrumKit == kitType) ? "✔" : "";
         MenuItem::step();
@@ -462,7 +462,7 @@ void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
     }
     menu->addChild(new rack::MenuSeparator());
     menu->addChild(rack::createMenuLabel("Drum Kit"));
-    for (int i = 0; i < static_cast<int>(DrumKitType::COUNT); ++i) {
+    for (int i = 0; i < static_cast<int>(DrumKitType::SIZE); ++i) {
         auto* kitItem = new DrumKitMenuItem;
         kitItem->module = this;
         kitItem->kitType = (DrumKitType)i;
@@ -759,7 +759,7 @@ void Clonotribe::onRandomize(const RandomizeEvent& e) {
     
     sequencer.fluxMode = (rack::random::uniform() < 0.2f);
     
-    int randomKit = static_cast<int>(rack::random::uniform() * static_cast<float>(DrumKitType::COUNT));
+    int randomKit = static_cast<int>(rack::random::uniform() * static_cast<float>(DrumKitType::SIZE));
     setDrumKit(static_cast<DrumKitType>(randomKit));
 
     int randomFilter = static_cast<int>(rack::random::uniform() * static_cast<float>(FilterType::COUNT));

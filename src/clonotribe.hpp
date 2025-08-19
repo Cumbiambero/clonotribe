@@ -5,8 +5,8 @@
 #include "plugin.hpp"
 #include "dsp/dsp.hpp"
 #include "dsp/parameter_cache.hpp"
-#include "dsp/sequencer_state_manager.hpp"
-#include "dsp/drum_processor.hpp"
+#include "dsp/sequencer/sequencer_state_manager.hpp"
+#include "dsp/drumkits/base/drum_processor.hpp"
 #include "dsp/filter_processor.hpp"
 #include "dsp/vcf/ladder.hpp"
 #include "dsp/vcf/filter_type.hpp"
@@ -23,12 +23,7 @@ enum class TempoRange {
     COUNT
 };
 
-enum class DrumKitType {
-    ORIGINAL,
-    TR808,
-    LATIN,
-    COUNT
-};
+
 
 struct Clonotribe : rack::Module {
     static float processEnvelope(EnvelopeType envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
@@ -161,7 +156,7 @@ struct Clonotribe : rack::Module {
 
     void setDrumKit(DrumKitType kit) {
         selectedDrumKit = kit;
-        drumProcessor.setDrumKit(static_cast<DrumProcessor::DrumKitType>(kit));
+        drumProcessor.setDrumKit(static_cast<DrumKitType>(kit));
     }
     
     void setNoiseType(NoiseType type) {

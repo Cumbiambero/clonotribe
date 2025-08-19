@@ -1,4 +1,4 @@
-#include "../clonotribe.hpp"
+#include "../../clonotribe.hpp"
 
 void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered) {
     if (sequencer.playing) {
@@ -46,11 +46,10 @@ void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOut
 
         int drumStepIndex = currentStep;
         if (sequencer.isInSixteenStepMode()) {
-            // In 16-step mode, drums trigger on main steps (even indices 0,2,4,6,8,10,12,14) map these back to 0,1,2,3,4,5,6,7
             if (currentStep % 2 == 0 && currentStep < 16) {
                 drumStepIndex = currentStep / 2;
             } else {
-                drumStepIndex = -1; // don't trigger drums on sub-steps
+                drumStepIndex = -1;
             }
         }
 

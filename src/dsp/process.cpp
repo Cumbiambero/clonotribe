@@ -39,14 +39,12 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
             getParamQuantity(PARAM_VCO_OCTAVE_KNOB)->setDisplayValue(octaveSwitch);
         }
         paramCache.octave = octaveSwitch - 3.0f;
-        
-    paramCache.envelopeType = static_cast<EnvelopeType>(params[PARAM_ENVELOPE_FORM_SWITCH].getValue());
-    paramCache.lfoMode = static_cast<SequencerStateManager::LFOMode>(params[PARAM_LFO_MODE_SWITCH].getValue());
-    paramCache.lfoTarget = static_cast<SequencerStateManager::LFOTarget>(params[PARAM_LFO_TARGET_SWITCH].getValue());
-    paramCache.lfoWaveform = static_cast<SequencerStateManager::LFOWaveform>(params[PARAM_LFO_WAVEFORM_SWITCH].getValue());
-    paramCache.ribbonMode = static_cast<int>(params[PARAM_RIBBON_RANGE_SWITCH].getValue());
-    paramCache.waveform = static_cast<int>(params[PARAM_VCO_WAVEFORM_SWITCH].getValue());
-
+        paramCache.envelopeType = static_cast<EnvelopeType>(params[PARAM_ENVELOPE_FORM_SWITCH].getValue());
+        paramCache.lfoMode = static_cast<SequencerStateManager::LFOMode>(params[PARAM_LFO_MODE_SWITCH].getValue());
+        paramCache.lfoTarget = static_cast<SequencerStateManager::LFOTarget>(params[PARAM_LFO_TARGET_SWITCH].getValue());
+        paramCache.lfoWaveform = static_cast<SequencerStateManager::LFOWaveform>(params[PARAM_LFO_WAVEFORM_SWITCH].getValue());
+        paramCache.ribbonMode = static_cast<int>(params[PARAM_RIBBON_RANGE_SWITCH].getValue());
+        paramCache.waveform = static_cast<int>(params[PARAM_VCO_WAVEFORM_SWITCH].getValue());
         paramCache.resetUpdateCounter();
     }
     
