@@ -7,6 +7,7 @@ CXXFLAGS += -std=c++23
 SOURCES += $(wildcard src/*.cpp)
 SOURCES += $(wildcard src/ui/*.cpp)
 SOURCES += $(wildcard src/dsp/*.cpp)
+SOURCES += $(wildcard src/dsp/sequencer/*.cpp)
 
 DISTRIBUTABLES += res
 DISTRIBUTABLES += $(wildcard LICENSE*)

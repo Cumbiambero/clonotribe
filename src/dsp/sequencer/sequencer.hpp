@@ -4,6 +4,13 @@
 
 namespace clonotribe {
 
+enum class TempoRange {
+    T10_600,
+    T20_300,
+    T60_180,
+    SIZE
+};
+
 struct Sequencer final {
     static constexpr int kMaxSteps = 16;
     static constexpr int kDefaultSteps = 8;

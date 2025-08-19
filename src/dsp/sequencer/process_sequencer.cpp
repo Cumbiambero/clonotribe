@@ -1,6 +1,6 @@
 #include "../../clonotribe.hpp"
 
-void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered) {
+void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate,bool gateTriggered) {
     if (sequencer.playing) {
         int currentStep = seqOutput.step;
         if (sequencer.isStepMuted(currentStep)) {
@@ -36,7 +36,6 @@ void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOut
                 sequencer.recordingStep = (nextStep + 1) % stepCount;
             }
         } else if (sequencer.playing && ribbon.touching && seqOutput.stepChanged) {
-            // While ribbon overrides notes, capture the held ribbon note on each new step
             sequencer.recordNote(finalInputPitch, finalGate > 1.0f ? finalGate : 5.0f, 0.8f);
         }
     }

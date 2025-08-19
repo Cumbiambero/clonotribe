@@ -123,7 +123,7 @@ void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& 
                     } else if (accent) {
                         red = 0.0f;
                         green = baseBrightness;
-                        blue = 0.0f;
+                        blue = baseBrightness;
                     } else if (glide) {
                         red = 0.0f;
                         green = 0.0f;
@@ -351,16 +351,12 @@ void Clonotribe::process(const ProcessArgs& args) {
         outputs[OUTPUT_LFO_RATE_CONNECTOR].setVoltage(0.0f);
     }
     
-    // Apply very gentle taming of the signal to prevent crackling
-    // This is critical to prevent the vinyl-like crackle artifacts
     finalOutput = finalOutput * 0.95f;
     
     if (distortion <= 0.1f) {
-        // Apply a very gentle soft clipping
         finalOutput = clonotribe::FastMath::fastTanh(finalOutput * 0.7f) * 1.3f;
     }
 
-    // Apply noise reduction to eliminate the vinyl-like crackle
     float noiseReducedOutput = finalOutput;
     if (std::abs(finalOutput) < 0.0015f) {
         float reduction = std::abs(finalOutput) / 0.0015f;
@@ -478,10 +474,10 @@ void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
     }
     menu->addChild(new rack::MenuSeparator());
     menu->addChild(rack::createMenuLabel("Tempo range"));
-    static const char* rangeLabels[static_cast<int>(TempoRange::COUNT)] = {
+    static const char* rangeLabels[static_cast<int>(TempoRange::SIZE)] = {
         "10–600 BPM", "20–300 BPM", "60–180 BPM"
     };
-    for (int i = 0; i < static_cast<int>(TempoRange::COUNT); ++i) {
+    for (int i = 0; i < static_cast<int>(TempoRange::SIZE); ++i) {
         auto* item = new TempoRangeItem;
         item->module = this;
         item->range = (TempoRange)i;

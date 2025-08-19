@@ -16,13 +16,6 @@
 
 using namespace clonotribe;
 
-enum class TempoRange {
-    T10_600,
-    T20_300,
-    T60_180,
-    COUNT
-};
-
 
 
 struct Clonotribe : rack::Module {
