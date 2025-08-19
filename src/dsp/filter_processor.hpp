@@ -8,9 +8,9 @@ namespace clonotribe {
 
 class FilterProcessor final {
 public:
-    explicit FilterProcessor(MS20Filter& vcf) noexcept : vcf(&vcf), ladder(nullptr), moog(nullptr), filterType(FILTER_MS20) {}
-    explicit FilterProcessor(LadderFilter& ladder) noexcept : vcf(nullptr), ladder(&ladder), moog(nullptr), filterType(FILTER_LADDER) {}
-    explicit FilterProcessor(MoogFilter& moog) noexcept : vcf(nullptr), ladder(nullptr), moog(&moog), filterType(FILTER_MOOG) {}
+    explicit FilterProcessor(MS20Filter& vcf) noexcept : vcf(&vcf), ladder(nullptr), moog(nullptr), filterType(FilterType::MS20) {}
+    explicit FilterProcessor(LadderFilter& ladder) noexcept : vcf(nullptr), ladder(&ladder), moog(nullptr), filterType(FilterType::LADDER) {}
+    explicit FilterProcessor(MoogFilter& moog) noexcept : vcf(nullptr), ladder(nullptr), moog(&moog), filterType(FilterType::MOOG) {}
 
     void setFilterType(FilterType type, MS20Filter* vcfPtr, LadderFilter* ladderPtr, MoogFilter* moogPtr) noexcept {
         filterType = type;
@@ -40,7 +40,7 @@ public:
         }
         
         switch (filterType) {
-            case FILTER_MS20:
+            case FilterType::MS20:
                 if (vcf) {
                     vcf->setCutoff(smoothedCutoff);
                     vcf->setResonance(smoothedResonance);
@@ -49,7 +49,7 @@ public:
                     return output;
                 }
                 break;
-            case FILTER_LADDER:
+            case FilterType::LADDER:
                 if (ladder) {
                     ladder->setCutoff(smoothedCutoff);
                     ladder->setResonance(smoothedResonance);
@@ -58,7 +58,7 @@ public:
                     return output;
                 }
                 break;
-            case FILTER_MOOG:
+            case FilterType::MOOG:
                 if (moog) {
                     moog->setCutoff(smoothedCutoff);
                     moog->setResonance(smoothedResonance);
@@ -75,19 +75,19 @@ public:
 
     void forceUpdate(float cutoff, float resonance) noexcept {
         switch (filterType) {
-            case FILTER_MS20:
+            case FilterType::MS20:
                 if (vcf) {
                     vcf->setCutoff(cutoff);
                     vcf->setResonance(resonance);
                 }
                 break;
-            case FILTER_LADDER:
+            case FilterType::LADDER:
                 if (ladder) {
                     ladder->setCutoff(cutoff);
                     ladder->setResonance(resonance);
                 }
                 break;
-            case FILTER_MOOG:
+            case FilterType::MOOG:
                 if (moog) {
                     moog->setCutoff(cutoff);
                     moog->setResonance(resonance);

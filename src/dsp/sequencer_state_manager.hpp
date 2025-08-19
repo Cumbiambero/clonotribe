@@ -5,6 +5,10 @@ namespace clonotribe {
 
 class SequencerStateManager {
 public:
+    enum class LFOMode { OneShot = 0, Slow = 1, Fast = 2 };
+    enum class LFOTarget { VCF = 0, VCO_VCF = 1, VCO = 2 };
+    enum class LFOWaveform { Square = 0, Triangle = 1, Sawtooth = 2 };
+
     struct TriggerState {
         bool playPressed = false;
         bool recPressed = false;
@@ -16,7 +20,7 @@ public:
     };
     
     struct UIState {
-        int selectedDrumPart = 0; // 0=synth, 1=kick, 2=snare, 3=hihat
+        int selectedDrumPart = 0;
         int selectedStepForEditing = 0;
         bool activeStepActive = false;
         bool activeStepWasPressed = false;

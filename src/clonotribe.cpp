@@ -12,25 +12,19 @@
 void Clonotribe::cycleStepAccentGlide(int step) {
     if (step < 0 || step >= sequencer.getStepCount()) return;
     
-    // Get current state
     bool accent = sequencer.isStepAccent(step);
     bool glide = sequencer.isStepGlide(step);
     
-    // Cycle through states: none -> accent -> glide -> accent+glide -> none
     if (!accent && !glide) {
-        // From none to accent
         sequencer.setStepAccent(step, true);
         sequencer.setStepGlide(step, false);
     } else if (accent && !glide) {
-        // From accent to glide
         sequencer.setStepAccent(step, false);
         sequencer.setStepGlide(step, true);
     } else if (!accent && glide) {
-        // From glide to accent+glide
         sequencer.setStepAccent(step, true);
         sequencer.setStepGlide(step, true);
     } else {
-        // From accent+glide to none
         sequencer.setStepAccent(step, false);
         sequencer.setStepGlide(step, false);
     }
@@ -298,18 +292,18 @@ void Clonotribe::process(const ProcessArgs& args) {
     lfo.setRate(lfoFreq);
     LFO::Waveform wf = LFO::Waveform::Square;
     switch (lfoWaveform) {
-        case 0: wf = LFO::Waveform::Square; break;
-        case 1: wf = LFO::Waveform::Triangle; break;
-        case 2: wf = LFO::Waveform::Sawtooth; break;
+        case SequencerStateManager::LFOWaveform::Square: wf = LFO::Waveform::Square; break;
+        case SequencerStateManager::LFOWaveform::Triangle: wf = LFO::Waveform::Triangle; break;
+        case SequencerStateManager::LFOWaveform::Sawtooth: wf = LFO::Waveform::Sawtooth; break;
         default: wf = LFO::Waveform::Square; break;
     }
     float lfoOut = lfo.process(args.sampleTime, wf) * lfoIntensity;
 
     float lfoToVCO = 0.0f, lfoToVCF = 0.0f;
     switch (lfoTarget) {
-        case 0: lfoToVCF = lfoOut; break;
-        case 1: lfoToVCO = lfoOut * 0.5f; lfoToVCF = lfoOut; break;
-        case 2: lfoToVCO = lfoOut * 0.5f; break;
+        case SequencerStateManager::LFOTarget::VCF: lfoToVCF = lfoOut; break;
+        case SequencerStateManager::LFOTarget::VCO_VCF: lfoToVCO = lfoOut * 0.5f; lfoToVCF = lfoOut; break;
+        case SequencerStateManager::LFOTarget::VCO: lfoToVCO = lfoOut * 0.5f; break;
     }
 
     vco.setPitch(finalPitch + lfoToVCO);
@@ -421,8 +415,8 @@ struct DrumKitMenuItem : rack::MenuItem {
         module->setDrumKit(kitType);
     }
     void step() override {
-        static const char* kitLabels[DRUMKIT_COUNT] = {"Original", "TR-808", "Latin"};
-        text = kitLabels[kitType];
+    static const char* kitLabels[static_cast<int>(DrumKitType::COUNT)] = {"Original", "TR-808", "Latin"};
+    text = kitLabels[static_cast<int>(kitType)];
         rightText = (module->selectedDrumKit == kitType) ? "✔" : "";
         MenuItem::step();
     }
@@ -460,7 +454,7 @@ void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
     filterProcessor.setType(selectedFilterType);
     menu->addChild(new rack::MenuSeparator());
     menu->addChild(rack::createMenuLabel("Filter Type"));
-    for (int i = 0; i < FILTER_TYPE_COUNT; ++i) {
+    for (int i = 0; i < static_cast<int>(FilterType::COUNT); ++i) {
         auto* filterItem = new FilterTypeMenuItem;
         filterItem->module = this;
         filterItem->filterType = static_cast<FilterType>(i);
@@ -468,7 +462,7 @@ void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
     }
     menu->addChild(new rack::MenuSeparator());
     menu->addChild(rack::createMenuLabel("Drum Kit"));
-    for (int i = 0; i < DRUMKIT_COUNT; ++i) {
+    for (int i = 0; i < static_cast<int>(DrumKitType::COUNT); ++i) {
         auto* kitItem = new DrumKitMenuItem;
         kitItem->module = this;
         kitItem->kitType = (DrumKitType)i;
@@ -484,10 +478,10 @@ void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
     }
     menu->addChild(new rack::MenuSeparator());
     menu->addChild(rack::createMenuLabel("Tempo range"));
-    static const char* rangeLabels[TEMPO_RANGE_COUNT] = {
+    static const char* rangeLabels[static_cast<int>(TempoRange::COUNT)] = {
         "10–600 BPM", "20–300 BPM", "60–180 BPM"
     };
-    for (int i = 0; i < TEMPO_RANGE_COUNT; ++i) {
+    for (int i = 0; i < static_cast<int>(TempoRange::COUNT); ++i) {
         auto* item = new TempoRangeItem;
         item->module = this;
         item->range = (TempoRange)i;
@@ -570,8 +564,8 @@ json_t* Clonotribe::dataToJson() {
     json_object_set_new(rootJ, "gateTimesLocked", json_boolean(gateTimesLocked));
     json_object_set_new(rootJ, "lfoSampleAndHoldMode", json_boolean(lfoSampleAndHoldMode));
     json_object_set_new(rootJ, "syncHalfTempo", json_boolean(syncHalfTempo));
-    json_object_set_new(rootJ, "selectedDrumKit", json_integer(selectedDrumKit));
-    json_object_set_new(rootJ, "selectedTempoRange", json_integer(selectedTempoRange));
+    json_object_set_new(rootJ, "selectedDrumKit", json_integer(static_cast<int>(selectedDrumKit)));
+    json_object_set_new(rootJ, "selectedTempoRange", json_integer(static_cast<int>(selectedTempoRange)));
     json_object_set_new(rootJ, "selectedNoiseType", json_integer(static_cast<int>(selectedNoiseType)));
     
     return rootJ;
@@ -765,9 +759,9 @@ void Clonotribe::onRandomize(const RandomizeEvent& e) {
     
     sequencer.fluxMode = (rack::random::uniform() < 0.2f);
     
-    int randomKit = static_cast<int>(rack::random::uniform() * static_cast<float>(DRUMKIT_COUNT));
+    int randomKit = static_cast<int>(rack::random::uniform() * static_cast<float>(DrumKitType::COUNT));
     setDrumKit(static_cast<DrumKitType>(randomKit));
 
-    int randomFilter = static_cast<int>(rack::random::uniform() * static_cast<float>(FILTER_TYPE_COUNT));
+    int randomFilter = static_cast<int>(rack::random::uniform() * static_cast<float>(FilterType::COUNT));
     setFilterType(static_cast<FilterType>(randomFilter));
 }

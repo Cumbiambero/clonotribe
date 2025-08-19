@@ -1,7 +1,7 @@
 #include "../clonotribe.hpp"
 #include <tuple>
 
-auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, int, int, int, int, int, int> {
+auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, EnvelopeType, SequencerStateManager::LFOMode, SequencerStateManager::LFOTarget, SequencerStateManager::LFOWaveform, int, int> {
     auto getParamWithCV = [this](int paramId, int inputId) -> float {
         float value = params[paramId].getValue();
         if (inputs[inputId].isConnected()) {
@@ -40,13 +40,13 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
         }
         paramCache.octave = octaveSwitch - 3.0f;
         
-        paramCache.envelopeType = (int) params[PARAM_ENVELOPE_FORM_SWITCH].getValue();
-        paramCache.lfoMode = (int) params[PARAM_LFO_MODE_SWITCH].getValue();
-        paramCache.lfoTarget = (int) params[PARAM_LFO_TARGET_SWITCH].getValue();
-        paramCache.lfoWaveform = (int) params[PARAM_LFO_WAVEFORM_SWITCH].getValue();
-        paramCache.ribbonMode = (int) params[PARAM_RIBBON_RANGE_SWITCH].getValue();
-        paramCache.waveform = (int) params[PARAM_VCO_WAVEFORM_SWITCH].getValue();
-        
+    paramCache.envelopeType = static_cast<EnvelopeType>(params[PARAM_ENVELOPE_FORM_SWITCH].getValue());
+    paramCache.lfoMode = static_cast<SequencerStateManager::LFOMode>(params[PARAM_LFO_MODE_SWITCH].getValue());
+    paramCache.lfoTarget = static_cast<SequencerStateManager::LFOTarget>(params[PARAM_LFO_TARGET_SWITCH].getValue());
+    paramCache.lfoWaveform = static_cast<SequencerStateManager::LFOWaveform>(params[PARAM_LFO_WAVEFORM_SWITCH].getValue());
+    paramCache.ribbonMode = static_cast<int>(params[PARAM_RIBBON_RANGE_SWITCH].getValue());
+    paramCache.waveform = static_cast<int>(params[PARAM_VCO_WAVEFORM_SWITCH].getValue());
+
         paramCache.resetUpdateCounter();
     }
     

@@ -15,20 +15,19 @@ namespace clonotribe {
 
 class DrumProcessor {
 public:
-    enum DrumKitType {
+    enum class DrumKitType {
         ORIGINAL = 0,
         TR808 = 1,
         LATIN = 2
     };
     
     DrumProcessor() {
-        setDrumKit(ORIGINAL);
+        setDrumKit(DrumKitType::ORIGINAL);
         setSampleRate(44100.0f);
     }
     
     void setSampleRate(float sampleRate) {
-        currentSampleRate = sampleRate;
-        
+        currentSampleRate = sampleRate;        
         kickOriginal.setSampleRate(sampleRate);
         snareOriginal.setSampleRate(sampleRate);
         hihatOriginal.setSampleRate(sampleRate);
@@ -59,54 +58,54 @@ public:
     
     void triggerKick() {
         switch (currentKit) {
-            case TR808: kickTR808.reset(); break;
-            case LATIN: kickLatin.reset(); break;
+            case DrumKitType::TR808: kickTR808.reset(); break;
+            case DrumKitType::LATIN: kickLatin.reset(); break;
             default: kickOriginal.reset(); break;
         }
     }
     
     void triggerSnare() {
         switch (currentKit) {
-            case TR808: snareTR808.reset(); break;
-            case LATIN: snareLatin.reset(); break;
+            case DrumKitType::TR808: snareTR808.reset(); break;
+            case DrumKitType::LATIN: snareLatin.reset(); break;
             default: snareOriginal.reset(); break;
         }
     }
     
     void triggerHihat() {
         switch (currentKit) {
-            case TR808: hihatTR808.reset(); break;
-            case LATIN: hihatLatin.reset(); break;
+            case DrumKitType::TR808: hihatTR808.reset(); break;
+            case DrumKitType::LATIN: hihatLatin.reset(); break;
             default: hihatOriginal.reset(); break;
         }
     }
     
     float processKick(float trig, float accent, NoiseGenerator& noise) {
         switch (currentKit) {
-            case TR808: return kickTR808.process(trig, accent, noise);
-            case LATIN: return kickLatin.process(trig, accent, noise);
+            case DrumKitType::TR808: return kickTR808.process(trig, accent, noise);
+            case DrumKitType::LATIN: return kickLatin.process(trig, accent, noise);
             default: return kickOriginal.process(trig, accent, noise);
         }
     }
     
     float processSnare(float trig, float accent, NoiseGenerator& noise) {
         switch (currentKit) {
-            case TR808: return snareTR808.process(trig, accent, noise);
-            case LATIN: return snareLatin.process(trig, accent, noise);
+            case DrumKitType::TR808: return snareTR808.process(trig, accent, noise);
+            case DrumKitType::LATIN: return snareLatin.process(trig, accent, noise);
             default: return snareOriginal.process(trig, accent, noise);
         }
     }
     
     float processHihat(float trig, float accent, NoiseGenerator& noise) {
         switch (currentKit) {
-            case TR808: return hihatTR808.process(trig, accent, noise);
-            case LATIN: return hihatLatin.process(trig, accent, noise);
+            case DrumKitType::TR808: return hihatTR808.process(trig, accent, noise);
+            case DrumKitType::LATIN: return hihatLatin.process(trig, accent, noise);
             default: return hihatOriginal.process(trig, accent, noise);
         }
     }
 
 private:
-    DrumKitType currentKit = ORIGINAL;
+    DrumKitType currentKit = DrumKitType::ORIGINAL;
     float currentSampleRate = 44100.0f;
     
     drumkits::original::KickDrum kickOriginal;
@@ -119,5 +118,4 @@ private:
     drumkits::latin::SnareDrum snareLatin;
     drumkits::latin::HiHat hihatLatin;
 };
-
 }

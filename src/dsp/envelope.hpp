@@ -3,6 +3,13 @@
 
 namespace clonotribe {
 
+enum class EnvelopeType {
+    ATTACK,
+    GATE,
+    DECAY,
+    ENVELOPE_TYPE_COUNT
+};
+
 struct Envelope final {
     enum class Stage { Attack, Decay, Sustain, Release, Off };
     Stage stage = Stage::Off;

@@ -3,9 +3,6 @@
 
 namespace clonotribe {
 
-// Transparent button encodes modifier state in its value:
-// 0.9 => pressed with Ctrl, 1.0 => pressed without Ctrl, 0.0 => released
-
 struct TransparentButton final : rack::app::ParamWidget {
     bool pressed = false;
 

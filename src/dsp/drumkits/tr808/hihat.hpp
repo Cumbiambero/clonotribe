@@ -28,7 +28,7 @@ public:
         sampleRate = newSampleRate;
     }
     
-    float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {
+    [[nodiscard]] float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {
         if (!triggered) {
             return 0.0f;
         }
@@ -45,7 +45,7 @@ public:
             }
             
             float square = (phases[i] < clonotribe::FastMath::PI) ? 1.0f : -1.0f;
-            squareSum += square * (1.0f / 6.0f); // Normalize
+            squareSum += square * (1.0f / 6.0f);
         }
         
         osc1Phase = phases[0]; osc2Phase = phases[1]; osc3Phase = phases[2];
@@ -95,6 +95,5 @@ private:
     float sampleRate = 44100.0f;
     bool triggered = false;
 };
-
 }
 }

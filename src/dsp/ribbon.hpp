@@ -17,7 +17,7 @@ public:
     void setOctave(float oct) noexcept { octave = oct; }
     void setTouching(bool t) noexcept { touching = t; }
     void setPosition(float pos) noexcept { position = std::clamp(pos, 0.0f, 1.0f); }
-    float getPosition() const noexcept { return position; }
+    [[nodiscard]] float getPosition() const noexcept { return position; }
 
     [[nodiscard]] float getCV() const noexcept {
         switch (mode) {

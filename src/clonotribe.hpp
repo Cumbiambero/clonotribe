@@ -16,29 +16,29 @@
 
 using namespace clonotribe;
 
-enum TempoRange {
-    TEMPO_10_600,
-    TEMPO_20_300,
-    TEMPO_60_180,
-    TEMPO_RANGE_COUNT
+enum class TempoRange {
+    T10_600,
+    T20_300,
+    T60_180,
+    COUNT
 };
 
-enum DrumKitType {
-    DRUMKIT_ORIGINAL,
-    DRUMKIT_TR808,
-    DRUMKIT_LATIN,
-    DRUMKIT_COUNT
+enum class DrumKitType {
+    ORIGINAL,
+    TR808,
+    LATIN,
+    COUNT
 };
 
 struct Clonotribe : rack::Module {
-    static float processEnvelope(int envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
+    static float processEnvelope(EnvelopeType envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
     float processOutput(
         float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
         float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep, float distortion,
         float delayClock, float delayTime, float delayAmount
     );
     
-    void handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered);
+    void handleSequencerAndDrumState(Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered);
     enum ParamId {
         PARAM_VCO_OCTAVE_KNOB,
         PARAM_VCA_LEVEL_KNOB,
@@ -156,7 +156,7 @@ struct Clonotribe : rack::Module {
     DrumProcessor drumProcessor;
     Distortion distortionProcessor;
     Delay delayProcessor;
-    DrumKitType selectedDrumKit = DRUMKIT_ORIGINAL;
+    DrumKitType selectedDrumKit = DrumKitType::ORIGINAL;
     NoiseType selectedNoiseType = NoiseType::WHITE;
 
     void setDrumKit(DrumKitType kit) {
@@ -176,7 +176,7 @@ struct Clonotribe : rack::Module {
     FilterProcessor filterProcessor;
     LadderFilter ladderFilter;
     MoogFilter moogFilter;
-    FilterType selectedFilterType = FILTER_MS20;
+    FilterType selectedFilterType = FilterType::MS20;
     void setFilterType(FilterType type) {
         selectedFilterType = type;
         filterProcessor.setType(type);
@@ -244,7 +244,7 @@ struct Clonotribe : rack::Module {
         delayProcessor.clear();
     }
 
-    auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, int, int, int, int, int, int>;
+    auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, EnvelopeType, SequencerStateManager::LFOMode, SequencerStateManager::LFOTarget, SequencerStateManager::LFOWaveform, int, int>;
     void updateDSPState(float volume, float rhythmVolume, float lfoIntensity, int ribbonMode, float octave);
     void handleMainTriggers();
     void handleDrumSelectionAndTempo(float tempo);
@@ -257,13 +257,13 @@ struct Clonotribe : rack::Module {
     void dataFromJson(json_t* rootJ) override;
 
 public:
-    TempoRange selectedTempoRange = TEMPO_10_600;
+    TempoRange selectedTempoRange = TempoRange::T10_600;
 
     void getTempoRange(float& min, float& max) {
         switch (selectedTempoRange) {
-            case TEMPO_10_600: min = 10.0f; max = 600.0f; break;
-            case TEMPO_20_300: min = 20.0f; max = 300.0f; break;
-            case TEMPO_60_180: min = 60.0f; max = 180.0f; break;
+            case TempoRange::T10_600: min = 10.0f; max = 600.0f; break;
+            case TempoRange::T20_300: min = 20.0f; max = 300.0f; break;
+            case TempoRange::T60_180: min = 60.0f; max = 180.0f; break;
             default: min = 10.0f; max = 600.0f;
         }
     }

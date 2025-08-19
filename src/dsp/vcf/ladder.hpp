@@ -29,7 +29,7 @@ public:
         if (!active) reset();
     }
 
-    float process(float input) noexcept {
+    [[nodiscard]] float process(float input) noexcept {
         if (!active) return 0.f;
         float cutoff = 20.f * std::exp(7.0f * cutoffParam);
         float res = resonanceParam * 4.0f;
@@ -55,5 +55,4 @@ private:
     float invSampleRate = FastMath::fastInverse(44100.f);
     bool active = true;
 };
-
 }

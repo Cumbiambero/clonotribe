@@ -26,21 +26,16 @@ public:
         float gateOutput;
         float syncOutput;
     };
-    
-    AudioOutput process(const ProcessContext& ctx, 
-                       VCO& vco, VCF& vcf, LFO& lfo, Envelope& envelope,
-                       NoiseGenerator& noiseGen, Sequencer& sequencer,
-                       drumkits::KickDrum& kick, drumkits::SnareDrum& snare, 
-                       drumkits::HiHat& hihat);
+
+    AudioOutput process(const ProcessContext& ctx, VCO& vco, VCF& vcf, LFO& lfo, Envelope& envelope, 
+        NoiseGenerator& noiseGen, Sequencer& sequencer, drumkits::KickDrum& kick, drumkits::SnareDrum& snare, drumkits::HiHat& hihat);
 
 private:
     float processVCO(const ProcessContext& ctx, VCO& vco, float pitch, float pitchMod);
     float processFilter(const ProcessContext& ctx, VCF& vcf, float input, float cutoffMod);
     float processEnvelope(const ProcessContext& ctx, Envelope& envelope, float gate);
     float processLFO(const ProcessContext& ctx, LFO& lfo);
-    float processDrums(const ProcessContext& ctx, 
-                      drumkits::KickDrum& kick, drumkits::SnareDrum& snare, 
-                      drumkits::HiHat& hihat, NoiseGenerator& noiseGen);
+    float processDrums(const ProcessContext& ctx, drumkits::KickDrum& kick, drumkits::SnareDrum& snare, 
+        drumkits::HiHat& hihat, NoiseGenerator& noiseGen);
 };
-
 }

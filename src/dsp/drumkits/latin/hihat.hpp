@@ -26,7 +26,7 @@ public:
         sampleRate = newSampleRate;
     }
     
-    float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {
+    [[nodiscard]] float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {
         if (!triggered) {
             return 0.0f;
         }
@@ -100,6 +100,5 @@ private:
     float sampleRate = 44100.0f;
     bool triggered = false;
 };
-
 }
 }
