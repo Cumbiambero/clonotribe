@@ -1,12 +1,12 @@
 #pragma once
-#include "fastmath.hpp"
-#include "noise.hpp"
+#include "../fastmath.hpp"
+#include "../noise.hpp"
 
 namespace clonotribe {
 
-class VCF {
+class MS20Filter {
 public:
-    VCF() = default;
+    MS20Filter() = default;
 
     void setSampleRate(float sr) noexcept {
         sampleRate = std::max(8000.f, sr);

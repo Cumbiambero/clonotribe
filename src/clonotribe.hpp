@@ -5,37 +5,25 @@
 #include "plugin.hpp"
 #include "dsp/dsp.hpp"
 #include "dsp/parameter_cache.hpp"
-#include "dsp/sequencer_state_manager.hpp"
-#include "dsp/drum_processor.hpp"
+#include "dsp/drumkits/base/drum_processor.hpp"
 #include "dsp/filter_processor.hpp"
+#include "dsp/vcf/ladder.hpp"
+#include "dsp/vcf/filter_type.hpp"
 #include "dsp/delay.hpp"
+#include "dsp/dc_blocker.hpp"
 #include "ui/ui.hpp"
 
 using namespace clonotribe;
 
-enum TempoRange {
-    TEMPO_10_600,
-    TEMPO_20_300,
-    TEMPO_60_180,
-    TEMPO_RANGE_COUNT
-};
-
-enum DrumKitType {
-    DRUMKIT_ORIGINAL,
-    DRUMKIT_TR808,
-    DRUMKIT_LATIN,
-    DRUMKIT_COUNT
-};
-
 struct Clonotribe : rack::Module {
-    static float processEnvelope(int envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
+    static float processEnvelope(Envelope::Type envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
     float processOutput(
         float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
         float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep, float distortion,
         float delayClock, float delayTime, float delayAmount
     );
     
-    void handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered);
+    void handleSequencerAndDrumState(Sequencer::SequencerOutput& seqOutput, float finalInputPitch, float finalGate, bool gateTriggered);
     enum ParamId {
         PARAM_VCO_OCTAVE_KNOB,
         PARAM_VCA_LEVEL_KNOB,
@@ -72,6 +60,7 @@ struct Clonotribe : rack::Module {
         PARAM_SEQUENCER_8_BUTTON,
         PARAM_PLAY_BUTTON,
         PARAM_GATE_TIME_BUTTON,
+        PARAM_ACCENT_GLIDE_KNOB,
         PARAMS_LEN
     };
     
@@ -90,6 +79,7 @@ struct Clonotribe : rack::Module {
         INPUT_DELAY_TIME_CONNECTOR,
         INPUT_DELAY_AMOUNT_CONNECTOR,
         INPUT_NOISE_CONNECTOR,
+        INPUT_ACCENT_GLIDE_CONNECTOR,
         INPUTS_LEN
     };
     
@@ -102,6 +92,7 @@ struct Clonotribe : rack::Module {
         OUTPUT_BASSDRUM_CONNECTOR,
         OUTPUT_SNARE_CONNECTOR,
         OUTPUT_HIHAT_CONNECTOR,
+        OUTPUT_LFO_RATE_CONNECTOR,        
         OUTPUTS_LEN
     };
     
@@ -110,22 +101,38 @@ struct Clonotribe : rack::Module {
         LIGHT_BASSDRUM,
         LIGHT_SNARE,
         LIGHT_HIGHHAT,
-        LIGHT_SEQUENCER_1,
-        LIGHT_SEQUENCER_2,
-        LIGHT_SEQUENCER_3,
-        LIGHT_SEQUENCER_4,
-        LIGHT_SEQUENCER_5,
-        LIGHT_SEQUENCER_6,
-        LIGHT_SEQUENCER_7,
-        LIGHT_SEQUENCER_8,
         LIGHT_FLUX,
         LIGHT_REC,
         LIGHT_PLAY,
+        LIGHT_SEQUENCER_1_R,
+        LIGHT_SEQUENCER_1_G,
+        LIGHT_SEQUENCER_1_B,
+        LIGHT_SEQUENCER_2_R,
+        LIGHT_SEQUENCER_2_G,
+        LIGHT_SEQUENCER_2_B,
+        LIGHT_SEQUENCER_3_R,
+        LIGHT_SEQUENCER_3_G,
+        LIGHT_SEQUENCER_3_B,
+        LIGHT_SEQUENCER_4_R,
+        LIGHT_SEQUENCER_4_G,
+        LIGHT_SEQUENCER_4_B,
+        LIGHT_SEQUENCER_5_R,
+        LIGHT_SEQUENCER_5_G,
+        LIGHT_SEQUENCER_5_B,
+        LIGHT_SEQUENCER_6_R,
+        LIGHT_SEQUENCER_6_G,
+        LIGHT_SEQUENCER_6_B,
+        LIGHT_SEQUENCER_7_R,
+        LIGHT_SEQUENCER_7_G,
+        LIGHT_SEQUENCER_7_B,
+        LIGHT_SEQUENCER_8_R,
+        LIGHT_SEQUENCER_8_G,
+        LIGHT_SEQUENCER_8_B,
         LIGHTS_LEN
     };
 
     VCO vco;
-    VCF vcf;
+    MS20Filter vcf;
     LFO lfo;
     Envelope envelope;
     Sequencer sequencer;
@@ -134,12 +141,12 @@ struct Clonotribe : rack::Module {
     DrumProcessor drumProcessor;
     Distortion distortionProcessor;
     Delay delayProcessor;
-    DrumKitType selectedDrumKit = DRUMKIT_ORIGINAL;
+    DrumKitType selectedDrumKit = DrumKitType::ORIGINAL;
     NoiseType selectedNoiseType = NoiseType::WHITE;
 
     void setDrumKit(DrumKitType kit) {
         selectedDrumKit = kit;
-        drumProcessor.setDrumKit(static_cast<DrumProcessor::DrumKitType>(kit));
+        drumProcessor.setDrumKit(static_cast<DrumKitType>(kit));
     }
     
     void setNoiseType(NoiseType type) {
@@ -152,12 +159,17 @@ struct Clonotribe : rack::Module {
     void triggerHihat() { drumProcessor.triggerHihat(); }
     Ribbon ribbon;
     FilterProcessor filterProcessor;
+    LadderFilter ladderFilter;
+    MoogFilter moogFilter;
+    FilterType selectedFilterType = FilterType::MS20;
+    void setFilterType(FilterType type) {
+        selectedFilterType = type;
+        filterProcessor.setType(type);
+        filterProcessor.setPointers(&vcf, &ladderFilter, &moogFilter);
+    }
     RibbonController ribbonController;
     
     ParameterCache paramCache;
-    
-    SequencerStateManager stateManager;
-    SequencerStateManager::UIState uiState;
     
     dsp::SchmittTrigger gateTrigger;
     dsp::SchmittTrigger playTrigger;
@@ -175,10 +187,13 @@ struct Clonotribe : rack::Module {
     dsp::SchmittTrigger syncHalfTempoTrigger;
     dsp::SchmittTrigger stepTriggers[8];
     dsp::SchmittTrigger drumTriggers[4];
-    dsp::SchmittTrigger lfoClockTrigger;
+    dsp::SchmittTrigger ribbonGateTrigger;
     dsp::PulseGenerator syncPulse;
+    dsp::PulseGenerator lfoRatePulse;
+    DcBlocker dcBlocker;
+    bool stepCtrlLatch[8] = {false,false,false,false,false,false,false,false};
+    float stepPrevVal[8] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
 
-    int selectedDrumPart = 0; // 0=synth, 1=kick, 2=snare, 3=hihat
     int selectedStepForEditing = 0;
     int syncDivideCounter = 0;
 
@@ -201,6 +216,7 @@ struct Clonotribe : rack::Module {
     void onSampleRateChange() override {
         drumProcessor.setSampleRate(APP->engine->getSampleRate());
         delayProcessor.setSampleRate(APP->engine->getSampleRate());
+        dcBlocker.setSampleRate(APP->engine->getSampleRate());
     }
 
     void onReset() override {
@@ -208,8 +224,8 @@ struct Clonotribe : rack::Module {
         delayProcessor.clear();
     }
 
-    auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, int, int, int, int, int, int>;
-    void updateDSPState(float volume, float rhythmVolume, float lfoIntensity, int ribbonMode, float octave);
+    auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, Envelope::Type, LFO::Mode, LFO::Target, LFO::Waveform, Ribbon::Mode, VCO::Waveform>;
+    void updateDSPState(float volume, float rhythmVolume, float lfoIntensity, Ribbon::Mode ribbonMode, float octave);
     void handleMainTriggers();
     void handleDrumSelectionAndTempo(float tempo);
     void handleSpecialGateTimeButtons(bool gateTimeHeld);
@@ -221,13 +237,13 @@ struct Clonotribe : rack::Module {
     void dataFromJson(json_t* rootJ) override;
 
 public:
-    TempoRange selectedTempoRange = TEMPO_10_600;
+    TempoRange selectedTempoRange = TempoRange::T10_600;
 
     void getTempoRange(float& min, float& max) {
         switch (selectedTempoRange) {
-            case TEMPO_10_600: min = 10.0f; max = 600.0f; break;
-            case TEMPO_20_300: min = 20.0f; max = 300.0f; break;
-            case TEMPO_60_180: min = 60.0f; max = 180.0f; break;
+            case TempoRange::T10_600: min = 10.0f; max = 600.0f; break;
+            case TempoRange::T20_300: min = 20.0f; max = 300.0f; break;
+            case TempoRange::T60_180: min = 60.0f; max = 180.0f; break;
             default: min = 10.0f; max = 600.0f;
         }
     }
@@ -239,9 +255,10 @@ private:
     void enableAllActiveSteps();
     void handleActiveStep();
     void handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld);
-    void handleStepButtons();
+    void handleStepButtons(float sampleTime);
     void toggleStepInCurrentMode(int step);
     void toggleActiveStep(int step);
     void updateStepLights(const Sequencer::SequencerOutput& seqOutput);
     bool isStepActiveInCurrentMode(int step);
+    void cycleStepAccentGlide(int step);
 };

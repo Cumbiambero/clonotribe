@@ -4,6 +4,20 @@
 
 namespace clonotribe {
 
+enum class TempoRange {
+    T10_600,
+    T20_300,
+    T60_180,
+    SIZE
+};
+
+enum class DrumPart {
+    SYNTH = 0,
+    KICK = 1,
+    SNARE = 2,
+    HIHAT = 3
+};
+
 struct Sequencer final {
     static constexpr int kMaxSteps = 16;
     static constexpr int kDefaultSteps = 8;
@@ -15,7 +29,24 @@ struct Sequencer final {
         float pitch = 0.0f;
         float gate = 0.0f;
         float gateTime = 0.5f;
+        bool accent = false;
+        bool glide = false;
     };
+
+    void setStepAccent(int step, bool value) noexcept {
+        if (step >= 0 && step < getStepCount()) steps[step].accent = value;
+    }
+    bool isStepAccent(int step) const noexcept {
+        if (step >= 0 && step < getStepCount()) return steps[step].accent;
+        return false;
+    }
+    void setStepGlide(int step, bool value) noexcept {
+        if (step >= 0 && step < getStepCount()) steps[step].glide = value;
+    }
+    bool isStepGlide(int step) const noexcept {
+        if (step >= 0 && step < getStepCount()) return steps[step].glide;
+        return false;
+    }
 
     std::array<Step, kMaxSteps> steps{};
     std::array<float, kFluxBufferSize> fluxBuffer{};
@@ -28,11 +59,15 @@ struct Sequencer final {
     float lastRecordedPitch = 0.0f;
     float stepDuration = 0.25f;
     float stepTimer = 0.0f;
+    float glideStatePitch = 0.0f;
     bool externalSync = false;
     bool fluxMode = false;
     bool playing = false;
     bool recording = false;
     bool sixteenStepMode = false;
+    bool hasGlideState = false;
+
+    DrumPart selectedDrumPart = DrumPart::SYNTH;
 
     rack::dsp::SchmittTrigger gateTrigger;
     rack::dsp::SchmittTrigger syncTrigger;
@@ -48,6 +83,10 @@ struct Sequencer final {
     void setExternalSync(bool external) noexcept { externalSync = external; }
     void setSixteenStepMode(bool sixteenStep) noexcept { sixteenStepMode = sixteenStep; }
     [[nodiscard]] bool isInSixteenStepMode() const noexcept { return sixteenStepMode; }
+    
+    void setSelectedDrumPart(DrumPart part) noexcept { selectedDrumPart = part; }
+    [[nodiscard]] DrumPart getSelectedDrumPart() const noexcept { return selectedDrumPart; }
+    
     int getStepCount() const noexcept { return sixteenStepMode ? 16 : 8; }
     int getStepIndex(int buttonStep, bool isSubStep = false) const noexcept {
         if (!sixteenStepMode) return buttonStep;
@@ -92,6 +131,27 @@ struct Sequencer final {
         }
     }
     void stopRecording() noexcept { recording = false; }
+    
+    void clearSequence() noexcept {
+        int stepCount = getStepCount();
+        for (int i = 0; i < stepCount; i++) {
+            steps[i].skipped = false;
+            steps[i].muted = false;
+            steps[i].pitch = 0.0f;
+            steps[i].gate = 5.0f;
+            steps[i].gateTime = 0.8f;
+            steps[i].accent = false;
+            steps[i].glide = false;
+        }
+    }
+    
+    void enableAllSteps() noexcept {
+        int stepCount = getStepCount();
+        for (int i = 0; i < stepCount; i++) {
+            steps[i].skipped = false;
+        }
+    }
+    
     void recordNote(float pitch, float gate, float gateTime = 0.5f) noexcept {
         if (recording && !fluxMode) {
             int targetStep = playing ? currentStep : recordingStep;
@@ -136,8 +196,10 @@ struct Sequencer final {
         float gate = 0.0f;
         bool stepChanged = false;
         int step = 0;
+        bool accent = false;
+        bool glide = false;
     };
-    SequencerOutput process(float sampleTime, float inputPitch = 0.0f, float inputGate = 0.0f, float syncSignal = 0.0f, float ribbonGateTimeMod = 0.5f) {
+    SequencerOutput process(float sampleTime, float inputPitch = 0.0f, float inputGate = 0.0f, float syncSignal = 0.0f, float ribbonGateTimeMod = 0.5f, float accentGlideAmount = 0.0f) {
         SequencerOutput output;
         if (!playing) return output;
         bool wasNewStep = false;
@@ -175,6 +237,8 @@ struct Sequencer final {
                 output.pitch = 0.0f;
                 output.gate = 0.0f;
             } else {
+                output.accent = steps[currentStep].accent;
+                output.glide = steps[currentStep].glide;
                 if (fluxMode && fluxSampleCount > 0) {
                     int samplesPerStep = fluxSampleCount / getStepCount();
                     if (samplesPerStep > 0) {
@@ -191,6 +255,22 @@ struct Sequencer final {
                 } else {
                     output.pitch = steps[currentStep].pitch;
                 }
+                
+                if (output.glide && accentGlideAmount > 0.0f) {
+                    if (!hasGlideState) {
+                        glideStatePitch = output.pitch;
+                        hasGlideState = true;
+                    } else {
+                        float glideSpeed = std::clamp(accentGlideAmount, 0.0f, 1.0f);
+                        glideStatePitch += (output.pitch - glideStatePitch) * glideSpeed;
+                    }
+                    
+                    output.pitch = glideStatePitch;
+                } else {
+                    glideStatePitch = output.pitch;
+                    hasGlideState = true;
+                }
+                
                 float effectiveGateTime = std::clamp(steps[currentStep].gateTime * ribbonGateTimeMod, 0.1f, 1.0f);
                 float stepProgress = externalSync ? (stepTimer / 0.1f) : (stepTimer / stepDuration);
                 output.gate = (stepProgress < effectiveGateTime) ? 5.0f : 0.0f;
@@ -198,6 +278,8 @@ struct Sequencer final {
         } else {
             output.pitch = 0.0f;
             output.gate = 0.0f;
+            output.accent = false;
+            output.glide = false;
         }
         return output;
     }

@@ -14,7 +14,7 @@ public:
         clickEnv = 1.0f;
         phase = 0.0f;
         lowPhase = 0.0f;
-    hpState = 0.0f;
+        hpState = 0.0f;
         triggered = true;
     }
     
@@ -22,16 +22,16 @@ public:
         sampleRate = newSampleRate;
     }
     
-    float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {
-        if (!triggered) return 0.0f;
+    [[nodiscard]] float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {
+        if (!triggered) {
+            return 0.0f;
+        }
         
-        const float invSampleRate = 1.0f / sampleRate;
-    float accentGain = 0.8f + accent * 0.6f;
+        float invSampleRate = 1.0f / sampleRate;
+        float accentGain = 0.8f + accent * 0.6f;        
+        float pitchMod = 45.0f * pitchEnv * pitchEnv;
+        float freq = 92.0f + pitchMod;
         
-    float pitchMod = 45.0f * pitchEnv * pitchEnv;
-    float freq = 92.0f + pitchMod;
-        
-        // Main oscillator
         phase += freq * invSampleRate * 2.0f * clonotribe::FastMath::PI;
         if (phase >= 2.0f * clonotribe::FastMath::PI) {
             phase -= 2.0f * clonotribe::FastMath::PI;
@@ -45,12 +45,11 @@ public:
         float mainSine = clonotribe::FastMath::fastSin(phase);
         float lowSine = clonotribe::FastMath::fastSin(lowPhase) * 0.4f;
         
-    float n = noise.process();
-    const float hpCut = 0.28f;
-    hpState += (n - hpState) * hpCut;
-    float hpNoise = n - hpState;
-    float click = (clickEnv > 0.7f ? (clickEnv - 0.7f) * 3.33f : 0.0f) + hpNoise * 0.1f * clickEnv;
+        float n = noise.process();
         
+        hpState += (n - hpState) * HP_CUTOFF;
+        float hpNoise = n - hpState;
+        float click = (clickEnv > 0.7f ? (clickEnv - 0.7f) * 3.33f : 0.0f) + hpNoise * 0.1f * clickEnv;        
         float output = (mainSine + lowSine + click * 0.4f) * ampEnv;
         
         pitchEnv *= 0.9986f;
@@ -66,6 +65,8 @@ public:
     }
     
 private:
+    static constexpr float HP_CUTOFF = 0.28f;
+
     float pitchEnv = 0.0f;
     float ampEnv = 0.0f;
     float clickEnv = 0.0f;
@@ -75,6 +76,5 @@ private:
     float sampleRate = 44100.0f;
     bool triggered = false;
 };
-
 }
 }

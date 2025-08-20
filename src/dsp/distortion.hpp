@@ -6,14 +6,22 @@ namespace clonotribe {
 
 class Distortion {
 public:
-    float process(float input, float amount) {
+    Distortion() {
+        reset();
+    }
+    
+    void reset() {
+        lowpass = 0.0f;
+    }
+    
+    [[nodiscard]] float process(float input, float amount) {
         if (amount <= 0.0f) {
             return input;
         }
         
         float driven = input * (1.0f + amount * DRIVE_SCALE);
         
-        driven = FastMath::fastTanh(driven * 1.5f) * 0.7f;
+        driven = FastMath::fastTanh(driven * 1.2f) * 0.8f;
         
         if (driven > THRESHOLD) {
             driven = THRESHOLD + (driven - THRESHOLD) * POSITIVE_CLIPPING_THRESHOLD;
@@ -21,17 +29,18 @@ public:
             driven = -THRESHOLD + (driven + THRESHOLD) * NEGATIVE_CLIPPING_FACTOR;
         }
         
-        driven = FastMath::fastTanh(FastMath::fastTanh(driven * 2.5f) * 0.6f * 3.0f) * 0.5f;
+        driven = FastMath::fastTanh(FastMath::fastTanh(driven * 2.0f) * 0.7f * 2.5f) * 0.6f;
         
         float filterCutoff = FILTER_BASE - amount * FILTER_SCALE;
-        lowpass += (driven - lowpass) * filterCutoff;
+        lowpass = lowpass * (1.0f - filterCutoff) + driven * filterCutoff; // Improved filter
         
         float highFreq = driven - lowpass;
         float output = lowpass + FastMath::fastTanh(highFreq * HIGH_SATURATION_SCALE) * HIGH_MIX * amount;
         
         output = FastMath::fastTanh(output * FINAL_SATURATION_SCALE) * FINAL_GAIN;
         
-        return output * (COMPRESSION_BASE / (1.0f + amount * COMPRESSION_SCALE));
+        float compressionAmount = COMPRESSION_BASE / (1.0f + amount * COMPRESSION_SCALE);
+        return output * compressionAmount;
     }
 
 private:

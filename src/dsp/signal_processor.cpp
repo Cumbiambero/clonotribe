@@ -1,31 +1,34 @@
 #include "../clonotribe.hpp"
+#include "envelope.hpp"
 
-float Clonotribe::processEnvelope(int envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate) {
+float Clonotribe::processEnvelope(Envelope::Type envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate) {
     float envValue = 1.0f;
     bool useGate = (finalSequencerGate > 1.0f);
     switch (envelopeType) {
-        case 0: // Attack
+        case Envelope::Type::ATTACK:
             envelope.setAttack(0.1f);
             envelope.setDecay(0.1f);
             envelope.setSustain(1.0f);
             envelope.setRelease(0.1f);
             envValue = envelope.process(sampleTime);
             break;
-        case 1: // Gate
+        case Envelope::Type::GATE:
             envValue = useGate ? 1.0f : 0.0f;
             break;
-        case 2: // Decay
+        case Envelope::Type::DECAY:
             envelope.setAttack(0.001f);
             envelope.setDecay(0.5f);
             envelope.setSustain(0.0f);
             envelope.setRelease(0.001f);
             envValue = envelope.process(sampleTime);
             break;
+        default:
+            break;
     }
     return envValue;
 }
 
-float Clonotribe::processOutput(
+[[nodiscard]] float Clonotribe::processOutput(
     float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
     float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep, float distortion,
     float delayClock, float delayTime, float delayAmount
@@ -47,6 +50,7 @@ float Clonotribe::processOutput(
             float compressionFactor = 1.0f + std::sqrt(excessGain - 1.0f) * 0.5f;
             distortedSignal /= compressionFactor;
         }
+        
         synthOutput = distortedSignal;
     }
     

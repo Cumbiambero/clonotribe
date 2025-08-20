@@ -24,8 +24,8 @@ public:
         buffer.resize(maxDelaySamples, 0.0f);
         writeIndex = 0;
     }
-    
-    float process(float input, float clockTrigger, float time, float amount) {
+
+    [[nodiscard]] float process(float input, float clockTrigger, float time, float amount) {
         if (buffer.empty()) return input;
         
         amount = std::clamp(amount, 0.0f, 1.0f);

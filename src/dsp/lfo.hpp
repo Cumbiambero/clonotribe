@@ -6,19 +6,38 @@
 namespace clonotribe {
 
 struct LFO final {
-    enum class Waveform { Square = 0, Triangle = 1, Sawtooth = 2, SampleHold = 3 };
     static constexpr float MIN_FREQ = 0.01f;
     static constexpr float MAX_FREQ = 20.0f;
     static constexpr float MIN_ACTIVE_FREQ = 0.001f;
 
+    enum class Waveform { 
+        SQUARE = 0,
+        TRIANGLE = 1,
+        SAW = 2,
+        SAMPLE_HOLD = 3
+    };
+
+    enum class Mode {
+        ONE_SHOT = 0,
+        SLOW = 1,
+        FAST = 2
+    };
+
+    enum class Target {
+        VCF = 0,
+        VCO_VCF = 1,
+        VCO = 2
+    };
+
+
     float phase = 0.0f;
     float freq = 1.0f;
+    float sampleHoldValue = 0.0f;
+    float lastPhase = 0.0f;
     bool oneShot = false;
     bool triggered = false;
     bool active = true;
     bool sampleAndHold = false;
-    float sampleHoldValue = 0.0f;
-    float lastPhase = 0.0f;
 
     constexpr LFO() noexcept = default;
     LFO(const LFO&) noexcept = default;
@@ -53,7 +72,7 @@ struct LFO final {
         }
     }
 
-    [[nodiscard]] float process(float sampleTime, Waveform waveform = Waveform::Square) noexcept {
+    [[nodiscard]] float process(float sampleTime, Waveform waveform = Waveform::SQUARE) noexcept {
         if (!active || (oneShot && !triggered)) [[unlikely]] {
             return 0.0f;
         }
@@ -81,20 +100,20 @@ struct LFO final {
             output = sampleHoldValue;
         } else {
             switch (waveform) {
-                case Waveform::Square:
+                case Waveform::SQUARE:
                     output = (phase < 0.5f) ? 1.0f : -1.0f;
                     break;
-                case Waveform::Triangle:
+                case Waveform::TRIANGLE:
                     if (phase < 0.5f) {
                         output = 4.0f * phase - 1.0f;
                     } else {
                         output = 3.0f - 4.0f * phase;
                     }
                     break;
-                case Waveform::Sawtooth:
+                case Waveform::SAW:
                     output = 2.0f * phase - 1.0f;
                     break;
-                case Waveform::SampleHold:
+                case Waveform::SAMPLE_HOLD:
                     if (phase < lastPhase) {
                         sampleHoldValue = (rack::random::uniform() - 0.5f) * 2.0f;
                     }

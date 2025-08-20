@@ -5,8 +5,7 @@
 #include "lfo.hpp"
 #include "noise.hpp"
 #include "ribbon.hpp"
-#include "sequencer.hpp"
-#include "vcf.hpp"
+#include "sequencer/sequencer.hpp"
 #include "vco.hpp"
 #include "distortion.hpp"
 
