@@ -121,9 +121,9 @@ void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& 
                     if (accent && glide) {
                         red = green = blue = baseBrightness;
                     } else if (accent) {
-                        red = 0.0f;
+                        red = baseBrightness;
                         green = baseBrightness;
-                        blue = baseBrightness;
+                        blue = 0.0f;
                     } else if (glide) {
                         red = 0.0f;
                         green = 0.0f;

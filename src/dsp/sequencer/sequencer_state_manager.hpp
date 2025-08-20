@@ -6,7 +6,6 @@ namespace clonotribe {
 class SequencerStateManager {
 public:
     
-
     struct TriggerState {
         bool playPressed = false;
         bool recPressed = false;
@@ -45,7 +44,6 @@ private:
     rack::dsp::SchmittTrigger gateTimeTrigger;
     rack::dsp::SchmittTrigger stepTriggers[8];
     rack::dsp::SchmittTrigger drumTriggers[4];
-    
     rack::dsp::SchmittTrigger clearAllSequencesTrigger;
     rack::dsp::SchmittTrigger clearSynthSequenceTrigger;
     rack::dsp::SchmittTrigger clearDrumSequenceTrigger;
@@ -55,5 +53,4 @@ private:
     rack::dsp::SchmittTrigger gateTimesLockTrigger;
     rack::dsp::SchmittTrigger syncHalfTempoTrigger;
 };
-
 }
