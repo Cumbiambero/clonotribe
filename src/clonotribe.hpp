@@ -5,7 +5,6 @@
 #include "plugin.hpp"
 #include "dsp/dsp.hpp"
 #include "dsp/parameter_cache.hpp"
-#include "dsp/sequencer/sequencer_state_manager.hpp"
 #include "dsp/drumkits/base/drum_processor.hpp"
 #include "dsp/filter_processor.hpp"
 #include "dsp/vcf/ladder.hpp"
@@ -171,9 +170,6 @@ struct Clonotribe : rack::Module {
     RibbonController ribbonController;
     
     ParameterCache paramCache;
-    
-    SequencerStateManager stateManager;
-    SequencerStateManager::UIState uiState;
     
     dsp::SchmittTrigger gateTrigger;
     dsp::SchmittTrigger playTrigger;
