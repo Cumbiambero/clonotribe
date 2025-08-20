@@ -52,7 +52,7 @@ void Clonotribe::handleStepButtons(float sampleTime) {
             int idx = i;
             if (sequencer.isInSixteenStepMode()) idx = sequencer.getStepIndex(i, false);
             
-            if (selectedDrumPart == 0 && idx >= 0 && idx < sequencer.getStepCount()) {
+            if (sequencer.getSelectedDrumPart() == DrumPart::SYNTH && idx >= 0 && idx < sequencer.getStepCount()) {
                 if (isCtrlClick) {
                     cycleStepAccentGlide(idx);
                 } else if (activeStepActive) {
@@ -61,8 +61,8 @@ void Clonotribe::handleStepButtons(float sampleTime) {
                     sequencer.toggleStepMuted(idx);
                 }
                 selectedStepForEditing = i;
-            } else if (selectedDrumPart != 0) {
-                int drumIdx = selectedDrumPart - 1;
+            } else if (sequencer.getSelectedDrumPart() != DrumPart::SYNTH) {
+                int drumIdx = static_cast<int>(sequencer.getSelectedDrumPart()) - 1;
                 if (drumIdx >= 0 && drumIdx < 3) {
                     drumPatterns[drumIdx][i] = !drumPatterns[drumIdx][i];
                 }
@@ -74,7 +74,7 @@ void Clonotribe::handleStepButtons(float sampleTime) {
 }
 
 void Clonotribe::toggleStepInCurrentMode(int step) {
-    if (selectedDrumPart == 0) {
+    if (sequencer.getSelectedDrumPart() == DrumPart::SYNTH) {
         int idx = step;
         if (sequencer.isInSixteenStepMode()) {
             idx = sequencer.getStepIndex(step, false);
@@ -84,7 +84,7 @@ void Clonotribe::toggleStepInCurrentMode(int step) {
             sequencer.setStepMuted(idx, !current);
         }
     } else {
-        int drumIdx = selectedDrumPart - 1;
+        int drumIdx = static_cast<int>(sequencer.getSelectedDrumPart()) - 1;
         if (drumIdx >= 0 && drumIdx < 3 && step >= 0 && step < 8) {
             drumPatterns[drumIdx][step] = !drumPatterns[drumIdx][step];
         }
@@ -105,7 +105,7 @@ void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& 
             bool isPlaying = false;
             bool notMuted = false;
             
-            if (selectedDrumPart == 0) {
+            if (sequencer.getSelectedDrumPart() == DrumPart::SYNTH) {
                 notMuted = !sequencer.isStepMuted(mainIdx);
                 isPlaying = sequencer.playing && (seqOutput.step == mainIdx);
                 
@@ -135,7 +135,7 @@ void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& 
                 lights[base + 1].setBrightness(green);
                 lights[base + 2].setBrightness(blue);
             } else {
-                int drumIdx = selectedDrumPart - 1;
+                int drumIdx = static_cast<int>(sequencer.getSelectedDrumPart()) - 1;
                 notMuted = (drumIdx >= 0 && drumIdx < 3) ? drumPatterns[drumIdx][i] : false;
                 isPlaying = sequencer.playing && (seqOutput.step == i);
                 
@@ -365,10 +365,10 @@ void Clonotribe::process(const ProcessArgs& args) {
     lights[LIGHT_PLAY].setBrightness(sequencer.playing ? 1.0f : 0.0f);
     lights[LIGHT_REC].setBrightness(sequencer.recording ? 1.0f : 0.0f);
     lights[LIGHT_FLUX].setBrightness(sequencer.fluxMode ? 1.0f : 0.0f);
-    lights[LIGHT_SYNTH].setBrightness(selectedDrumPart == 0 ? 1.0f : 0.0f);
-    lights[LIGHT_BASSDRUM].setBrightness(selectedDrumPart == 1 ? 1.0f : 0.0f);
-    lights[LIGHT_SNARE].setBrightness(selectedDrumPart == 2 ? 1.0f : 0.0f);
-    lights[LIGHT_HIGHHAT].setBrightness(selectedDrumPart == 3 ? 1.0f : 0.0f);
+    lights[LIGHT_SYNTH].setBrightness(sequencer.getSelectedDrumPart() == DrumPart::SYNTH ? 1.0f : 0.0f);
+    lights[LIGHT_BASSDRUM].setBrightness(sequencer.getSelectedDrumPart() == DrumPart::KICK ? 1.0f : 0.0f);
+    lights[LIGHT_SNARE].setBrightness(sequencer.getSelectedDrumPart() == DrumPart::SNARE ? 1.0f : 0.0f);
+    lights[LIGHT_HIGHHAT].setBrightness(sequencer.getSelectedDrumPart() == DrumPart::HIHAT ? 1.0f : 0.0f);
 
     updateStepLights(seqOutput);
 }
@@ -548,7 +548,7 @@ json_t* Clonotribe::dataToJson() {
     
     json_object_set_new(rootJ, "sequencer", sequencerJ);
     
-    json_object_set_new(rootJ, "selectedDrumPart", json_integer(selectedDrumPart));
+    json_object_set_new(rootJ, "selectedDrumPart", json_integer(static_cast<int>(sequencer.getSelectedDrumPart())));
     json_object_set_new(rootJ, "selectedStepForEditing", json_integer(selectedStepForEditing));
     json_object_set_new(rootJ, "gateTimesLocked", json_boolean(gateTimesLocked));
     json_object_set_new(rootJ, "lfoSampleAndHoldMode", json_boolean(lfoSampleAndHoldMode));
@@ -631,7 +631,7 @@ void Clonotribe::dataFromJson(json_t* rootJ) {
     
     json_t* selectedDrumPartJ = json_object_get(rootJ, "selectedDrumPart");
     if (selectedDrumPartJ) {
-        selectedDrumPart = static_cast<int>(json_integer_value(selectedDrumPartJ));
+        sequencer.setSelectedDrumPart(static_cast<DrumPart>(json_integer_value(selectedDrumPartJ)));
     }
     
     json_t* selectedStepForEditingJ = json_object_get(rootJ, "selectedStepForEditing");

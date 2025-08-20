@@ -200,8 +200,6 @@ struct Clonotribe : rack::Module {
     bool stepCtrlLatch[8] = {false,false,false,false,false,false,false,false};
     float stepPrevVal[8] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
 
-
-    int selectedDrumPart = 0; // 0=synth, 1=kick, 2=snare, 3=hihat
     int selectedStepForEditing = 0;
     int syncDivideCounter = 0;
 

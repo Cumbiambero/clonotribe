@@ -105,16 +105,16 @@ void Clonotribe::handleDrumSelectionAndTempo(float tempo) {
     bool snarePressed = drumTriggers[2].process(params[PARAM_SNARE_BUTTON].getValue() > 0.5f);
     bool hihatPressed = drumTriggers[3].process(params[PARAM_HIGHHAT_BUTTON].getValue() > 0.5f);
     if (synthPressed) {
-        selectedDrumPart = 0;
+        sequencer.setSelectedDrumPart(DrumPart::SYNTH);
     }
     if (kickPressed) {
-        selectedDrumPart = 1;
+        sequencer.setSelectedDrumPart(DrumPart::KICK);
     }
     if (snarePressed) {
-        selectedDrumPart = 2;
+        sequencer.setSelectedDrumPart(DrumPart::SNARE);
     }
     if (hihatPressed) {
-        selectedDrumPart = 3;
+        sequencer.setSelectedDrumPart(DrumPart::HIHAT);
     }
     if (!inputs[INPUT_SYNC_CONNECTOR].isConnected()) {
         float minTempo, maxTempo;
@@ -142,17 +142,18 @@ void Clonotribe::handleActiveStep() {
 void Clonotribe::handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld) {
     static float rollTimer = 0.0f;
     
-    if (gateTimeHeld && ribbon.touching && selectedDrumPart > 0) {
+    if (gateTimeHeld && ribbon.touching && sequencer.getSelectedDrumPart() != DrumPart::SYNTH) {
         float rollIntensity = ribbon.getDrumRollIntensity();
         float rollRate = rollIntensity * 50.0f + 1.0f;        
         rollTimer += args.sampleTime * rollRate;
         
         if (rollTimer >= 1.0f) {
             rollTimer -= 1.0f;
-            switch (selectedDrumPart) {
-                case 1: triggerKick(); break;
-                case 2: triggerSnare(); break;
-                case 3: triggerHihat(); break;
+            switch (sequencer.getSelectedDrumPart()) {
+                case DrumPart::KICK: triggerKick(); break;
+                case DrumPart::SNARE: triggerSnare(); break;
+                case DrumPart::HIHAT: triggerHihat(); break;
+                case DrumPart::SYNTH: break;
             }
         }
     } else {
@@ -162,38 +163,31 @@ void Clonotribe::handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld) {
 
 bool Clonotribe::isStepActiveInCurrentMode(int step) {
     if (activeStepActive) {
-        if (selectedDrumPart == 0) {
+        if (sequencer.getSelectedDrumPart() == DrumPart::SYNTH) {
             int idx = sequencer.isInSixteenStepMode() ? sequencer.getStepIndex(step, false) : step;
             return (idx >= 0 && idx < sequencer.getStepCount()) && !sequencer.isStepSkipped(idx);
         } else {
-            int drumIndex = selectedDrumPart - 1;
+            int drumIndex = static_cast<int>(sequencer.getSelectedDrumPart()) - 1;
             return (drumIndex >= 0 && drumIndex < 3) ? drumPatterns[drumIndex][step] : false;
         }
     } else {
-        if (selectedDrumPart == 0) {
+        if (sequencer.getSelectedDrumPart() == DrumPart::SYNTH) {
             int idx = sequencer.isInSixteenStepMode() ? sequencer.getStepIndex(step, false) : step;
             return (idx >= 0 && idx < sequencer.getStepCount()) && !sequencer.isStepMuted(idx);
         } else {
-            int drumIndex = selectedDrumPart - 1;
+            int drumIndex = static_cast<int>(sequencer.getSelectedDrumPart()) - 1;
             return (drumIndex >= 0 && drumIndex < 3) ? drumPatterns[drumIndex][step] : false;
         }
     }
 }
 
 void Clonotribe::clearAllSequences() {
-    clearSynthSequence();
+    sequencer.clearSequence();
     clearDrumSequence();
 }
 
 void Clonotribe::clearSynthSequence() {
-    int stepCount = sequencer.getStepCount();
-    for (int i = 0; i < stepCount; i++) {
-        sequencer.setStepSkipped(i, false);
-        sequencer.setStepMuted(i, false);
-        sequencer.steps[i].pitch = 0.0f;
-        sequencer.steps[i].gate = 5.0f;
-        sequencer.steps[i].gateTime = 0.8f;
-    }
+    sequencer.clearSequence();
 }
 
 void Clonotribe::clearDrumSequence() {
@@ -205,13 +199,10 @@ void Clonotribe::clearDrumSequence() {
 }
 
 void Clonotribe::enableAllActiveSteps() {
-    if (selectedDrumPart == 0) {
-        int stepCount = sequencer.getStepCount();
-        for (int i = 0; i < stepCount; i++) {
-            sequencer.setStepSkipped(i, false);
-        }
+    if (sequencer.getSelectedDrumPart() == DrumPart::SYNTH) {
+        sequencer.enableAllSteps();
     } else {
-        int drumIndex = selectedDrumPart - 1;
+        int drumIndex = static_cast<int>(sequencer.getSelectedDrumPart()) - 1;
         if (drumIndex >= 0 && drumIndex < 3) {
             for (int s = 0; s < 8; s++) {
                 drumPatterns[drumIndex][s] = true;

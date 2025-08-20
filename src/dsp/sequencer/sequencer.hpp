@@ -11,6 +11,13 @@ enum class TempoRange {
     SIZE
 };
 
+enum class DrumPart {
+    SYNTH = 0,
+    KICK = 1,
+    SNARE = 2,
+    HIHAT = 3
+};
+
 struct Sequencer final {
     static constexpr int kMaxSteps = 16;
     static constexpr int kDefaultSteps = 8;
@@ -60,6 +67,8 @@ struct Sequencer final {
     bool sixteenStepMode = false;
     bool hasGlideState = false;
 
+    DrumPart selectedDrumPart = DrumPart::SYNTH;
+
     rack::dsp::SchmittTrigger gateTrigger;
     rack::dsp::SchmittTrigger syncTrigger;
 
@@ -74,6 +83,10 @@ struct Sequencer final {
     void setExternalSync(bool external) noexcept { externalSync = external; }
     void setSixteenStepMode(bool sixteenStep) noexcept { sixteenStepMode = sixteenStep; }
     [[nodiscard]] bool isInSixteenStepMode() const noexcept { return sixteenStepMode; }
+    
+    void setSelectedDrumPart(DrumPart part) noexcept { selectedDrumPart = part; }
+    [[nodiscard]] DrumPart getSelectedDrumPart() const noexcept { return selectedDrumPart; }
+    
     int getStepCount() const noexcept { return sixteenStepMode ? 16 : 8; }
     int getStepIndex(int buttonStep, bool isSubStep = false) const noexcept {
         if (!sixteenStepMode) return buttonStep;
@@ -118,6 +131,27 @@ struct Sequencer final {
         }
     }
     void stopRecording() noexcept { recording = false; }
+    
+    void clearSequence() noexcept {
+        int stepCount = getStepCount();
+        for (int i = 0; i < stepCount; i++) {
+            steps[i].skipped = false;
+            steps[i].muted = false;
+            steps[i].pitch = 0.0f;
+            steps[i].gate = 5.0f;
+            steps[i].gateTime = 0.8f;
+            steps[i].accent = false;
+            steps[i].glide = false;
+        }
+    }
+    
+    void enableAllSteps() noexcept {
+        int stepCount = getStepCount();
+        for (int i = 0; i < stepCount; i++) {
+            steps[i].skipped = false;
+        }
+    }
+    
     void recordNote(float pitch, float gate, float gateTime = 0.5f) noexcept {
         if (recording && !fluxMode) {
             int targetStep = playing ? currentStep : recordingStep;
