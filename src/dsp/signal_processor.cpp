@@ -1,21 +1,21 @@
 #include "../clonotribe.hpp"
 #include "envelope.hpp"
 
-float Clonotribe::processEnvelope(EnvelopeType envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate) {
+float Clonotribe::processEnvelope(Envelope::Type envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate) {
     float envValue = 1.0f;
     bool useGate = (finalSequencerGate > 1.0f);
     switch (envelopeType) {
-        case EnvelopeType::ATTACK:
+        case Envelope::Type::ATTACK:
             envelope.setAttack(0.1f);
             envelope.setDecay(0.1f);
             envelope.setSustain(1.0f);
             envelope.setRelease(0.1f);
             envValue = envelope.process(sampleTime);
             break;
-        case EnvelopeType::GATE:
+        case Envelope::Type::GATE:
             envValue = useGate ? 1.0f : 0.0f;
             break;
-        case EnvelopeType::DECAY:
+        case Envelope::Type::DECAY:
             envelope.setAttack(0.001f);
             envelope.setDecay(0.5f);
             envelope.setSustain(0.0f);

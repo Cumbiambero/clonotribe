@@ -21,7 +21,7 @@ struct ParameterCache {
     float delayTime;
     float delayAmount;
 
-    EnvelopeType envelopeType;
+    Envelope::Type envelopeType;
     LFO::Mode lfoMode;
     LFO::Target lfoTarget;
     LFO::Waveform lfoWaveform;

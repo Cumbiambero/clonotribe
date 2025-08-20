@@ -1,7 +1,7 @@
 #include "../clonotribe.hpp"
 #include <tuple>
 
-auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, EnvelopeType, LFO::Mode, LFO::Target, LFO::Waveform, Ribbon::Mode, VCO::Waveform> {
+auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, Envelope::Type, LFO::Mode, LFO::Target, LFO::Waveform, Ribbon::Mode, VCO::Waveform> {
     auto getParamWithCV = [this](int paramId, int inputId) -> float {
         float value = params[paramId].getValue();
         if (inputs[inputId].isConnected()) {
@@ -39,7 +39,7 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
             getParamQuantity(PARAM_VCO_OCTAVE_KNOB)->setDisplayValue(octaveSwitch);
         }
         paramCache.octave = octaveSwitch - 3.0f;
-        paramCache.envelopeType = static_cast<EnvelopeType>(params[PARAM_ENVELOPE_FORM_SWITCH].getValue());
+        paramCache.envelopeType = static_cast<Envelope::Type>(params[PARAM_ENVELOPE_FORM_SWITCH].getValue());
         paramCache.lfoMode = static_cast<LFO::Mode>(params[PARAM_LFO_MODE_SWITCH].getValue());
         paramCache.lfoTarget = static_cast<LFO::Target>(params[PARAM_LFO_TARGET_SWITCH].getValue());
         paramCache.lfoWaveform = static_cast<LFO::Waveform>(params[PARAM_LFO_WAVEFORM_SWITCH].getValue());

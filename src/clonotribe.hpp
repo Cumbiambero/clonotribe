@@ -16,10 +16,8 @@
 
 using namespace clonotribe;
 
-
-
 struct Clonotribe : rack::Module {
-    static float processEnvelope(EnvelopeType envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
+    static float processEnvelope(Envelope::Type envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate);
     float processOutput(
         float filteredSignal, float volume, float envValue, float ribbonVolumeAutomation,
         float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep, float distortion,
@@ -230,7 +228,7 @@ struct Clonotribe : rack::Module {
         delayProcessor.clear();
     }
 
-    auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, EnvelopeType, LFO::Mode, LFO::Target, LFO::Waveform, Ribbon::Mode, VCO::Waveform>;
+    auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, Envelope::Type, LFO::Mode, LFO::Target, LFO::Waveform, Ribbon::Mode, VCO::Waveform>;
     void updateDSPState(float volume, float rhythmVolume, float lfoIntensity, Ribbon::Mode ribbonMode, float octave);
     void handleMainTriggers();
     void handleDrumSelectionAndTempo(float tempo);
