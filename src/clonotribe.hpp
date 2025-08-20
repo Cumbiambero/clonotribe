@@ -190,7 +190,12 @@ struct Clonotribe : rack::Module {
     dsp::SchmittTrigger ribbonGateTrigger;
     dsp::PulseGenerator syncPulse;
     dsp::PulseGenerator lfoRatePulse;
-    DcBlocker dcBlocker;
+    
+    DcBlocker dcBlockerPost;
+    DcBlocker dcBlockerPostFilter;
+    DcBlocker dcBlockerPostDist;
+    DcBlocker dcBlockerFinal;
+    
     bool stepCtrlLatch[8] = {false,false,false,false,false,false,false,false};
     float stepPrevVal[8] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
 
@@ -216,7 +221,19 @@ struct Clonotribe : rack::Module {
     void onSampleRateChange() override {
         drumProcessor.setSampleRate(APP->engine->getSampleRate());
         delayProcessor.setSampleRate(APP->engine->getSampleRate());
-        dcBlocker.setSampleRate(APP->engine->getSampleRate());
+        
+        float sampleRate = APP->engine->getSampleRate();
+        dcBlockerPost.setSampleRate(sampleRate);
+        dcBlockerPost.setCutoff(30.0f);
+        
+        dcBlockerPostFilter.setSampleRate(sampleRate);
+        dcBlockerPostFilter.setCutoff(20.0f);
+        
+        dcBlockerPostDist.setSampleRate(sampleRate);
+        dcBlockerPostDist.setCutoff(15.0f);
+        
+        dcBlockerFinal.setSampleRate(sampleRate);
+        dcBlockerFinal.setCutoff(10.0f);
     }
 
     void onReset() override {

@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <cmath>
+#include "dc_blocker.hpp"
 
 namespace clonotribe {
 
@@ -9,10 +10,13 @@ public:
     Delay() {
         setSampleRate(44100.0f);
         setMaxDelayTime(2.0f);
+        feedbackDcBlocker.setSampleRate(44100.0f);
+        feedbackDcBlocker.setCutoff(30.0f);
     }
     
     void setSampleRate(float sampleRate) {
         this->sampleRate = sampleRate;
+        feedbackDcBlocker.setSampleRate(sampleRate);
         if (maxDelaySamples > 0) {
             setMaxDelayTime(maxDelayTime);
         }
@@ -68,8 +72,10 @@ public:
         float sample2 = buffer[static_cast<size_t>(readIndex2)];
         float delayedSample = sample1 + fraction * (sample2 - sample1);
         float feedback = amount * 0.4f;
-        float feedbackSignal = delayedSample * feedback;
+        
+        float feedbackSignal = feedbackDcBlocker.process(delayedSample * feedback);
         feedbackSignal = std::clamp(feedbackSignal, -2.0f, 2.0f);
+        
         buffer[writeIndex] = input + feedbackSignal;
         writeIndex = (writeIndex + 1) % maxDelaySamples;
         return input * (1.0f - amount) + delayedSample * amount;
@@ -85,6 +91,7 @@ public:
         samplesSinceLastClock = 0;
         lastClockInterval = 0.0f;
         smoothedDelaySamples = 1.0f;
+        feedbackDcBlocker.reset();
     }
     
 private:
@@ -97,5 +104,7 @@ private:
     int samplesSinceLastClock = 0;
     float lastClockInterval = 0.0f;
     float smoothedDelaySamples = 1.0f;
+    DcBlocker feedbackDcBlocker;
 };
+
 }

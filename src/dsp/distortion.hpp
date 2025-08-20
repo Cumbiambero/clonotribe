@@ -29,6 +29,9 @@ public:
             driven = -THRESHOLD + (driven + THRESHOLD) * NEGATIVE_CLIPPING_FACTOR;
         }
         
+        float dcCompensation = (POSITIVE_CLIPPING_THRESHOLD - NEGATIVE_CLIPPING_FACTOR) * amount * 0.1f;
+        driven -= dcCompensation;
+        
         driven = FastMath::fastTanh(FastMath::fastTanh(driven * 2.0f) * 0.7f * 2.5f) * 0.6f;
         
         float filterCutoff = FILTER_BASE - amount * FILTER_SCALE;
