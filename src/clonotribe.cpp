@@ -47,7 +47,7 @@ void Clonotribe::handleStepButtons(float sampleTime) {
         bool rising = (stepPrevVal[i] <= 0.5f && btnVal > 0.5f);
 
         if (rising) {
-            bool isCtrlClick = (btnVal >= 0.85f && btnVal < 0.95f);
+            bool isCtrlClick = (btnVal >= 0.8f && btnVal <= 0.95f);
             
             int idx = i;
             if (sequencer.isInSixteenStepMode()) idx = sequencer.getStepIndex(i, false);
