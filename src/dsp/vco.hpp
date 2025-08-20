@@ -8,9 +8,9 @@ namespace clonotribe {
 class VCO final {
 public:
     enum class Waveform {
-        SAW,
-        TRIANGLE,
-        SQUARE
+        SQUARE = 0,
+        TRIANGLE = 1,
+        SAW = 2
     };
 
     constexpr VCO() noexcept = default;

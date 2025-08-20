@@ -13,7 +13,7 @@ struct LFO final {
     enum class Waveform { 
         SQUARE = 0,
         TRIANGLE = 1,
-        SAW_TOOTH = 2,
+        SAW = 2,
         SAMPLE_HOLD = 3
     };
 
@@ -110,7 +110,7 @@ struct LFO final {
                         output = 3.0f - 4.0f * phase;
                     }
                     break;
-                case Waveform::SAW_TOOTH:
+                case Waveform::SAW:
                     output = 2.0f * phase - 1.0f;
                     break;
                 case Waveform::SAMPLE_HOLD:

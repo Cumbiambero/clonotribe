@@ -293,7 +293,7 @@ void Clonotribe::process(const ProcessArgs& args) {
     switch (lfoWaveform) {
         case LFO::Waveform::SQUARE: wf = LFO::Waveform::SQUARE; break;
         case LFO::Waveform::TRIANGLE: wf = LFO::Waveform::TRIANGLE; break;
-        case LFO::Waveform::SAW_TOOTH: wf = LFO::Waveform::SAW_TOOTH; break;
+        case LFO::Waveform::SAW: wf = LFO::Waveform::SAW; break;
         default: wf = LFO::Waveform::SQUARE; break;
     }
     float lfoOut = lfo.process(args.sampleTime, wf) * lfoIntensity;
