@@ -6,6 +6,13 @@
 namespace clonotribe {
 
 struct VCO final {
+
+    enum class Waveform {
+        SAW,
+        TRIANGLE,
+        SQUARE
+    };
+
     float phase{0.0f};
     float freq{440.0f};
     float pulseWidth{0.5f};
@@ -14,9 +21,6 @@ struct VCO final {
     bool active{true};
 
     rack::dsp::RCFilter antiAlias{};
-    float dcBlockerY{0.0f};
-    float dcBlockerX{0.0f};
-    static constexpr float dcBlockerAlpha = 0.9997f;
 
     constexpr VCO() noexcept = default;
 
@@ -68,12 +72,8 @@ struct VCO final {
         auto saw = 2.0f * phase - 1.0f;
         saw -= polyblep(phase, dt);
 
-        float y = saw - dcBlockerX + dcBlockerAlpha * dcBlockerY;
-        dcBlockerX = saw;
-        dcBlockerY = y;
-
-        lastSaw = y;
-        return y;
+        lastSaw = saw;
+        return saw;
     }
 
 
@@ -98,11 +98,7 @@ struct VCO final {
 
         triangle = triangle + 0.05f * triangle * triangle * triangle;
 
-        float y = triangle - dcBlockerX + dcBlockerAlpha * dcBlockerY;
-        dcBlockerX = triangle;
-        dcBlockerY = y;
-
-        return y;
+        return triangle;
     }
 
     [[nodiscard]] float processSquare(float sampleTime) noexcept {
@@ -131,11 +127,7 @@ struct VCO final {
             square = 1.0f - 2.0f * t;
         }
 
-        float y = square - dcBlockerX + dcBlockerAlpha * dcBlockerY;
-        dcBlockerX = square;
-        dcBlockerY = y;
-
-        return y;
+        return square;
     }
 };
 }

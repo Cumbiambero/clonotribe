@@ -237,7 +237,6 @@ void Clonotribe::process(const ProcessArgs& args) {
     handleStepButtons(args.sampleTime);
     bool gateTimeHeld = params[PARAM_GATE_TIME_BUTTON].getValue() > 0.5f;
     this->gateTimeHeld = gateTimeHeld;
-    handleSpecialGateTimeButtons(gateTimeHeld);
 
     float ribbonGateTimeMod = gateTimesLocked ? 0.5f : (gateTimeHeld && ribbon.touching ? ribbon.getGateTimeMod() : 0.5f);
 
@@ -290,30 +289,30 @@ void Clonotribe::process(const ProcessArgs& args) {
 
     float lfoFreq = rack::math::rescale(lfoRate, 0.0f, 1.0f, LFO::MIN_FREQ, LFO::MAX_FREQ);
     lfo.setRate(lfoFreq);
-    LFO::Waveform wf = LFO::Waveform::Square;
+    LFO::Waveform wf = LFO::Waveform::SQUARE;
     switch (lfoWaveform) {
-        case SequencerStateManager::LFOWaveform::Square: wf = LFO::Waveform::Square; break;
-        case SequencerStateManager::LFOWaveform::Triangle: wf = LFO::Waveform::Triangle; break;
-        case SequencerStateManager::LFOWaveform::Sawtooth: wf = LFO::Waveform::Sawtooth; break;
-        default: wf = LFO::Waveform::Square; break;
+        case LFO::Waveform::SQUARE: wf = LFO::Waveform::SQUARE; break;
+        case LFO::Waveform::TRIANGLE: wf = LFO::Waveform::TRIANGLE; break;
+        case LFO::Waveform::SAW_TOOTH: wf = LFO::Waveform::SAW_TOOTH; break;
+        default: wf = LFO::Waveform::SQUARE; break;
     }
     float lfoOut = lfo.process(args.sampleTime, wf) * lfoIntensity;
 
     float lfoToVCO = 0.0f, lfoToVCF = 0.0f;
     switch (lfoTarget) {
-        case SequencerStateManager::LFOTarget::VCF: lfoToVCF = lfoOut; break;
-        case SequencerStateManager::LFOTarget::VCO_VCF: lfoToVCO = lfoOut * 0.5f; lfoToVCF = lfoOut; break;
-        case SequencerStateManager::LFOTarget::VCO: lfoToVCO = lfoOut * 0.5f; break;
+        case LFO::Target::VCF: lfoToVCF = lfoOut; break;
+        case LFO::Target::VCO_VCF: lfoToVCO = lfoOut * 0.5f; lfoToVCF = lfoOut; break;
+        case LFO::Target::VCO: lfoToVCO = lfoOut * 0.5f; break;
     }
 
     vco.setPitch(finalPitch + lfoToVCO);
-    static int cachedWaveform = -1;
+    static VCO::Waveform cachedWaveform = static_cast<VCO::Waveform>(-1);
     static float (VCO::*vcoProcessFunction)(float) = nullptr;
     if (cachedWaveform != waveform) {
         switch (waveform) {
-            case 0: vcoProcessFunction = &VCO::processSquare; break;
-            case 1: vcoProcessFunction = &VCO::processTriangle; break;
-            case 2: vcoProcessFunction = &VCO::processSaw; break;
+            case VCO::Waveform::SQUARE: vcoProcessFunction = &VCO::processSquare; break;
+            case VCO::Waveform::TRIANGLE: vcoProcessFunction = &VCO::processTriangle; break;
+            case VCO::Waveform::SAW: vcoProcessFunction = &VCO::processSaw; break;
             default: vcoProcessFunction = &VCO::processSquare; break;
         }
         cachedWaveform = waveform;
@@ -351,17 +350,11 @@ void Clonotribe::process(const ProcessArgs& args) {
         outputs[OUTPUT_LFO_RATE_CONNECTOR].setVoltage(0.0f);
     }
     
-    finalOutput = finalOutput * 0.95f;
-    
     if (distortion <= 0.1f) {
         finalOutput = clonotribe::FastMath::fastTanh(finalOutput * 0.7f) * 1.3f;
     }
 
-    float noiseReducedOutput = finalOutput;
-    if (std::abs(finalOutput) < 0.0015f) {
-        float reduction = std::abs(finalOutput) / 0.0015f;
-        noiseReducedOutput = finalOutput * reduction * reduction;
-    }
+    float noiseReducedOutput = dcBlocker.process(finalOutput);
 
     outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(std::clamp(noiseReducedOutput * 4.0f, -10.0f, 10.0f));
     outputs[OUTPUT_CV_CONNECTOR].setVoltage(finalPitch);

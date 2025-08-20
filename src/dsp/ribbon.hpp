@@ -7,7 +7,11 @@ namespace clonotribe {
 
 class Ribbon {
 public:
-    enum class Mode { Key = 0, Narrow = 1, Wide = 2 };
+    enum class Mode {
+        KEY = 0, 
+        NARROW = 1, 
+        WIDE = 2
+    };
 
     Ribbon() = default;
 
@@ -21,13 +25,13 @@ public:
 
     [[nodiscard]] float getCV() const noexcept {
         switch (mode) {
-            case Mode::Key: {
+            case Mode::KEY: {
                 int step = static_cast<int>(position * 12.0f);
                 return (static_cast<float>(step) / 12.0f) + octave;
             }
-            case Mode::Narrow:
+            case Mode::NARROW:
                 return position * 2.0f + octave - 1.0f;
-            case Mode::Wide:
+            case Mode::WIDE:
                 return position * 5.0f + octave - 2.5f;
             default:
                 return 0.0f;
@@ -47,7 +51,7 @@ public:
     }
     bool touching = false;
 private:
-    Mode mode = Mode::Key;
+    Mode mode = Mode::KEY;
     float octave = 0.0f;
     float position = 0.0f;
 };

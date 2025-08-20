@@ -22,12 +22,12 @@ struct ParameterCache {
     float delayAmount;
 
     EnvelopeType envelopeType;
-    SequencerStateManager::LFOMode lfoMode;
-    SequencerStateManager::LFOTarget lfoTarget;
-    SequencerStateManager::LFOWaveform lfoWaveform;
+    LFO::Mode lfoMode;
+    LFO::Target lfoTarget;
+    LFO::Waveform lfoWaveform;
 
-    int ribbonMode;
-    int waveform;
+    Ribbon::Mode ribbonMode;
+    VCO::Waveform vcoWaveform;
     int updateCounter = 0;
     static constexpr int UPDATE_INTERVAL = 64;
 

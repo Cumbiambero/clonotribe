@@ -224,7 +224,7 @@ struct Clonotribe : rack::Module {
     void onSampleRateChange() override {
         drumProcessor.setSampleRate(APP->engine->getSampleRate());
         delayProcessor.setSampleRate(APP->engine->getSampleRate());
-    dcBlocker.setSampleRate(APP->engine->getSampleRate());
+        dcBlocker.setSampleRate(APP->engine->getSampleRate());
     }
 
     void onReset() override {
@@ -232,8 +232,8 @@ struct Clonotribe : rack::Module {
         delayProcessor.clear();
     }
 
-    auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, EnvelopeType, SequencerStateManager::LFOMode, SequencerStateManager::LFOTarget, SequencerStateManager::LFOWaveform, int, int>;
-    void updateDSPState(float volume, float rhythmVolume, float lfoIntensity, int ribbonMode, float octave);
+    auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, EnvelopeType, LFO::Mode, LFO::Target, LFO::Waveform, Ribbon::Mode, VCO::Waveform>;
+    void updateDSPState(float volume, float rhythmVolume, float lfoIntensity, Ribbon::Mode ribbonMode, float octave);
     void handleMainTriggers();
     void handleDrumSelectionAndTempo(float tempo);
     void handleSpecialGateTimeButtons(bool gateTimeHeld);

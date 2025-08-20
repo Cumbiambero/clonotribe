@@ -1,7 +1,7 @@
 #include "../clonotribe.hpp"
 #include <tuple>
 
-auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, EnvelopeType, SequencerStateManager::LFOMode, SequencerStateManager::LFOTarget, SequencerStateManager::LFOWaveform, int, int> {
+auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, EnvelopeType, LFO::Mode, LFO::Target, LFO::Waveform, Ribbon::Mode, VCO::Waveform> {
     auto getParamWithCV = [this](int paramId, int inputId) -> float {
         float value = params[paramId].getValue();
         if (inputs[inputId].isConnected()) {
@@ -40,28 +40,28 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
         }
         paramCache.octave = octaveSwitch - 3.0f;
         paramCache.envelopeType = static_cast<EnvelopeType>(params[PARAM_ENVELOPE_FORM_SWITCH].getValue());
-        paramCache.lfoMode = static_cast<SequencerStateManager::LFOMode>(params[PARAM_LFO_MODE_SWITCH].getValue());
-        paramCache.lfoTarget = static_cast<SequencerStateManager::LFOTarget>(params[PARAM_LFO_TARGET_SWITCH].getValue());
-        paramCache.lfoWaveform = static_cast<SequencerStateManager::LFOWaveform>(params[PARAM_LFO_WAVEFORM_SWITCH].getValue());
-        paramCache.ribbonMode = static_cast<int>(params[PARAM_RIBBON_RANGE_SWITCH].getValue());
-        paramCache.waveform = static_cast<int>(params[PARAM_VCO_WAVEFORM_SWITCH].getValue());
+        paramCache.lfoMode = static_cast<LFO::Mode>(params[PARAM_LFO_MODE_SWITCH].getValue());
+        paramCache.lfoTarget = static_cast<LFO::Target>(params[PARAM_LFO_TARGET_SWITCH].getValue());
+        paramCache.lfoWaveform = static_cast<LFO::Waveform>(params[PARAM_LFO_WAVEFORM_SWITCH].getValue());
+        paramCache.ribbonMode = static_cast<Ribbon::Mode>(params[PARAM_RIBBON_RANGE_SWITCH].getValue());
+        paramCache.vcoWaveform = static_cast<VCO::Waveform>(params[PARAM_VCO_WAVEFORM_SWITCH].getValue());
         paramCache.resetUpdateCounter();
     }
     
     return {paramCache.cutoff, paramCache.lfoIntensity, paramCache.lfoRate, paramCache.noiseLevel, 
             paramCache.resonance, paramCache.rhythmVolume, paramCache.tempo, paramCache.volume, 
             paramCache.octave, paramCache.distortion, paramCache.envelopeType, paramCache.lfoMode, paramCache.lfoTarget, 
-            paramCache.lfoWaveform, paramCache.ribbonMode, paramCache.waveform};
+            paramCache.lfoWaveform, paramCache.ribbonMode, paramCache.vcoWaveform};
 }
 
-void Clonotribe::updateDSPState(float volume, float rhythmVolume, float lfoIntensity, int ribbonMode, float octave) {
+void Clonotribe::updateDSPState(float volume, float rhythmVolume, float lfoIntensity, Ribbon::Mode ribbonMode, float octave) {
     bool synthActive = true;
     bool filterActive = true;
     bool lfoActive = (lfoIntensity > 0.01f);
     lfo.active = lfoActive;
     vco.active = synthActive;
     vcf.setActive(filterActive);
-    ribbon.setMode(ribbonMode);
+    ribbon.setMode(static_cast<int>(ribbonMode));
     ribbon.setOctave(octave);
 }
 
@@ -104,10 +104,18 @@ void Clonotribe::handleDrumSelectionAndTempo(float tempo) {
     bool kickPressed = drumTriggers[1].process(params[PARAM_BASSDRUM_BUTTON].getValue() > 0.5f);
     bool snarePressed = drumTriggers[2].process(params[PARAM_SNARE_BUTTON].getValue() > 0.5f);
     bool hihatPressed = drumTriggers[3].process(params[PARAM_HIGHHAT_BUTTON].getValue() > 0.5f);
-    if (synthPressed) selectedDrumPart = 0;
-    if (kickPressed) selectedDrumPart = 1;
-    if (snarePressed) selectedDrumPart = 2;
-    if (hihatPressed) selectedDrumPart = 3;
+    if (synthPressed) {
+        selectedDrumPart = 0;
+    }
+    if (kickPressed) {
+        selectedDrumPart = 1;
+    }
+    if (snarePressed) {
+        selectedDrumPart = 2;
+    }
+    if (hihatPressed) {
+        selectedDrumPart = 3;
+    }
     if (!inputs[INPUT_SYNC_CONNECTOR].isConnected()) {
         float minTempo, maxTempo;
         getTempoRange(minTempo, maxTempo);
@@ -119,18 +127,12 @@ void Clonotribe::handleDrumSelectionAndTempo(float tempo) {
     }
 }
 
-void Clonotribe::handleSpecialGateTimeButtons(bool gateTimeHeld) {
-    (void)gateTimeHeld; // Gate Time no longer invokes combos; reserved for ribbon rolls only
-}
-
-
-
 void Clonotribe::handleActiveStep() {
     bool activeStepHeld = params[PARAM_ACTIVE_STEP_BUTTON].getValue() > 0.5f;
 
     if (activeStepHeld && !activeStepWasPressed) {
         activeStepWasPressed = true;
-    activeStepActive = true; // enter skip-edit mode (no immediate toggle)
+        activeStepActive = true;
     } else if (!activeStepHeld && activeStepWasPressed) {
         activeStepWasPressed = false;
         activeStepActive = false;
@@ -157,7 +159,6 @@ void Clonotribe::handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld) {
         rollTimer = 0.0f;
     }
 }
-
 
 bool Clonotribe::isStepActiveInCurrentMode(int step) {
     if (activeStepActive) {
@@ -194,7 +195,6 @@ void Clonotribe::clearSynthSequence() {
         sequencer.steps[i].gateTime = 0.8f;
     }
 }
-
 
 void Clonotribe::clearDrumSequence() {
     for (int d = 0; d < 3; d++) {

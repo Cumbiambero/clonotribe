@@ -5,9 +5,7 @@ namespace clonotribe {
 
 class SequencerStateManager {
 public:
-    enum class LFOMode { OneShot = 0, Slow = 1, Fast = 2 };
-    enum class LFOTarget { VCF = 0, VCO_VCF = 1, VCO = 2 };
-    enum class LFOWaveform { Square = 0, Triangle = 1, Sawtooth = 2 };
+    
 
     struct TriggerState {
         bool playPressed = false;
