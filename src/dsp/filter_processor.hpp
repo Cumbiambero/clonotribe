@@ -25,15 +25,20 @@ public:
         float smoothedCutoff = cutoff;
         float smoothedResonance = resonance;
         
-        if (std::abs(cutoff - lastCutoff) > CUTOFF_THRESHOLD) {
-            smoothedCutoff = lastCutoff + (cutoff - lastCutoff) * 0.2f;
+        float cutoffDelta = std::abs(cutoff - lastCutoff);
+        float resonanceDelta = std::abs(resonance - lastResonance);
+        
+        if (cutoffDelta > CUTOFF_THRESHOLD) {
+            float smoothFactor = std::clamp(0.05f + cutoffDelta * 0.1f, 0.05f, 0.3f);
+            smoothedCutoff = lastCutoff + (cutoff - lastCutoff) * smoothFactor;
             lastCutoff = smoothedCutoff;
         } else {
             lastCutoff = cutoff;
         }
         
-        if (std::abs(resonance - lastResonance) > RESONANCE_THRESHOLD) {
-            smoothedResonance = lastResonance + (resonance - lastResonance) * 0.2f;
+        if (resonanceDelta > RESONANCE_THRESHOLD) {
+            float smoothFactor = std::clamp(0.1f + resonanceDelta * 0.2f, 0.1f, 0.4f);
+            smoothedResonance = lastResonance + (resonance - lastResonance) * smoothFactor;
             lastResonance = smoothedResonance;
         } else {
             lastResonance = resonance;

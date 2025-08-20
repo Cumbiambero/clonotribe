@@ -126,8 +126,9 @@ private:
             triangle = 3.0f - 4.0f * phase;
         }
 
-        triangle = triangle + 0.05f * triangle * triangle * triangle;
-
+        float shaped = triangle * triangle * triangle;
+        triangle = triangle + 0.05f * shaped;
+        
         return triangle;
     }
 

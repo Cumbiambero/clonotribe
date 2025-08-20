@@ -47,13 +47,17 @@ public:
         f = std::clamp(f, 0.f, 0.9f);
 
         float drive = 1.0f + resonanceParam * 1.2f;
-        float drivenInput = saturate(input * drive);
+        
+        float drivenInput = input * drive;
+        drivenInput = saturate(drivenInput);
         
         float hp = saturate(drivenInput - resonance * s2 - s1);
+        
         s1 += f * saturate(hp);
         s2 += f * saturate(s1);
 
         float output = s2;
+        
         if (cutoffParam < 0.4f) {
             if (cutoffParam < 0.3f) {
                 output *= 0.0f;
@@ -69,17 +73,22 @@ public:
             float oscGain = (resonanceParam - 0.75f) * 4.0f;
             oscPhase += 2.0f * FastMath::PI * cutoff * invSampleRate;
             if (oscPhase >= 2.0f * FastMath::PI) oscPhase -= 2.0f * FastMath::PI;
+            
             float oscSig = FastMath::fastSin(oscPhase) * oscGain * 0.15f;
 
             if (cutoff > sampleRate * 0.25f) {
                 oscSig *= 0.5f;
             }
+            
             output = output * (1.0f - oscGain * 0.3f) + oscSig;
         }
 
         if (std::abs(output) < 1e-30f) output = 0.f;
 
-        return saturate(output * (1.1f + resonanceParam * 0.3f));
+        float finalGain = 1.1f + resonanceParam * 0.3f;
+        output = saturate(output * finalGain);
+        
+        return output;
     }
 
     void reset() noexcept {

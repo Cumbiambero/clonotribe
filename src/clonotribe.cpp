@@ -47,7 +47,7 @@ void Clonotribe::handleStepButtons(float sampleTime) {
         bool rising = (stepPrevVal[i] <= 0.5f && btnVal > 0.5f);
 
         if (rising) {
-            bool isCtrlClick = (btnVal >= 0.85f && btnVal < 0.95f);
+            bool isCtrlClick = (btnVal >= 0.8f && btnVal <= 0.95f);
             
             int idx = i;
             if (sequencer.isInSixteenStepMode()) idx = sequencer.getStepIndex(i, false);
@@ -91,7 +91,7 @@ void Clonotribe::toggleStepInCurrentMode(int step) {
     }
 }
 
-void Clonotribe::updateStepLights(const clonotribe::Sequencer::SequencerOutput& seqOutput) {
+void Clonotribe::updateStepLights(const Sequencer::SequencerOutput& seqOutput) {
     for (int i = 0; i < 8; ++i) {
         int mainIdx = sequencer.isInSixteenStepMode() ? sequencer.getStepIndex(i, false) : i;
         int base = LIGHT_SEQUENCER_1_R + i * 3;
@@ -221,10 +221,6 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
     filterProcessor.setPointers(&vcf, &ladderFilter, &moogFilter);
     filterProcessor.setType(selectedFilterType);
     delayProcessor.clear();
-    
-    dcBlocker.setSampleRate(APP->engine->getSampleRate());
-    dcBlocker.setCutoff(60.0f);
-    dcBlocker.reset();
 }
 
 void Clonotribe::process(const ProcessArgs& args) {
@@ -308,6 +304,9 @@ void Clonotribe::process(const ProcessArgs& args) {
     vco.setPitch(finalPitch + lfoToVCO);
     vco.setWaveform(waveform);
     float vcoOutput = vco.process(args.sampleTime);
+    
+    vcoOutput = dcBlockerPost.process(vcoOutput);
+    
     float noise = noiseGenerator.process() * noiseLevel;
     float mixedSignal = vcoOutput + noise;
     
@@ -316,6 +315,8 @@ void Clonotribe::process(const ProcessArgs& args) {
         std::clamp(effectiveCutoff + lfoToVCF, 0.0f, 1.0f), 
         resonance
     );
+    
+    filteredSignal = dcBlockerPostFilter.process(filteredSignal);
     float envValue = processEnvelope(envelopeType, envelope, args.sampleTime, finalGate);
     float delayClock = inputs[INPUT_DELAY_TIME_CONNECTOR].isConnected() ? inputs[INPUT_DELAY_TIME_CONNECTOR].getVoltage() : 0.0f;
     float finalOutput = processOutput(
@@ -337,10 +338,10 @@ void Clonotribe::process(const ProcessArgs& args) {
     }
     
     if (distortion <= 0.1f) {
-        finalOutput = clonotribe::FastMath::fastTanh(finalOutput * 0.7f) * 1.3f;
+        finalOutput = FastMath::fastTanh(finalOutput * 0.7f) * 1.3f;
     }
 
-    float noiseReducedOutput = dcBlocker.process(finalOutput);
+    float noiseReducedOutput = dcBlockerFinal.processFinal(finalOutput);
 
     outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(std::clamp(noiseReducedOutput * 4.0f, -10.0f, 10.0f));
     outputs[OUTPUT_CV_CONNECTOR].setVoltage(finalPitch);

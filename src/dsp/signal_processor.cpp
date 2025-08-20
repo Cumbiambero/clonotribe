@@ -51,7 +51,7 @@ float Clonotribe::processEnvelope(Envelope::Type envelopeType, Envelope& envelop
             distortedSignal /= compressionFactor;
         }
         
-        synthOutput = distortedSignal;
+        synthOutput = dcBlockerPostDist.processAggressive(distortedSignal);
     }
     
     if (delayAmount > 0.0f && delayTime > 0.001f) {
