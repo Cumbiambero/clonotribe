@@ -55,14 +55,10 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
 }
 
 void Clonotribe::updateDSPState(float volume, float rhythmVolume, float lfoIntensity, Ribbon::Mode ribbonMode, float octave) {
-    bool synthActive = true;
-    bool filterActive = true;
-    bool lfoActive = (lfoIntensity > 0.01f);
-    lfo.active = lfoActive;
-    vco.active = synthActive;
-    vcf.setActive(filterActive);
+    lfo.active = lfoIntensity > 0.01f;
+    vcf.setActive(volume > 0.01f);
     ribbon.setMode(static_cast<int>(ribbonMode));
-    ribbon.setOctave(octave);
+    ribbon.setOctave(octave);    
 }
 
 void Clonotribe::handleMainTriggers() {

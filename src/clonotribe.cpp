@@ -306,22 +306,8 @@ void Clonotribe::process(const ProcessArgs& args) {
     }
 
     vco.setPitch(finalPitch + lfoToVCO);
-    static VCO::Waveform cachedWaveform = static_cast<VCO::Waveform>(-1);
-    static float (VCO::*vcoProcessFunction)(float) = nullptr;
-    if (cachedWaveform != waveform) {
-        switch (waveform) {
-            case VCO::Waveform::SQUARE: vcoProcessFunction = &VCO::processSquare; break;
-            case VCO::Waveform::TRIANGLE: vcoProcessFunction = &VCO::processTriangle; break;
-            case VCO::Waveform::SAW: vcoProcessFunction = &VCO::processSaw; break;
-            default: vcoProcessFunction = &VCO::processSquare; break;
-        }
-        cachedWaveform = waveform;
-    }
-    if (!vcoProcessFunction) {
-        vcoProcessFunction = &VCO::processSquare;
-    }
-    
-    float vcoOutput = (vco.*vcoProcessFunction)(args.sampleTime);
+    vco.setWaveform(waveform);
+    float vcoOutput = vco.process(args.sampleTime);
     float noise = noiseGenerator.process() * noiseLevel;
     float mixedSignal = vcoOutput + noise;
     

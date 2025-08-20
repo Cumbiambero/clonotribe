@@ -5,27 +5,40 @@
 
 namespace clonotribe {
 
-struct VCO final {
-
+class VCO final {
+public:
     enum class Waveform {
         SAW,
         TRIANGLE,
         SQUARE
     };
 
-    float phase{0.0f};
-    float freq{440.0f};
-    float pulseWidth{0.5f};
-    float lastSaw{0.0f};
-    float lastPulse{0.0f};
-    bool active{true};
-
-    rack::dsp::RCFilter antiAlias{};
-
     constexpr VCO() noexcept = default;
 
     void initialize() noexcept {
         antiAlias.setCutoff(8000.0f / 48000.0f);
+        setWaveform(currentWaveform);
+    }
+
+    void setWaveform(Waveform waveform) noexcept {
+        if (currentWaveform != waveform) {
+            currentWaveform = waveform;
+            switch (waveform) {
+                case Waveform::TRIANGLE: 
+                    processFunction = &VCO::processTriangle; 
+                    break;
+                case Waveform::SAW: 
+                    processFunction = &VCO::processSaw; 
+                    break;
+                case Waveform::SQUARE: 
+                default: 
+                    processFunction = &VCO::processSquare; 
+            }
+        }
+    }
+
+    [[nodiscard]] float process(float sampleTime) noexcept {
+        return (this->*processFunction)(sampleTime);
     }
 
     void setPitch(float pitch) noexcept {
@@ -45,7 +58,20 @@ struct VCO final {
         pulseWidth = std::clamp(pw, 0.01f, 0.99f);
     }
 
-    [[nodiscard]] static constexpr float polyblep(float t, float dt) noexcept {
+private:
+    float phase{0.0f};
+    float freq{440.0f};
+    float pulseWidth{0.5f};
+    float lastSaw{0.0f};
+    float lastPulse{0.0f};
+    bool active{true};
+    
+    Waveform currentWaveform{Waveform::SAW};
+    float (VCO::*processFunction)(float){&VCO::processSaw};
+
+    rack::dsp::RCFilter antiAlias{};
+
+    [[nodiscard]] static constexpr float polyBLEP(float t, float dt) noexcept {
         if (t < dt) {
             t /= dt;
             return t + t - t * t - 1.0f;
@@ -58,7 +84,9 @@ struct VCO final {
     }
 
     [[nodiscard]] float processSaw(float sampleTime) noexcept {
-        if (!active) return lastSaw;
+        if (!active) {
+            return  0.0f;
+        }
 
         const auto dt = freq * sampleTime;
         if (dt > 1.0f) {
@@ -70,7 +98,7 @@ struct VCO final {
         if (phase >= 1.0f) phase -= 1.0f;
 
         auto saw = 2.0f * phase - 1.0f;
-        saw -= polyblep(phase, dt);
+        saw -= polyBLEP(phase, dt);
 
         lastSaw = saw;
         return saw;
@@ -78,7 +106,9 @@ struct VCO final {
 
 
     [[nodiscard]] float processTriangle(float sampleTime) noexcept {
-        if (!active) return 0.0f;
+        if (!active) {
+            return 0.0f;
+        }
 
         const auto dt = freq * sampleTime;
         if (dt > 1.0f) {
@@ -102,7 +132,9 @@ struct VCO final {
     }
 
     [[nodiscard]] float processSquare(float sampleTime) noexcept {
-        if (!active) return 0.0f;
+        if (!active) {
+            return 0.0f;
+        }
 
         const auto dt = freq * sampleTime;
         if (dt > 1.0f) {
