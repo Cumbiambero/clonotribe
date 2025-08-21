@@ -10,8 +10,10 @@
 #include "dsp/drumkits/latin/hihat.hpp"
 
 void Clonotribe::cycleStepAccentGlide(int step) {
-    if (step < 0 || step >= sequencer.getStepCount()) return;
-    
+    if (step < 0 || step >= sequencer.getStepCount()) {
+        return;
+    }
+
     bool accent = sequencer.isStepAccent(step);
     bool glide = sequencer.isStepGlide(step);
     
@@ -98,9 +100,9 @@ void Clonotribe::updateStepLights(const Sequencer::SequencerOutput& seqOutput) {
         
         if (activeStepActive) {
             bool notSkipped = (mainIdx >= 0 && mainIdx < sequencer.getStepCount()) && !sequencer.steps[mainIdx].skipped;
-            lights[base + 0].setBrightness(notSkipped ? 1.0f : 0.0f);
-            lights[base + 1].setBrightness(0.0f);
-            lights[base + 2].setBrightness(0.0f);
+            lights[base + 0].setBrightness(notSkipped ? LIGHT_ACTIVE : LIGHT_OFF);
+            lights[base + 1].setBrightness(LIGHT_OFF);
+            lights[base + 2].setBrightness(LIGHT_OFF);
         } else {
             bool isPlaying = false;
             bool notMuted = false;
@@ -109,10 +111,12 @@ void Clonotribe::updateStepLights(const Sequencer::SequencerOutput& seqOutput) {
                 notMuted = !sequencer.isStepMuted(mainIdx);
                 isPlaying = sequencer.playing && (seqOutput.step == mainIdx);
                 
-                float baseBrightness = 0.0f;
-                if (notMuted) baseBrightness = isPlaying ? 1.0f : 0.3f;
+                float baseBrightness = LIGHT_OFF;
+                if (notMuted) {
+                    baseBrightness = isPlaying ? LIGHT_ACTIVE : LIGHT_ON;
+                }
                 
-                float red = baseBrightness, green = 0.0f, blue = 0.0f;
+                float red = baseBrightness, green = LIGHT_OFF, blue = LIGHT_OFF;
                 
                 if (notMuted) {
                     bool accent = sequencer.isStepAccent(mainIdx);
@@ -123,10 +127,10 @@ void Clonotribe::updateStepLights(const Sequencer::SequencerOutput& seqOutput) {
                     } else if (accent) {
                         red = baseBrightness;
                         green = baseBrightness;
-                        blue = 0.0f;
+                        blue = LIGHT_OFF;
                     } else if (glide) {
-                        red = 0.0f;
-                        green = 0.0f;
+                        red = LIGHT_OFF;
+                        green = LIGHT_OFF;
                         blue = baseBrightness;
                     }
                 }
@@ -138,11 +142,11 @@ void Clonotribe::updateStepLights(const Sequencer::SequencerOutput& seqOutput) {
                 int drumIdx = static_cast<int>(sequencer.getSelectedDrumPart()) - 1;
                 notMuted = (drumIdx >= 0 && drumIdx < 3) ? drumPatterns[drumIdx][i] : false;
                 isPlaying = sequencer.playing && (seqOutput.step == i);
-                
-                float brightness = notMuted ? (isPlaying ? 1.0f : 0.3f) : 0.0f;
+
+                float brightness = notMuted ? (isPlaying ? LIGHT_ACTIVE : LIGHT_ON) : LIGHT_OFF;
                 lights[base + 0].setBrightness(brightness);
-                lights[base + 1].setBrightness(0.0f);
-                lights[base + 2].setBrightness(0.0f);
+                lights[base + 1].setBrightness(LIGHT_OFF);
+                lights[base + 2].setBrightness(LIGHT_OFF);
             }
         }
     }
@@ -349,13 +353,13 @@ void Clonotribe::process(const ProcessArgs& args) {
     bool syncOut = syncPulse.process(args.sampleTime);
     outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(syncOut ? 5.0f : 0.0f);
 
-    lights[LIGHT_PLAY].setBrightness(sequencer.playing ? 1.0f : 0.0f);
-    lights[LIGHT_REC].setBrightness(sequencer.recording ? 1.0f : 0.0f);
-    lights[LIGHT_FLUX].setBrightness(sequencer.fluxMode ? 1.0f : 0.0f);
-    lights[LIGHT_SYNTH].setBrightness(sequencer.getSelectedDrumPart() == DrumPart::SYNTH ? 1.0f : 0.0f);
-    lights[LIGHT_BASSDRUM].setBrightness(sequencer.getSelectedDrumPart() == DrumPart::KICK ? 1.0f : 0.0f);
-    lights[LIGHT_SNARE].setBrightness(sequencer.getSelectedDrumPart() == DrumPart::SNARE ? 1.0f : 0.0f);
-    lights[LIGHT_HIGHHAT].setBrightness(sequencer.getSelectedDrumPart() == DrumPart::HIHAT ? 1.0f : 0.0f);
+    lights[LIGHT_PLAY].setBrightness(sequencer.playing ? LIGHT_ON : LIGHT_OFF);
+    lights[LIGHT_REC].setBrightness(sequencer.recording ? LIGHT_ON : LIGHT_OFF);
+    lights[LIGHT_FLUX].setBrightness(sequencer.fluxMode ? LIGHT_ON : LIGHT_OFF);
+    lights[LIGHT_SYNTH].setBrightness(sequencer.getSelectedDrumPart() == DrumPart::SYNTH ? LIGHT_ON : LIGHT_OFF);
+    lights[LIGHT_BASSDRUM].setBrightness(sequencer.getSelectedDrumPart() == DrumPart::KICK ? LIGHT_ON : LIGHT_OFF);
+    lights[LIGHT_SNARE].setBrightness(sequencer.getSelectedDrumPart() == DrumPart::SNARE ? LIGHT_ON : LIGHT_OFF);
+    lights[LIGHT_HIGHHAT].setBrightness(sequencer.getSelectedDrumPart() == DrumPart::HIHAT ? LIGHT_ON : LIGHT_OFF);
 
     updateStepLights(seqOutput);
 }
@@ -575,7 +579,7 @@ void Clonotribe::dataFromJson(json_t* rootJ) {
             size_t stepIndex;
             json_t* stepJ;
             json_array_foreach(stepsJ, stepIndex, stepJ) {
-                if (stepIndex < sequencer.kMaxSteps) {
+                if (stepIndex < sequencer.MAX_STEPS) {
                     json_t* pitchJ = json_object_get(stepJ, "pitch");
                     if (pitchJ) sequencer.steps[stepIndex].pitch = static_cast<float>(json_real_value(pitchJ));
                     
