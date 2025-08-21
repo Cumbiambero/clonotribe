@@ -9,15 +9,15 @@ namespace latin {
 class SnareDrum : public drumkits::SnareDrum {
 public:
     void reset() override {
-        ampEnv = 1.0f;
-        toneEnv = 1.0f;
-        noiseEnv = 1.0f;
-        cracklEnv = 1.0f;
-        tonePhase = 0.0f;
-        highpassState = 0.0f;
-        bandpassState1 = 0.0f;
-        bandpassState2 = 0.0f;
-        crackleFilter = 0.0f;
+        ampEnv = ONE;
+        toneEnv = ONE;
+        noiseEnv = ONE;
+        cracklEnv = ONE;
+        tonePhase = ZERO;
+        highpassState = ZERO;
+        bandpassState1 = ZERO;
+        bandpassState2 = ZERO;
+        crackleFilter = ZERO;
         triggered = true;
     }
     
@@ -27,15 +27,15 @@ public:
     
     [[nodiscard]] float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {
         if (!triggered) {
-            return 0.0f;
+            return ZERO;
         }
         
-        float invSampleRate = 1.0f / sampleRate;
+        float invSampleRate = ONE / sampleRate;
         float accentGain = 0.8f + accent * 0.6f;
         
-        tonePhase += FREQ * invSampleRate * 2.0f * clonotribe::FastMath::PI;
-        if (tonePhase >= 2.0f * clonotribe::FastMath::PI) {
-            tonePhase -= 2.0f * clonotribe::FastMath::PI;
+        tonePhase += FREQ * invSampleRate * TWO * clonotribe::FastMath::PI;
+        if (tonePhase >= TWO * clonotribe::FastMath::PI) {
+            tonePhase -= TWO * clonotribe::FastMath::PI;
         }
         
         float tone = clonotribe::FastMath::fastSin(tonePhase) * toneEnv;
@@ -72,15 +72,15 @@ private:
     static constexpr float BP_CUTOFF = 0.22f;
     static constexpr float CRACKLE_CUTOFF = 0.38f;
 
-    float ampEnv = 0.0f;
-    float toneEnv = 0.0f;
-    float noiseEnv = 0.0f;
-    float cracklEnv = 0.0f;
-    float tonePhase = 0.0f;
-    float highpassState = 0.0f;
-    float bandpassState1 = 0.0f;
-    float bandpassState2 = 0.0f;
-    float crackleFilter = 0.0f;
+    float ampEnv = ZERO;
+    float toneEnv = ZERO;
+    float noiseEnv = ZERO;
+    float cracklEnv = ZERO;
+    float tonePhase = ZERO;
+    float highpassState = ZERO;
+    float bandpassState1 = ZERO;
+    float bandpassState2 = ZERO;
+    float crackleFilter = ZERO;
     float sampleRate = 44100.0f;
     bool triggered = false;
 };

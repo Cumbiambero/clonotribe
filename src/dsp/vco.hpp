@@ -43,15 +43,15 @@ public:
 
     void setPitch(float pitch) noexcept {
         if (!std::isfinite(pitch)) {
-            pitch = 0.0f;
+            pitch = ZERO;
         }
         pitch = std::clamp(pitch, -10.0f, 10.0f);
-        freq = rack::dsp::FREQ_C4 * std::pow(2.0f, pitch);
+        freq = rack::dsp::FREQ_C4 * std::pow(TWO, pitch);
         if (!std::isfinite(freq)) {
             freq = rack::dsp::FREQ_C4;
         }
         freq = std::clamp(freq, 0.1f, 48000.0f);
-        active = freq > 1.0f;
+        active = freq > ONE;
     }
 
     void setPulseWidth(float pw) noexcept {
@@ -59,11 +59,11 @@ public:
     }
 
 private:
-    float phase{0.0f};
+    float phase{ZERO};
     float freq{440.0f};
     float pulseWidth{0.5f};
-    float lastSaw{0.0f};
-    float lastPulse{0.0f};
+    float lastSaw{ZERO};
+    float lastPulse{ZERO};
     bool active{true};
     
     Waveform currentWaveform{Waveform::SAW};
@@ -74,30 +74,30 @@ private:
     [[nodiscard]] static constexpr float polyBLEP(float t, float dt) noexcept {
         if (t < dt) {
             t /= dt;
-            return t + t - t * t - 1.0f;
-        } else if (t > 1.0f - dt) {
-            t = (t - 1.0f) / dt;
-            return t * t + t + t + 1.0f;
+            return t + t - t * t - ONE;
+        } else if (t > ONE - dt) {
+            t = (t - ONE) / dt;
+            return t * t + t + t + ONE;
         } else {
-            return 0.0f;
+            return ZERO;
         }
     }
 
     [[nodiscard]] float processSaw(float sampleTime) noexcept {
         if (!active) {
-            return  0.0f;
+            return  ZERO;
         }
 
         const auto dt = freq * sampleTime;
-        if (dt > 1.0f) {
-            phase = 0.0f;
+        if (dt > ONE) {
+            phase = ZERO;
             return lastSaw;
         }
         
         phase += dt;
-        if (phase >= 1.0f) phase -= 1.0f;
+        if (phase >= ONE) phase -= ONE;
 
-        auto saw = 2.0f * phase - 1.0f;
+        auto saw = TWO * phase - ONE;
         saw -= polyBLEP(phase, dt);
 
         lastSaw = saw;
@@ -107,21 +107,21 @@ private:
 
     [[nodiscard]] float processTriangle(float sampleTime) noexcept {
         if (!active) {
-            return 0.0f;
+            return ZERO;
         }
 
         const auto dt = freq * sampleTime;
-        if (dt > 1.0f) {
-            phase = 0.0f;
-            return 0.0f;
+        if (dt > ONE) {
+            phase = ZERO;
+            return ZERO;
         }
 
         phase += dt;
-        if (phase >= 1.0f) phase -= 1.0f;
+        if (phase >= ONE) phase -= ONE;
 
         float triangle;
         if (phase < 0.5f) {
-            triangle = 4.0f * phase - 1.0f;
+            triangle = 4.0f * phase - ONE;
         } else {
             triangle = 3.0f - 4.0f * phase;
         }
@@ -134,30 +134,30 @@ private:
 
     [[nodiscard]] float processSquare(float sampleTime) noexcept {
         if (!active) {
-            return 0.0f;
+            return ZERO;
         }
 
         const auto dt = freq * sampleTime;
-        if (dt > 1.0f) {
-            phase = 0.0f;
-            return 0.0f;
+        if (dt > ONE) {
+            phase = ZERO;
+            return ZERO;
         }
 
         phase += dt;
-        if (phase >= 1.0f) phase -= 1.0f;
+        if (phase >= ONE) phase -= ONE;
 
-        float square = (phase < 0.5f) ? 1.0f : -1.0f;
+        float square = (phase < 0.5f) ? ONE : -ONE;
 
         constexpr float transition = 0.005f;
         if (phase > 0.5f - transition && phase < 0.5f + transition) {
-            float t = (phase - (0.5f - transition)) / (2.0f * transition);
-            square = 1.0f - 2.0f * t;
+            float t = (phase - (0.5f - transition)) / (TWO * transition);
+            square = ONE - TWO * t;
         } else if (phase < transition) {
             float t = phase / transition;
-            square = -1.0f + 2.0f * t;
-        } else if (phase > 1.0f - transition) {
-            float t = (phase - (1.0f - transition)) / transition;
-            square = 1.0f - 2.0f * t;
+            square = -ONE + TWO * t;
+        } else if (phase > ONE - transition) {
+            float t = (phase - (ONE - transition)) / transition;
+            square = ONE - TWO * t;
         }
 
         return square;

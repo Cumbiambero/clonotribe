@@ -20,7 +20,7 @@ public:
     }
     void setOctave(float oct) noexcept { octave = oct; }
     void setTouching(bool t) noexcept { touching = t; }
-    void setPosition(float pos) noexcept { position = std::clamp(pos, 0.0f, 1.0f); }
+    void setPosition(float pos) noexcept { position = std::clamp(pos, ZERO, ONE); }
     [[nodiscard]] float getPosition() const noexcept { return position; }
 
     [[nodiscard]] float getCV() const noexcept {
@@ -30,21 +30,21 @@ public:
                 return (static_cast<float>(step) / 12.0f) + octave;
             }
             case Mode::NARROW:
-                return position * 2.0f + octave - 1.0f;
+                return position * TWO + octave - ONE;
             case Mode::WIDE:
                 return position * 5.0f + octave - 2.5f;
             default:
-                return 0.0f;
+                return ZERO;
         }
     }
     [[nodiscard]] float getGate() const noexcept {
-        return touching ? 10.0f : 0.0f;
+        return touching ? 10.0f : ZERO;
     }
     [[nodiscard]] float getGateTimeMod() const noexcept {
         return position;
     }
     [[nodiscard]] float getVolumeAutomation() const noexcept {
-        return (position - 0.5f) * 2.0f;
+        return (position - 0.5f) * TWO;
     }
     [[nodiscard]] float getDrumRollIntensity() const noexcept {
         return position;
@@ -52,7 +52,7 @@ public:
     bool touching = false;
 private:
     Mode mode = Mode::KEY;
-    float octave = 0.0f;
-    float position = 0.0f;
+    float octave = ZERO;
+    float position = ZERO;
 };
 }

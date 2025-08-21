@@ -9,15 +9,15 @@ namespace original {
 class HiHat : public drumkits::HiHat {
 public:
     void reset() override {
-        env = 1.0f;
-        shimmerEnv = 1.0f;
-        phase1 = 0.0f;
-        phase2 = 0.0f;
-        phase3 = 0.0f;
-        phase4 = 0.0f;
-        bandpass1 = 0.0f;
-        bandpass2 = 0.0f;
-        highpass = 0.0f;
+        env = ONE;
+        shimmerEnv = ONE;
+        phase1 = ZERO;
+        phase2 = ZERO;
+        phase3 = ZERO;
+        phase4 = ZERO;
+        bandpass1 = ZERO;
+        bandpass2 = ZERO;
+        highpass = ZERO;
         triggered = true;
     }
     
@@ -27,30 +27,30 @@ public:
     
     [[nodiscard]] float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {
         if (!triggered) {
-            return 0.0f;
+            return ZERO;
         }
         
-        float invSampleRate = 1.0f / sampleRate;
+        float invSampleRate = ONE / sampleRate;
         float accentGain = 0.7f + accent * 0.6f;
         
-        phase1 += FREQ1 * invSampleRate * 2.0f * clonotribe::FastMath::PI;
-        if (phase1 >= 2.0f * clonotribe::FastMath::PI) {
-            phase1 -= 2.0f * clonotribe::FastMath::PI;
+        phase1 += FREQ1 * invSampleRate * TWO * clonotribe::FastMath::PI;
+        if (phase1 >= TWO * clonotribe::FastMath::PI) {
+            phase1 -= TWO * clonotribe::FastMath::PI;
         }
         
-        phase2 += FREQ2 * invSampleRate * 2.0f * clonotribe::FastMath::PI;
-        if (phase2 >= 2.0f * clonotribe::FastMath::PI) {
-            phase2 -= 2.0f * clonotribe::FastMath::PI;
+        phase2 += FREQ2 * invSampleRate * TWO * clonotribe::FastMath::PI;
+        if (phase2 >= TWO * clonotribe::FastMath::PI) {
+            phase2 -= TWO * clonotribe::FastMath::PI;
         }
         
-        phase3 += FREQ3 * invSampleRate * 2.0f * clonotribe::FastMath::PI;
-        if (phase3 >= 2.0f * clonotribe::FastMath::PI) {
-            phase3 -= 2.0f * clonotribe::FastMath::PI;
+        phase3 += FREQ3 * invSampleRate * TWO * clonotribe::FastMath::PI;
+        if (phase3 >= TWO * clonotribe::FastMath::PI) {
+            phase3 -= TWO * clonotribe::FastMath::PI;
         }
         
-        phase4 += FREQ4 * invSampleRate * 2.0f * clonotribe::FastMath::PI;
-        if (phase4 >= 2.0f * clonotribe::FastMath::PI) {
-            phase4 -= 2.0f * clonotribe::FastMath::PI;
+        phase4 += FREQ4 * invSampleRate * TWO * clonotribe::FastMath::PI;
+        if (phase4 >= TWO * clonotribe::FastMath::PI) {
+            phase4 -= TWO * clonotribe::FastMath::PI;
         }
         
         float metallic1 = clonotribe::FastMath::fastSin(phase1) * env;
@@ -76,7 +76,7 @@ public:
         }
 
         output = clonotribe::FastMath::fastTanh(output * 1.6f);
-        return output * 1.0f * accentGain;
+        return output * ONE * accentGain;
     }
     
 private:
@@ -87,15 +87,15 @@ private:
     static constexpr float FREQ3 = 11200.0f;
     static constexpr float FREQ4 = 13600.0f;
 
-    float env = 0.0f;
-    float shimmerEnv = 0.0f;
-    float phase1 = 0.0f;
-    float phase2 = 0.0f;
-    float phase3 = 0.0f;
-    float phase4 = 0.0f;
-    float bandpass1 = 0.0f;
-    float bandpass2 = 0.0f;
-    float highpass = 0.0f;
+    float env = ZERO;
+    float shimmerEnv = ZERO;
+    float phase1 = ZERO;
+    float phase2 = ZERO;
+    float phase3 = ZERO;
+    float phase4 = ZERO;
+    float bandpass1 = ZERO;
+    float bandpass2 = ZERO;
+    float highpass = ZERO;
     float sampleRate = 44100.0f;
     bool triggered = false;
 };

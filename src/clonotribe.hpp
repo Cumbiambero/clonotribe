@@ -195,9 +195,9 @@ struct Clonotribe : rack::Module {
     DcBlocker dcBlockerPostFilter;
     DcBlocker dcBlockerPostDist;
     DcBlocker dcBlockerFinal;
-    
-    bool stepCtrlLatch[8] = {false,false,false,false,false,false,false,false};
-    float stepPrevVal[8] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+
+    bool stepCtrlLatch[8] = {false, false, false, false, false, false, false, false};
+    float stepPrevVal[8] = {ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO};
 
     int selectedStepForEditing = 0;
     int syncDivideCounter = 0;

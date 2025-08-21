@@ -28,7 +28,7 @@ void RibbonController::updatePosition(rack::math::Vec pos) noexcept {
     
     float margin = 6.0f;
     float effectiveWidth = box.size.x - 2 * margin;
-    float adjustedX = std::clamp(pos.x - margin, 0.0f, effectiveWidth);
+    float adjustedX = std::clamp(pos.x - margin, ZERO, effectiveWidth);
     
     float position = adjustedX / effectiveWidth;
     module->ribbon.setPosition(position);

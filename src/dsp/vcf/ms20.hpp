@@ -46,7 +46,7 @@ public:
         float f = 2.f * FastMath::fastSin(FastMath::PI * cutoff * invSampleRate);
         f = std::clamp(f, 0.f, 0.9f);
 
-        float drive = 1.0f + resonanceParam * 1.2f;
+        float drive = ONE + resonanceParam * 1.2f;
         
         float drivenInput = input * drive;
         drivenInput = saturate(drivenInput);
@@ -60,7 +60,7 @@ public:
         
         if (cutoffParam < 0.4f) {
             if (cutoffParam < 0.3f) {
-                output *= 0.0f;
+                output *= ZERO;
             } else {
                 float fadeRange = cutoffParam - 0.3f;
                 float fadeAmount = fadeRange * 10.0f;
@@ -71,8 +71,8 @@ public:
 
         if (resonanceParam > 0.75f) {
             float oscGain = (resonanceParam - 0.75f) * 4.0f;
-            oscPhase += 2.0f * FastMath::PI * cutoff * invSampleRate;
-            if (oscPhase >= 2.0f * FastMath::PI) oscPhase -= 2.0f * FastMath::PI;
+            oscPhase += TWO * FastMath::PI * cutoff * invSampleRate;
+            if (oscPhase >= TWO * FastMath::PI) oscPhase -= TWO * FastMath::PI;
             
             float oscSig = FastMath::fastSin(oscPhase) * oscGain * 0.15f;
 
@@ -80,7 +80,7 @@ public:
                 oscSig *= 0.5f;
             }
             
-            output = output * (1.0f - oscGain * 0.3f) + oscSig;
+            output = output * (ONE - oscGain * 0.3f) + oscSig;
         }
 
         if (std::abs(output) < 1e-30f) output = 0.f;
@@ -119,10 +119,10 @@ private:
 
     [[nodiscard]] inline float saturate(float x) const noexcept {
         x = std::clamp(x, -4.f, 4.f);
-        if (x > 0.0f) {
-            return x / (1.0f + x * 0.4f);
+        if (x > ZERO) {
+            return x / (ONE + x * 0.4f);
         } else {
-            return x / (1.0f + std::abs(x) * 0.5f);
+            return x / (ONE + std::abs(x) * 0.5f);
         }
     }    
 };

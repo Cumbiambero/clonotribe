@@ -20,7 +20,7 @@ public:
     }
 
     [[nodiscard]] float process(float input, float cutoff, float resonance) noexcept {
-        if (std::abs(input) < 1e-30f) input = 0.0f;
+        if (std::abs(input) < 1e-30f) input = ZERO;
         
         float smoothedCutoff = cutoff;
         float smoothedResonance = resonance;
@@ -50,7 +50,7 @@ public:
                     vcf->setCutoff(smoothedCutoff);
                     vcf->setResonance(smoothedResonance);
                     float output = vcf->process(input);
-                    if (std::abs(output) < 1e-30f) output = 0.0f;
+                    if (std::abs(output) < 1e-30f) output = ZERO;
                     return output;
                 }
                 break;
@@ -59,7 +59,7 @@ public:
                     ladder->setCutoff(smoothedCutoff);
                     ladder->setResonance(smoothedResonance);
                     float output = ladder->process(input);
-                    if (std::abs(output) < 1e-30f) output = 0.0f;
+                    if (std::abs(output) < 1e-30f) output = ZERO;
                     return output;
                 }
                 break;
@@ -68,14 +68,14 @@ public:
                     moog->setCutoff(smoothedCutoff);
                     moog->setResonance(smoothedResonance);
                     float output = moog->process(input);
-                    if (std::abs(output) < 1e-30f) output = 0.0f;
+                    if (std::abs(output) < 1e-30f) output = ZERO;
                     return output;
                 }
                 break;
             default:
                 break;
         }
-        return 0.0f;
+        return ZERO;
     }
 
     void forceUpdate(float cutoff, float resonance) noexcept {
@@ -106,8 +106,8 @@ public:
     }
 
     void reset() noexcept {
-        lastCutoff = -1.0f;
-        lastResonance = -1.0f;
+        lastCutoff = -ONE;
+        lastResonance = -ONE;
     }
 
     void setPointers(MS20Filter* vcfPtr, LadderFilter* ladderPtr, MoogFilter* moogPtr) noexcept {
@@ -127,7 +127,7 @@ private:
     LadderFilter* ladder;
     MoogFilter* moog;
     FilterType filterType;
-    float lastCutoff = -1.0f;
-    float lastResonance = -1.0f;
+    float lastCutoff = -ONE;
+    float lastResonance = -ONE;
 };
 }

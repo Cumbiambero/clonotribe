@@ -9,16 +9,16 @@ namespace original {
 class SnareDrum : public drumkits::SnareDrum {
 public:
     void reset() override {
-        ampEnv = 1.0f;
-        toneEnv = 1.0f;
-        noiseEnv = 1.0f;
-        buzzEnv = 1.0f;
-        tonePhase1 = 0.0f;
-        tonePhase2 = 0.0f;
-        noiseFilter1 = 0.0f;
-        noiseFilter2 = 0.0f;
-        bodyFilter = 0.0f;
-        hpState = 0.0f;
+        ampEnv = ONE;
+        toneEnv = ONE;
+        noiseEnv = ONE;
+        buzzEnv = ONE;
+        tonePhase1 = ZERO;
+        tonePhase2 = ZERO;
+        noiseFilter1 = ZERO;
+        noiseFilter2 = ZERO;
+        bodyFilter = ZERO;
+        hpState = ZERO;
         triggered = true;
     }
     
@@ -28,20 +28,20 @@ public:
     
     [[nodiscard]] float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {
         if (!triggered) {
-            return 0.0f;
+            return ZERO;
         }
         
-        float invSampleRate = 1.0f / sampleRate;
+        float invSampleRate = ONE / sampleRate;
         float accentGain = 0.75f + accent * 0.5f;
         
-        tonePhase1 += FREQ1 * invSampleRate * 2.0f * clonotribe::FastMath::PI;
-        if (tonePhase1 >= 2.0f * clonotribe::FastMath::PI) {
-            tonePhase1 -= 2.0f * clonotribe::FastMath::PI;
+        tonePhase1 += FREQ1 * invSampleRate * TWO * clonotribe::FastMath::PI;
+        if (tonePhase1 >= TWO * clonotribe::FastMath::PI) {
+            tonePhase1 -= TWO * clonotribe::FastMath::PI;
         }
         
-        tonePhase2 += FREQ2 * invSampleRate * 2.0f * clonotribe::FastMath::PI;
-        if (tonePhase2 >= 2.0f * clonotribe::FastMath::PI) {
-            tonePhase2 -= 2.0f * clonotribe::FastMath::PI;
+        tonePhase2 += FREQ2 * invSampleRate * TWO * clonotribe::FastMath::PI;
+        if (tonePhase2 >= TWO * clonotribe::FastMath::PI) {
+            tonePhase2 -= TWO * clonotribe::FastMath::PI;
         }
         
         float tone1 = clonotribe::FastMath::fastSin(tonePhase1) * toneEnv;
@@ -85,16 +85,16 @@ private:
     static constexpr float FREQ1 = 210.0f;
     static constexpr float FREQ2 = 330.0f;
 
-    float ampEnv = 0.0f;
-    float toneEnv = 0.0f;
-    float noiseEnv = 0.0f;
-    float buzzEnv = 0.0f;
-    float tonePhase1 = 0.0f;
-    float tonePhase2 = 0.0f;
-    float noiseFilter1 = 0.0f;
-    float noiseFilter2 = 0.0f;
-    float bodyFilter = 0.0f;
-    float hpState = 0.0f;
+    float ampEnv = ZERO;
+    float toneEnv = ZERO;
+    float noiseEnv = ZERO;
+    float buzzEnv = ZERO;
+    float tonePhase1 = ZERO;
+    float tonePhase2 = ZERO;
+    float noiseFilter1 = ZERO;
+    float noiseFilter2 = ZERO;
+    float bodyFilter = ZERO;
+    float hpState = ZERO;
     float sampleRate = 44100.0f;
     bool triggered = false;
 };

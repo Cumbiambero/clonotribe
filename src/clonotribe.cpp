@@ -154,26 +154,26 @@ void Clonotribe::updateStepLights(const Sequencer::SequencerOutput& seqOutput) {
 
 Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
     config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-    configSwitch(PARAM_VCO_WAVEFORM_SWITCH, 0.0f, 2.0f, 0.0f, "VCO Waveform", {"Square", "Triangle", "Sawtooth"});
-    configSwitch(PARAM_RIBBON_RANGE_SWITCH, 0.0f, 2.0f, 0.0f, "Ribbon Controller Range", {"Key", "Narrow", "Wide"});
-    configSwitch(PARAM_ENVELOPE_FORM_SWITCH, 0.0f, 2.0f, 0.0f, "Envelope",  {"Attack", "Gate", "Decay"});
-    configSwitch(PARAM_LFO_TARGET_SWITCH, 0.0f, 2.0f, 0.0f, "LFO Target",  {"VCF", "VCO+VCF", "VCO"});
-    configSwitch(PARAM_LFO_MODE_SWITCH, 0.0f, 2.0f, 0.0f, "LFO Mode", {"1 Shot", "Slow", "Fast"});
-    configSwitch(PARAM_LFO_WAVEFORM_SWITCH, 0.0f, 2.0f, 0.0f, "LFO Waveform",  {"Square", "Triangle", "Sawtooth"});
-    configParam(PARAM_VCO_OCTAVE_KNOB, 0.0f, 5.0f, 2.0f, "VCO Octave");
+    configSwitch(PARAM_VCO_WAVEFORM_SWITCH, ZERO, TWO, ZERO, "VCO Waveform", {"Square", "Triangle", "Sawtooth"});
+    configSwitch(PARAM_RIBBON_RANGE_SWITCH, ZERO, TWO, ZERO, "Ribbon Controller Range", {"Key", "Narrow", "Wide"});
+    configSwitch(PARAM_ENVELOPE_FORM_SWITCH, ZERO, TWO, ZERO, "Envelope",  {"Attack", "Gate", "Decay"});
+    configSwitch(PARAM_LFO_TARGET_SWITCH, ZERO, TWO, ZERO, "LFO Target",  {"VCF", "VCO+VCF", "VCO"});
+    configSwitch(PARAM_LFO_MODE_SWITCH, ZERO, TWO, ZERO, "LFO Mode", {"1 Shot", "Slow", "Fast"});
+    configSwitch(PARAM_LFO_WAVEFORM_SWITCH, ZERO, TWO, ZERO, "LFO Waveform",  {"Square", "Triangle", "Sawtooth"});
+    configParam(PARAM_VCO_OCTAVE_KNOB, ZERO, 5.0f, TWO, "VCO Octave");
     getParamQuantity(PARAM_VCO_OCTAVE_KNOB)->snapEnabled = true;
-    configParam(PARAM_NOISE_KNOB, 0.0f, 1.0f, 0.0f, "Noise Level");
-    configParam(PARAM_VCF_CUTOFF_KNOB, 0.0f, 1.0f, 0.7f, "VCF Cutoff");
-    configParam(PARAM_VCF_PEAK_KNOB, 0.0f, 1.0f, 0.1f, "VCF Peak (Resonance)");
-    configParam(PARAM_VCA_LEVEL_KNOB, 0.0f, 1.0f, 0.8f, "VCA Level");
-    configParam(PARAM_LFO_RATE_KNOB, 0.0f, 1.0f, 0.0f, "LFO Rate");
-    configParam(PARAM_LFO_INTERVAL_KNOB, 0.0f, 1.0f, 0.0f, "LFO Intensity");
-    configParam(PARAM_RHYTHM_VOLUME_KNOB, 0.0f, 1.0f, 0.0f, "Rhythm Volume");
-    configParam(PARAM_SEQUENCER_TEMPO_KNOB, 0.0f, 1.0f, 0.5f, "Sequencer Tempo", " BPM", 0.0f, 600.0f, 10.0f);
-    configParam(PARAM_DISTORTION_KNOB, 0.0f, 1.0f, 0.0f, "Distortion");
-    configParam(PARAM_DELAY_TIME_KNOB, 0.0f, 1.0f, 0.0f, "Delay Time", " s", 0.0f, 1.99f, 0.01f);
-    configParam(PARAM_DELAY_AMOUNT_KNOB, 0.0f, 1.0f, 0.0f, "Delay Amount");
-    configParam(PARAM_ACCENT_GLIDE_KNOB, 0.0f, 1.0f, 0.0f, "Accent/Glide Amount");
+    configParam(PARAM_NOISE_KNOB, ZERO, ONE, ZERO, "Noise Level");
+    configParam(PARAM_VCF_CUTOFF_KNOB, ZERO, ONE, 0.7f, "VCF Cutoff");
+    configParam(PARAM_VCF_PEAK_KNOB, ZERO, ONE, 0.1f, "VCF Peak (Resonance)");
+    configParam(PARAM_VCA_LEVEL_KNOB, ZERO, ONE, 0.8f, "VCA Level");
+    configParam(PARAM_LFO_RATE_KNOB, ZERO, ONE, ZERO, "LFO Rate");
+    configParam(PARAM_LFO_INTERVAL_KNOB, ZERO, ONE, ZERO, "LFO Intensity");
+    configParam(PARAM_RHYTHM_VOLUME_KNOB, ZERO, ONE, ZERO, "Rhythm Volume");
+    configParam(PARAM_SEQUENCER_TEMPO_KNOB, ZERO, ONE, 0.5f, "Sequencer Tempo", " BPM", ZERO, 600.0f, 10.0f);
+    configParam(PARAM_DISTORTION_KNOB, ZERO, ONE, ZERO, "Distortion");
+    configParam(PARAM_DELAY_TIME_KNOB, ZERO, ONE, ZERO, "Delay Time", " s", ZERO, 1.99f, 0.01f);
+    configParam(PARAM_DELAY_AMOUNT_KNOB, ZERO, ONE, ZERO, "Delay Amount");
+    configParam(PARAM_ACCENT_GLIDE_KNOB, ZERO, ONE, ZERO, "Accent/Glide Amount");
     configButton(PARAM_SNARE_BUTTON, "Snare (F7)");
     configButton(PARAM_FLUX_BUTTON, "Flux (Tab)");
     configButton(PARAM_REC_BUTTON, "Record (Shift)");
@@ -251,7 +251,7 @@ void Clonotribe::process(const ProcessArgs& args) {
         gate = ribbon.getGate();
     }
 
-    bool cvGateTriggered = gateTrigger.process(gate > 1.0f);
+    bool cvGateTriggered = gateTrigger.process(gate > ONE);
 
     auto seqOutput = sequencer.process(args.sampleTime, inputPitch, gate, syncSignal, ribbonGateTimeMod, paramCache.accentGlideAmount);
     handleSequencerAndDrumState(seqOutput, inputPitch, gate, cvGateTriggered);
@@ -260,8 +260,8 @@ void Clonotribe::process(const ProcessArgs& args) {
     float finalPitch = ribbonOverride ? inputPitch : (sequencer.playing ? seqOutput.pitch : inputPitch);
     float finalGate = ribbonOverride ? gate : (sequencer.playing ? seqOutput.gate : gate);
 
-    bool ribbonTriggered = ribbonGateTrigger.process(ribbon.getGate() > 1.0f);
-    bool stepTrigger = sequencer.playing && seqOutput.stepChanged && seqOutput.gate > 1.0f;
+    bool ribbonTriggered = ribbonGateTrigger.process(ribbon.getGate() > ONE);
+    bool stepTrigger = sequencer.playing && seqOutput.stepChanged && seqOutput.gate > ONE;
     if (ribbonOverride) {
         if (ribbonTriggered) {
             envelope.trigger();
@@ -281,13 +281,13 @@ void Clonotribe::process(const ProcessArgs& args) {
         gateActive = false;
     }
 
-    float accentBoost = 0.0f;
-    if (!ribbonOverride && seqOutput.accent && paramCache.accentGlideAmount > 0.0f) {
+    float accentBoost = ZERO;
+    if (!ribbonOverride && seqOutput.accent && paramCache.accentGlideAmount > ZERO) {
         accentBoost = 0.2f * paramCache.accentGlideAmount;
     }
-    float effectiveCutoff = std::clamp(cutoff + accentBoost, 0.0f, 1.0f);
+    float effectiveCutoff = std::clamp(cutoff + accentBoost, ZERO, ONE);
 
-    float lfoFreq = rack::math::rescale(lfoRate, 0.0f, 1.0f, LFO::MIN_FREQ, LFO::MAX_FREQ);
+    float lfoFreq = rack::math::rescale(lfoRate, ZERO, ONE, LFO::MIN_FREQ, LFO::MAX_FREQ);
     lfo.setRate(lfoFreq);
     LFO::Waveform wf = LFO::Waveform::SQUARE;
     switch (lfoWaveform) {
@@ -298,7 +298,7 @@ void Clonotribe::process(const ProcessArgs& args) {
     }
     float lfoOut = lfo.process(args.sampleTime, wf) * lfoIntensity;
 
-    float lfoToVCO = 0.0f, lfoToVCF = 0.0f;
+    float lfoToVCO = ZERO, lfoToVCF = ZERO;
     switch (lfoTarget) {
         case LFO::Target::VCF: lfoToVCF = lfoOut; break;
         case LFO::Target::VCO_VCF: lfoToVCO = lfoOut * 0.5f; lfoToVCF = lfoOut; break;
@@ -316,13 +316,13 @@ void Clonotribe::process(const ProcessArgs& args) {
     
     float filteredSignal = filterProcessor.process(
         mixedSignal, 
-        std::clamp(effectiveCutoff + lfoToVCF, 0.0f, 1.0f), 
+        std::clamp(effectiveCutoff + lfoToVCF, ZERO, ONE), 
         resonance
     );
     
     filteredSignal = dcBlockerPostFilter.process(filteredSignal);
     float envValue = processEnvelope(envelopeType, envelope, args.sampleTime, finalGate);
-    float delayClock = inputs[INPUT_DELAY_TIME_CONNECTOR].isConnected() ? inputs[INPUT_DELAY_TIME_CONNECTOR].getVoltage() : 0.0f;
+    float delayClock = inputs[INPUT_DELAY_TIME_CONNECTOR].isConnected() ? inputs[INPUT_DELAY_TIME_CONNECTOR].getVoltage() : ZERO;
     float finalOutput = processOutput(
         filteredSignal, volume, envValue, ribbon.getVolumeAutomation(),
         rhythmVolume, args.sampleTime, noiseGenerator, seqOutput.step, distortion,
@@ -330,15 +330,15 @@ void Clonotribe::process(const ProcessArgs& args) {
     );
 
     if (outputs[OUTPUT_LFO_RATE_CONNECTOR].isConnected()) {
-        static float prevPhase = 0.0f;
+        static float prevPhase = ZERO;
         if (lfo.phase < prevPhase) {
             lfoRatePulse.trigger(1e-3f);
         }
         prevPhase = lfo.phase;
         bool lfoClk = lfoRatePulse.process(args.sampleTime);
-        outputs[OUTPUT_LFO_RATE_CONNECTOR].setVoltage(lfoClk ? 5.0f : 0.0f);
+        outputs[OUTPUT_LFO_RATE_CONNECTOR].setVoltage(lfoClk ? 5.0f : ZERO);
     } else {
-        outputs[OUTPUT_LFO_RATE_CONNECTOR].setVoltage(0.0f);
+        outputs[OUTPUT_LFO_RATE_CONNECTOR].setVoltage(ZERO);
     }
     
     if (distortion <= 0.1f) {
@@ -351,7 +351,7 @@ void Clonotribe::process(const ProcessArgs& args) {
     outputs[OUTPUT_CV_CONNECTOR].setVoltage(finalPitch);
     outputs[OUTPUT_GATE_CONNECTOR].setVoltage(finalGate);
     bool syncOut = syncPulse.process(args.sampleTime);
-    outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(syncOut ? 5.0f : 0.0f);
+    outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(syncOut ? 5.0f : ZERO);
 
     lights[LIGHT_PLAY].setBrightness(sequencer.playing ? LIGHT_ON : LIGHT_OFF);
     lights[LIGHT_REC].setBrightness(sequencer.recording ? LIGHT_ON : LIGHT_OFF);
@@ -375,9 +375,9 @@ struct TempoRangeItem : rack::MenuItem {
         if (q) {
             q->name = "Sequencer Tempo";
             q->unit = " BPM";
-            q->minValue = 0.0f;
-            q->maxValue = 1.0f;
-            q->displayBase = 0.0f;
+            q->minValue = ZERO;
+            q->maxValue = ONE;
+            q->displayBase = ZERO;
             q->displayMultiplier = (max - min);
             q->displayOffset = min;
         }
@@ -665,29 +665,29 @@ void Clonotribe::processBypass(const ProcessArgs& args) {
     if (inputs[INPUT_AUDIO_CONNECTOR].isConnected()) {
         outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(inputs[INPUT_AUDIO_CONNECTOR].getVoltage());
     } else {
-        outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(0.0f);
+        outputs[OUTPUT_AUDIO_CONNECTOR].setVoltage(ZERO);
     }
     
     if (inputs[INPUT_CV_CONNECTOR].isConnected()) {
         outputs[OUTPUT_CV_CONNECTOR].setVoltage(inputs[INPUT_CV_CONNECTOR].getVoltage());
     } else {
-        outputs[OUTPUT_CV_CONNECTOR].setVoltage(0.0f);
+        outputs[OUTPUT_CV_CONNECTOR].setVoltage(ZERO);
     }
     
     if (inputs[INPUT_GATE_CONNECTOR].isConnected()) {
         outputs[OUTPUT_GATE_CONNECTOR].setVoltage(inputs[INPUT_GATE_CONNECTOR].getVoltage());
     } else {
-        outputs[OUTPUT_GATE_CONNECTOR].setVoltage(0.0f);
+        outputs[OUTPUT_GATE_CONNECTOR].setVoltage(ZERO);
     }
     
     if (inputs[INPUT_SYNC_CONNECTOR].isConnected()) {
         outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(inputs[INPUT_SYNC_CONNECTOR].getVoltage());
     } else {
-        outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(0.0f);
+        outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(ZERO);
     }
     
     for (int i = 0; i < LIGHTS_LEN; i++) {
-        lights[i].setBrightness(0.0f);
+        lights[i].setBrightness(LIGHT_OFF);
     }
 }
 
@@ -697,8 +697,8 @@ void Clonotribe::onRandomize(const RandomizeEvent& e) {
     
     int stepCount = sequencer.getStepCount();
     for (int i = 0; i < stepCount; i++) {
-        sequencer.steps[i].pitch = rack::random::uniform() * 4.0f - 2.0f;
-        sequencer.steps[i].gate = (rack::random::uniform() > 0.3f) ? 5.0f : 0.0f;
+        sequencer.steps[i].pitch = rack::random::uniform() * 4.0f - TWO;
+        sequencer.steps[i].gate = (rack::random::uniform() > 0.3f) ? 5.0f : ZERO;
         sequencer.steps[i].gateTime = 0.1f + rack::random::uniform() * 0.8f;
         
         bool chance = (rack::random::uniform() < 0.2f);

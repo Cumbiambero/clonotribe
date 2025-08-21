@@ -13,7 +13,7 @@ struct NoiseGenerator final {
     uint32_t state = 12345;
     NoiseType noiseType = NoiseType::WHITE;
     
-    float pinkState[5] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    float pinkState[5] = {ZERO, ZERO, ZERO, ZERO, ZERO};
     uint32_t pinkCounter = 0;
 
     constexpr NoiseGenerator() noexcept = default;
@@ -39,12 +39,11 @@ struct NoiseGenerator final {
         state ^= state << 13;
         state ^= state >> 17;
         state ^= state << 5;
-        return static_cast<float>(static_cast<int32_t>(state)) * (1.0f / 2147483648.0f);
+        return static_cast<float>(static_cast<int32_t>(state)) * (ONE / 2147483648.0f);
     }
 
     [[nodiscard]] float generatePinkNoise() noexcept {
-        float white = generateWhiteNoise();
-        
+        float white = generateWhiteNoise();        
         pinkState[0] = 0.99886f * pinkState[0] + white * 0.0555179f;
         pinkState[1] = 0.99332f * pinkState[1] + white * 0.0750759f;
         pinkState[2] = 0.96900f * pinkState[2] + white * 0.1538520f;
@@ -75,7 +74,7 @@ struct NoiseGenerator final {
     void reset() noexcept {
         state = 12345u;
         for (int i = 0; i < 5; i++) {
-            pinkState[i] = 0.0f;
+            pinkState[i] = ZERO;
         }
         pinkCounter = 0;
     }

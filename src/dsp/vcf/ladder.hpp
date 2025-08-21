@@ -33,7 +33,7 @@ public:
         if (!active) return 0.f;
         float cutoff = 20.f * std::exp(7.0f * cutoffParam);
         float res = resonanceParam * 4.0f;
-        float f = 2.0f * FastMath::fastSin(FastMath::PI * cutoff * invSampleRate);
+        float f = TWO * FastMath::fastSin(FastMath::PI * cutoff * invSampleRate);
         f = std::clamp(f, 0.f, 0.99f);
         float x = input - res * y4;
         y1 += f * (FastMath::fastTanh(x - y1));

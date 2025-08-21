@@ -9,18 +9,18 @@ namespace tr808 {
 class HiHat : public drumkits::HiHat {
 public:
     void reset() override {
-        env = 1.0f;
-        osc1Phase = 0.0f;
-        osc2Phase = 0.0f;
-        osc3Phase = 0.0f;
-        osc4Phase = 0.0f;
-        osc5Phase = 0.0f;
-        osc6Phase = 0.0f;
-        bandpass1State1 = 0.0f;
-        bandpass1State2 = 0.0f;
-        bandpass2State1 = 0.0f;
-        bandpass2State2 = 0.0f;
-        highpassState = 0.0f;
+        env = ONE;
+        osc1Phase = ZERO;
+        osc2Phase = ZERO;
+        osc3Phase = ZERO;
+        osc4Phase = ZERO;
+        osc5Phase = ZERO;
+        osc6Phase = ZERO;
+        bandpass1State1 = ZERO;
+        bandpass1State2 = ZERO;
+        bandpass2State1 = ZERO;
+        bandpass2State2 = ZERO;
+        highpassState = ZERO;
         triggered = true;
     }
     
@@ -30,22 +30,22 @@ public:
     
     [[nodiscard]] float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {
         if (!triggered) {
-            return 0.0f;
+            return ZERO;
         }
         
-        float invSampleRate = 1.0f / sampleRate;
+        float invSampleRate = ONE / sampleRate;
         float accentGain = 0.75f + accent * 0.7f;
         float phases[6] = {osc1Phase, osc2Phase, osc3Phase, osc4Phase, osc5Phase, osc6Phase};
-        float squareSum = 0.0f;
+        float squareSum = ZERO;
         
         for (int i = 0; i < 6; i++) {
-            phases[i] += FREQUENCIES[i] * invSampleRate * 2.0f * clonotribe::FastMath::PI;
-            if (phases[i] >= 2.0f * clonotribe::FastMath::PI) {
-                phases[i] -= 2.0f * clonotribe::FastMath::PI;
+            phases[i] += FREQUENCIES[i] * invSampleRate * TWO * clonotribe::FastMath::PI;
+            if (phases[i] >= TWO * clonotribe::FastMath::PI) {
+                phases[i] -= TWO * clonotribe::FastMath::PI;
             }
             
-            float square = (phases[i] < clonotribe::FastMath::PI) ? 1.0f : -1.0f;
-            squareSum += square * (1.0f / 6.0f);
+            float square = (phases[i] < clonotribe::FastMath::PI) ? ONE : -ONE;
+            squareSum += square * (ONE / 6.0f);
         }
         
         osc1Phase = phases[0]; osc2Phase = phases[1]; osc3Phase = phases[2];
@@ -80,18 +80,18 @@ private:
     static constexpr float BP1_CUTOFF = 0.23f;
     static constexpr float BP2_CUTOFF = 0.34f;
 
-    float env = 0.0f;
-    float osc1Phase = 0.0f;
-    float osc2Phase = 0.0f;
-    float osc3Phase = 0.0f;
-    float osc4Phase = 0.0f;
-    float osc5Phase = 0.0f;
-    float osc6Phase = 0.0f;
-    float bandpass1State1 = 0.0f;
-    float bandpass1State2 = 0.0f;
-    float bandpass2State1 = 0.0f;
-    float bandpass2State2 = 0.0f;
-    float highpassState = 0.0f;
+    float env = ZERO;
+    float osc1Phase = ZERO;
+    float osc2Phase = ZERO;
+    float osc3Phase = ZERO;
+    float osc4Phase = ZERO;
+    float osc5Phase = ZERO;
+    float osc6Phase = ZERO;
+    float bandpass1State1 = ZERO;
+    float bandpass1State2 = ZERO;
+    float bandpass2State1 = ZERO;
+    float bandpass2State2 = ZERO;
+    float highpassState = ZERO;
     float sampleRate = 44100.0f;
     bool triggered = false;
 };

@@ -2,23 +2,23 @@
 #include "envelope.hpp"
 
 float Clonotribe::processEnvelope(Envelope::Type envelopeType, Envelope& envelope, float sampleTime, float finalSequencerGate) {
-    float envValue = 1.0f;
-    bool useGate = (finalSequencerGate > 1.0f);
+    float envValue = ONE;
+    bool useGate = (finalSequencerGate > ONE);
     switch (envelopeType) {
         case Envelope::Type::ATTACK:
             envelope.setAttack(0.1f);
             envelope.setDecay(0.1f);
-            envelope.setSustain(1.0f);
+            envelope.setSustain(ONE);
             envelope.setRelease(0.1f);
             envValue = envelope.process(sampleTime);
             break;
         case Envelope::Type::GATE:
-            envValue = useGate ? 1.0f : 0.0f;
+            envValue = useGate ? ONE : ZERO;
             break;
         case Envelope::Type::DECAY:
             envelope.setAttack(0.001f);
             envelope.setDecay(0.5f);
-            envelope.setSustain(0.0f);
+            envelope.setSustain(ZERO);
             envelope.setRelease(0.001f);
             envValue = envelope.process(sampleTime);
             break;
@@ -33,13 +33,13 @@ float Clonotribe::processEnvelope(Envelope::Type envelopeType, Envelope& envelop
     float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep, float distortion,
     float delayClock, float delayTime, float delayAmount
 ) {
-    float volumeModulation = 1.0f + (ribbonVolumeAutomation * 0.5f);
-    volumeModulation = std::clamp(volumeModulation, 0.1f, 2.0f);
+    float volumeModulation = ONE + (ribbonVolumeAutomation * 0.5f);
+    volumeModulation = std::clamp(volumeModulation, 0.1f, TWO);
     
     float synthOutput = filteredSignal * volume * envValue * volumeModulation;
     
-    if (distortion > 0.0f) {
-        float driveGain = 1.0f + (distortion * 2.0f);
+    if (distortion > ZERO) {
+        float driveGain = ONE + (distortion * TWO);
         float drivenSignal = synthOutput * driveGain;
         float distortedSignal = distortionProcessor.process(drivenSignal, distortion);
         float outputLevel = std::abs(synthOutput);
@@ -47,22 +47,22 @@ float Clonotribe::processEnvelope(Envelope::Type envelopeType, Envelope& envelop
         
         if (outputLevel > 0.0001f && distortedLevel > outputLevel * 3.0f) {
             float excessGain = distortedLevel / (outputLevel * 2.5f);
-            float compressionFactor = 1.0f + std::sqrt(excessGain - 1.0f) * 0.5f;
+            float compressionFactor = ONE + std::sqrt(excessGain - ONE) * 0.5f;
             distortedSignal /= compressionFactor;
         }
         
         synthOutput = dcBlockerPostDist.processAggressive(distortedSignal);
     }
     
-    if (delayAmount > 0.0f && delayTime > 0.001f) {
+    if (delayAmount > ZERO && delayTime > 0.001f) {
         synthOutput = delayProcessor.process(synthOutput, delayClock, delayTime, delayAmount);
     }
 
-    float drumMix = 0.0f;
-    if (rhythmVolume > 0.0f) {
-        float kickOut = drumProcessor.processKick(0.0f, 0.0f, noiseGenerator);
-        float snareOut = drumProcessor.processSnare(0.0f, 0.0f, noiseGenerator);
-        float hihatOut = drumProcessor.processHihat(0.0f, 0.0f, noiseGenerator);
+    float drumMix = ZERO;
+    if (rhythmVolume > ZERO) {
+        float kickOut = drumProcessor.processKick(0.0f, ZERO, noiseGenerator);
+        float snareOut = drumProcessor.processSnare(0.0f, ZERO, noiseGenerator);
+        float hihatOut = drumProcessor.processHihat(0.0f, ZERO, noiseGenerator);
         
         drumMix = (kickOut * 0.7f + snareOut * 0.6f + hihatOut * 0.5f) * rhythmVolume;
         
@@ -70,9 +70,9 @@ float Clonotribe::processEnvelope(Envelope::Type envelopeType, Envelope& envelop
         outputs[OUTPUT_SNARE_CONNECTOR].setVoltage(std::clamp(snareOut * rhythmVolume * 4.0f, -10.0f, 10.0f));
         outputs[OUTPUT_HIHAT_CONNECTOR].setVoltage(std::clamp(hihatOut * rhythmVolume * 4.0f, -10.0f, 10.0f));
     } else {
-        outputs[OUTPUT_BASSDRUM_CONNECTOR].setVoltage(0.0f);
-        outputs[OUTPUT_SNARE_CONNECTOR].setVoltage(0.0f);
-        outputs[OUTPUT_HIHAT_CONNECTOR].setVoltage(0.0f);
+        outputs[OUTPUT_BASSDRUM_CONNECTOR].setVoltage(ZERO);
+        outputs[OUTPUT_SNARE_CONNECTOR].setVoltage(ZERO);
+        outputs[OUTPUT_HIHAT_CONNECTOR].setVoltage(ZERO);
     }
     
     outputs[OUTPUT_SYNTH_CONNECTOR].setVoltage(std::clamp(synthOutput * 4.0f, -10.0f, 10.0f));

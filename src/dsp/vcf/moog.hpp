@@ -31,13 +31,13 @@ public:
         float cutoff = 20.f * std::exp(7.0f * cutoffParam);
         float res = resonanceParam * 4.0f;
         float f = cutoff * invSampleRate * 1.16f;
-        float fb = res * (1.0f - 0.15f * f * f);
+        float fb = res * (ONE - 0.15f * f * f);
         float in = input - fb * y4;
         in = FastMath::fastTanh(in);
-        y1 = FastMath::fastTanh(in * f + FastMath::fastTanh(y1) * (1.0f - f));
-        y2 = FastMath::fastTanh(y1 * f + FastMath::fastTanh(y2) * (1.0f - f));
-        y3 = FastMath::fastTanh(y2 * f + FastMath::fastTanh(y3) * (1.0f - f));
-        y4 = FastMath::fastTanh(y3 * f + FastMath::fastTanh(y4) * (1.0f - f));
+        y1 = FastMath::fastTanh(in * f + FastMath::fastTanh(y1) * (ONE - f));
+        y2 = FastMath::fastTanh(y1 * f + FastMath::fastTanh(y2) * (ONE - f));
+        y3 = FastMath::fastTanh(y2 * f + FastMath::fastTanh(y3) * (ONE - f));
+        y4 = FastMath::fastTanh(y3 * f + FastMath::fastTanh(y4) * (ONE - f));
         return y4;
     }
 

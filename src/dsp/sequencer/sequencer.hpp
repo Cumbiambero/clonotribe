@@ -26,8 +26,8 @@ struct Sequencer final {
     struct Step {
         bool skipped = false;
         bool muted = false;
-        float pitch = 0.0f;
-        float gate = 0.0f;
+        float pitch = ZERO;
+        float gate = ZERO;
         float gateTime = 0.5f;
         bool accent = false;
         bool glide = false;
@@ -55,11 +55,11 @@ struct Sequencer final {
     int fluxRecordingStep = 0;
     int fluxSampleCount = 0;
     int recordingStep = 0;
-    float fluxStepTimer = 0.0f;
-    float lastRecordedPitch = 0.0f;
+    float fluxStepTimer = ZERO;
+    float lastRecordedPitch = ZERO;
     float stepDuration = 0.25f;
-    float stepTimer = 0.0f;
-    float glideStatePitch = 0.0f;
+    float stepTimer = ZERO;
+    float glideStatePitch = ZERO;
     bool externalSync = false;
     bool fluxMode = false;
     bool playing = false;
@@ -114,20 +114,20 @@ struct Sequencer final {
         if (step >= 0 && step < getStepCount()) steps[step].muted = !steps[step].muted;
     }
     void setStepGateTime(int step, float gateTime) noexcept {
-        if (step >= 0 && step < getStepCount()) steps[step].gateTime = std::clamp(gateTime, 0.1f, 1.0f);
+        if (step >= 0 && step < getStepCount()) steps[step].gateTime = std::clamp(gateTime, 0.1f, ONE);
     }
     float getStepGateTime(int step) const noexcept {
         if (step >= 0 && step < getStepCount()) return steps[step].gateTime;
         return 0.5f;
     }
-    void play() noexcept { playing = true; currentStep = 0; stepTimer = 0.0f; }
-    void stop() noexcept { playing = false; currentStep = 0; stepTimer = 0.0f; }
+    void play() noexcept { playing = true; currentStep = 0; stepTimer = ZERO; }
+    void stop() noexcept { playing = false; currentStep = 0; stepTimer = ZERO; }
     void startRecording() noexcept {
         recording = true; recordingStep = 0;
         if (fluxMode) {
             fluxSampleCount = 0;
             fluxRecordingStep = 0;
-            fluxStepTimer = 0.0f;
+            fluxStepTimer = ZERO;
         }
     }
     void stopRecording() noexcept { recording = false; }
@@ -137,7 +137,7 @@ struct Sequencer final {
         for (int i = 0; i < stepCount; i++) {
             steps[i].skipped = false;
             steps[i].muted = false;
-            steps[i].pitch = 0.0f;
+            steps[i].pitch = ZERO;
             steps[i].gate = 5.0f;
             steps[i].gateTime = 0.8f;
             steps[i].accent = false;
@@ -192,14 +192,14 @@ struct Sequencer final {
         }
     }
     struct SequencerOutput {
-        float pitch = 0.0f;
-        float gate = 0.0f;
+        float pitch = ZERO;
+        float gate = ZERO;
         bool stepChanged = false;
         int step = 0;
         bool accent = false;
         bool glide = false;
     };
-    SequencerOutput process(float sampleTime, float inputPitch = 0.0f, float inputGate = 0.0f, float syncSignal = 0.0f, float ribbonGateTimeMod = 0.5f, float accentGlideAmount = 0.0f) {
+    SequencerOutput process(float sampleTime, float inputPitch = ZERO, float inputGate = ZERO, float syncSignal = ZERO, float ribbonGateTimeMod = 0.5f, float accentGlideAmount = ZERO) {
         SequencerOutput output;
         if (!playing) return output;
         bool wasNewStep = false;
@@ -213,12 +213,12 @@ struct Sequencer final {
             return fromStep;
         };
         if (externalSync) {
-            bool syncTriggered = syncTrigger.process(syncSignal > 1.0f);
+            bool syncTriggered = syncTrigger.process(syncSignal > ONE);
             if (syncTriggered) {
                 int nextStep = advanceToNextActiveStep(currentStep);
                 wasNewStep = (nextStep != currentStep);
                 currentStep = nextStep;
-                stepTimer = 0.0f;
+                stepTimer = ZERO;
             }
             stepTimer += sampleTime;
         } else {
@@ -234,8 +234,8 @@ struct Sequencer final {
         output.stepChanged = wasNewStep;
         if (!steps[currentStep].skipped) {
             if (steps[currentStep].muted) {
-                output.pitch = 0.0f;
-                output.gate = 0.0f;
+                output.pitch = ZERO;
+                output.gate = ZERO;
             } else {
                 output.accent = steps[currentStep].accent;
                 output.glide = steps[currentStep].glide;
@@ -256,12 +256,12 @@ struct Sequencer final {
                     output.pitch = steps[currentStep].pitch;
                 }
                 
-                if (output.glide && accentGlideAmount > 0.0f) {
+                if (output.glide && accentGlideAmount > ZERO) {
                     if (!glidePitchActive) {
                         glideStatePitch = output.pitch;
                         glidePitchActive = true;
                     } else {
-                        float glideSpeed = std::clamp(accentGlideAmount, 0.0f, 1.0f);
+                        float glideSpeed = std::clamp(accentGlideAmount, ZERO, ONE);
                         glideStatePitch += (output.pitch - glideStatePitch) * glideSpeed;
                     }
                     
@@ -271,13 +271,13 @@ struct Sequencer final {
                     glidePitchActive = true;
                 }
                 
-                float effectiveGateTime = std::clamp(steps[currentStep].gateTime * ribbonGateTimeMod, 0.1f, 1.0f);
+                float effectiveGateTime = std::clamp(steps[currentStep].gateTime * ribbonGateTimeMod, 0.1f, ONE);
                 float stepProgress = externalSync ? (stepTimer / 0.1f) : (stepTimer / stepDuration);
-                output.gate = (stepProgress < effectiveGateTime) ? 5.0f : 0.0f;
+                output.gate = (stepProgress < effectiveGateTime) ? 5.0f : ZERO;
             }
         } else {
-            output.pitch = 0.0f;
-            output.gate = 0.0f;
+            output.pitch = ZERO;
+            output.gate = ZERO;
             output.accent = false;
             output.glide = false;
         }

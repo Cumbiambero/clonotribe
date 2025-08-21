@@ -30,10 +30,10 @@ struct LFO final {
     };
 
 
-    float phase = 0.0f;
-    float freq = 1.0f;
-    float sampleHoldValue = 0.0f;
-    float lastPhase = 0.0f;
+    float phase = ZERO;
+    float freq = ONE;
+    float sampleHoldValue = ZERO;
+    float lastPhase = ZERO;
     bool oneShot = false;
     bool triggered = false;
     bool active = true;
@@ -54,68 +54,68 @@ struct LFO final {
     void setOneShot(bool os) noexcept {
         oneShot = os;
         if (os && !triggered) {
-            phase = 0.0f;
+            phase = ZERO;
         }
     }
 
     void setSampleAndHold(bool sh) noexcept {
         sampleAndHold = sh;
         if (sh) {
-            sampleHoldValue = (rack::random::uniform() - 0.5f) * 2.0f;
+            sampleHoldValue = (rack::random::uniform() - 0.5f) * TWO;
         }
     }
 
     void trigger() noexcept {
         if (oneShot) {
-            phase = 0.0f;
+            phase = ZERO;
             triggered = true;
         }
     }
 
     [[nodiscard]] float process(float sampleTime, Waveform waveform = Waveform::SQUARE) noexcept {
         if (!active || (oneShot && !triggered)) [[unlikely]] {
-            return 0.0f;
+            return ZERO;
         }
 
         phase += freq * sampleTime;
 
         if (oneShot && phase >= 0.5f) {
             triggered = false;
-            return 0.0f;
+            return ZERO;
         }
 
-        if (phase >= 1.0f) {
-            phase -= 1.0f;
+        if (phase >= ONE) {
+            phase -= ONE;
             if (oneShot) {
                 triggered = false;
             }
         }
 
-        float output = 0.0f;
+        float output = ZERO;
 
         if (sampleAndHold) {
             if (phase < lastPhase) {
-                sampleHoldValue = (rack::random::uniform() - 0.5f) * 2.0f;
+                sampleHoldValue = (rack::random::uniform() - 0.5f) * TWO;
             }
             output = sampleHoldValue;
         } else {
             switch (waveform) {
                 case Waveform::SQUARE:
-                    output = (phase < 0.5f) ? 1.0f : -1.0f;
+                    output = (phase < 0.5f) ? ONE : -ONE;
                     break;
                 case Waveform::TRIANGLE:
                     if (phase < 0.5f) {
-                        output = 4.0f * phase - 1.0f;
+                        output = 4.0f * phase - ONE;
                     } else {
                         output = 3.0f - 4.0f * phase;
                     }
                     break;
                 case Waveform::SAW:
-                    output = 2.0f * phase - 1.0f;
+                    output = TWO * phase - ONE;
                     break;
                 case Waveform::SAMPLE_HOLD:
                     if (phase < lastPhase) {
-                        sampleHoldValue = (rack::random::uniform() - 0.5f) * 2.0f;
+                        sampleHoldValue = (rack::random::uniform() - 0.5f) * TWO;
                     }
                     output = sampleHoldValue;
                     break;

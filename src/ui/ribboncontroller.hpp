@@ -1,4 +1,5 @@
 #pragma once
+#include "../constants.hpp"
 #include <rack.hpp>
 
 struct Clonotribe;
@@ -21,6 +22,6 @@ struct RibbonController final : rack::Widget {
     void draw(const DrawArgs& args) override;
 
 private:
-    float position = 0.0f;
+    float position = ZERO;
 };
 }

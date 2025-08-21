@@ -9,13 +9,13 @@ namespace original {
 class KickDrum : public drumkits::KickDrum {
 public:
     void reset() override {
-        pitchEnv = 1.0f;
-        ampEnv = 1.0f;
-        subEnv = 1.0f;
-        clickEnv = 1.0f;
-        phase = 0.0f;
-        subPhase = 0.0f;
-        hpNoiseState = 0.0f;
+        pitchEnv = ONE;
+        ampEnv = ONE;
+        subEnv = ONE;
+        clickEnv = ONE;
+        phase = ZERO;
+        subPhase = ZERO;
+        hpNoiseState = ZERO;
         triggered = true;
     }
     
@@ -25,24 +25,24 @@ public:
     
     [[nodiscard]] float process(float trig, float accent, clonotribe::NoiseGenerator& noise) override {
         if (!triggered) {
-            return 0.0f;
+            return ZERO;
         }
         
-        float invSampleRate = 1.0f / sampleRate;
+        float invSampleRate = ONE / sampleRate;
         float accentGain = 0.75f + accent * 0.5f;
         
         float pitchMod = 110.0f * pitchEnv * pitchEnv;
         float freq = 58.0f + pitchMod;
         
-        float analogDrift = 1.0f + noise.process() * 0.002f;
-        phase += freq * analogDrift * invSampleRate * 2.0f * clonotribe::FastMath::PI;
-        if (phase >= 2.0f * clonotribe::FastMath::PI) {
-            phase -= 2.0f * clonotribe::FastMath::PI;
+        float analogDrift = ONE + noise.process() * 0.002f;
+        phase += freq * analogDrift * invSampleRate * TWO * clonotribe::FastMath::PI;
+        if (phase >= TWO * clonotribe::FastMath::PI) {
+            phase -= TWO * clonotribe::FastMath::PI;
         }
         
-        subPhase += (freq * 0.5f) * invSampleRate * 2.0f * clonotribe::FastMath::PI;
-        if (subPhase >= 2.0f * clonotribe::FastMath::PI) {
-            subPhase -= 2.0f * clonotribe::FastMath::PI;
+        subPhase += (freq * 0.5f) * invSampleRate * TWO * clonotribe::FastMath::PI;
+        if (subPhase >= TWO * clonotribe::FastMath::PI) {
+            subPhase -= TWO * clonotribe::FastMath::PI;
         }
         
         float mainSine = clonotribe::FastMath::fastSin(phase);
@@ -52,7 +52,7 @@ public:
         
         hpNoiseState += (n - hpNoiseState) * HP_CUTOFF;
         float hpNoise = n - hpNoiseState;
-        float click = (clickEnv > 0.85f ? (clickEnv - 0.85f) * 6.67f : 0.0f) + hpNoise * 0.12f * clickEnv;
+        float click = (clickEnv > 0.85f ? (clickEnv - 0.85f) * 6.67f : ZERO) + hpNoise * 0.12f * clickEnv;
         float output = (mainSine * ampEnv + subSine + click * 0.25f);        
         float envDecay = 0.9983f + noise.process() * 0.0001f;
         
@@ -72,13 +72,13 @@ public:
 private:
     static constexpr float HP_CUTOFF = 0.25f;
 
-    float pitchEnv = 0.0f;
-    float ampEnv = 0.0f;
-    float subEnv = 0.0f;
-    float clickEnv = 0.0f;
-    float phase = 0.0f;
-    float subPhase = 0.0f;
-    float hpNoiseState = 0.0f;
+    float pitchEnv = ZERO;
+    float ampEnv = ZERO;
+    float subEnv = ZERO;
+    float clickEnv = ZERO;
+    float phase = ZERO;
+    float subPhase = ZERO;
+    float hpNoiseState = ZERO;
     float sampleRate = 44100.0f;
     bool triggered = false;
 };

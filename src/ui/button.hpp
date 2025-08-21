@@ -15,7 +15,7 @@ struct TransparentButton final : rack::app::ParamWidget {
             nvgBeginPath(args.vg);
             nvgRect(args.vg, 0, 0, box.size.x, box.size.y);
             nvgStrokeColor(args.vg, nvgRGBA(255, 255, 255, 50));
-            nvgStrokeWidth(args.vg, 1.0f);
+            nvgStrokeWidth(args.vg, ONE);
             nvgStroke(args.vg);
         }
     }
@@ -27,11 +27,11 @@ struct TransparentButton final : rack::app::ParamWidget {
                 if (auto* q = getParamQuantity()) {
                     int mods = APP->window->getMods();
                     bool ctrl = (mods & RACK_MOD_CTRL) != 0;
-                    q->setValue(ctrl ? 0.9f : 1.0f);
+                    q->setValue(ctrl ? 0.9f : ONE);
                 }
             } else if (e.action == GLFW_RELEASE) {
                 if (getParamQuantity()) {
-                    getParamQuantity()->setValue(0.0f);
+                    getParamQuantity()->setValue(ZERO);
                 }
             }
         }
@@ -44,7 +44,7 @@ struct TransparentButton final : rack::app::ParamWidget {
             if (auto* q = getParamQuantity()) {
                 int mods = APP->window->getMods();
                 bool ctrl = (mods & RACK_MOD_CTRL) != 0;
-                q->setValue(ctrl ? 0.9f : 1.0f);
+                q->setValue(ctrl ? 0.9f : ONE);
             }
         }
         rack::app::ParamWidget::onDragStart(e);
@@ -54,7 +54,7 @@ struct TransparentButton final : rack::app::ParamWidget {
         if (e.button == GLFW_MOUSE_BUTTON_LEFT && pressed) {
             pressed = false;
             if (getParamQuantity()) {
-                getParamQuantity()->setValue(0.0f);
+                getParamQuantity()->setValue(ZERO);
             }
         }
         ParamWidget::onDragEnd(e);

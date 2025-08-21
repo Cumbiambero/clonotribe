@@ -6,7 +6,7 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
         float value = params[paramId].getValue();
         if (inputs[inputId].isConnected()) {
             float cvVoltage = inputs[inputId].getVoltage();
-            value = std::clamp((cvVoltage + 5.0f) * 0.1f, 0.0f, 1.0f);
+            value = std::clamp((cvVoltage + 5.0f) * 0.1f, ZERO, ONE);
             getParamQuantity(paramId)->setDisplayValue(value);
         }
         return value;
@@ -35,7 +35,7 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
         float octaveSwitch = params[PARAM_VCO_OCTAVE_KNOB].getValue();
         if (inputs[INPUT_VCO_OCTAVE_CONNECTOR].isConnected()) {
             float cvVoltage = inputs[INPUT_VCO_OCTAVE_CONNECTOR].getVoltage();
-            octaveSwitch = std::clamp((cvVoltage + 5.0f) * 0.5f, 0.0f, 5.0f);
+            octaveSwitch = std::clamp((cvVoltage + 5.0f) * 0.5f, ZERO, 5.0f);
             getParamQuantity(PARAM_VCO_OCTAVE_KNOB)->setDisplayValue(octaveSwitch);
         }
         paramCache.octave = octaveSwitch - 3.0f;
@@ -115,7 +115,7 @@ void Clonotribe::handleDrumSelectionAndTempo(float tempo) {
     if (!inputs[INPUT_SYNC_CONNECTOR].isConnected()) {
         float minTempo, maxTempo;
         getTempoRange(minTempo, maxTempo);
-        float bpm = rack::math::rescale(tempo, 0.0f, 1.0f, minTempo, maxTempo);
+        float bpm = rack::math::rescale(tempo, ZERO, ONE, minTempo, maxTempo);
         sequencer.setTempo(bpm);
         sequencer.setExternalSync(false);
     } else {
@@ -136,15 +136,15 @@ void Clonotribe::handleActiveStep() {
 }
 
 void Clonotribe::handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld) {
-    static float rollTimer = 0.0f;
+    static float rollTimer = ZERO;
     
     if (gateTimeHeld && ribbon.touching && sequencer.getSelectedDrumPart() != DrumPart::SYNTH) {
         float rollIntensity = ribbon.getDrumRollIntensity();
-        float rollRate = rollIntensity * 50.0f + 1.0f;        
+        float rollRate = rollIntensity * 50.0f + ONE;        
         rollTimer += args.sampleTime * rollRate;
         
-        if (rollTimer >= 1.0f) {
-            rollTimer -= 1.0f;
+        if (rollTimer >= ONE) {
+            rollTimer -= ONE;
             switch (sequencer.getSelectedDrumPart()) {
                 case DrumPart::KICK: triggerKick(); break;
                 case DrumPart::SNARE: triggerSnare(); break;
@@ -153,7 +153,7 @@ void Clonotribe::handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld) {
             }
         }
     } else {
-        rollTimer = 0.0f;
+        rollTimer = ZERO;
     }
 }
 

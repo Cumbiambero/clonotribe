@@ -9,7 +9,7 @@ class Delay {
 public:
     Delay() {
         setSampleRate(44100.0f);
-        setMaxDelayTime(2.0f);
+        setMaxDelayTime(TWO);
         feedbackDcBlocker.setSampleRate(44100.0f);
         feedbackDcBlocker.setCutoff(30.0f);
     }
@@ -25,19 +25,19 @@ public:
     void setMaxDelayTime(float maxTime) {
         maxDelayTime = maxTime;
         maxDelaySamples = static_cast<int>(maxTime * sampleRate) + 1;
-        buffer.resize(maxDelaySamples, 0.0f);
+        buffer.resize(maxDelaySamples, ZERO);
         writeIndex = 0;
     }
 
     [[nodiscard]] float process(float input, float clockTrigger, float time, float amount) {
         if (buffer.empty()) return input;
         
-        amount = std::clamp(amount, 0.0f, 1.0f);
-        if (amount <= 0.0f) return input;
+        amount = std::clamp(amount, ZERO, ONE);
+        if (amount <= ZERO) return input;
         
         input = std::clamp(input, -10.0f, 10.0f);
         
-        bool clockTriggered = clockTrigger > 1.0f && lastClockTrigger <= 1.0f;
+        bool clockTriggered = clockTrigger > ONE && lastClockTrigger <= ONE;
         lastClockTrigger = clockTrigger;
         
         float delayTime;
@@ -52,7 +52,7 @@ public:
             samplesSinceLastClock++;
         }
         
-        if (clockTrigger > 0.1f && static_cast<float>(samplesSinceLastClock) < sampleRate * 2.0f && lastClockInterval > 0.0f) {
+        if (clockTrigger > 0.1f && static_cast<float>(samplesSinceLastClock) < sampleRate * TWO && lastClockInterval > ZERO) {
             delayTime = lastClockInterval;
         } else {
             delayTime = 0.01f + time * 1.99f;
@@ -60,7 +60,7 @@ public:
         
         delayTime = std::clamp(delayTime, 0.001f, maxDelayTime);
         float targetDelaySamples = delayTime * sampleRate;
-        targetDelaySamples = std::clamp(targetDelaySamples, 1.0f, static_cast<float>(maxDelaySamples - 1));
+        targetDelaySamples = std::clamp(targetDelaySamples, ONE, static_cast<float>(maxDelaySamples - 1));
         smoothedDelaySamples += (targetDelaySamples - smoothedDelaySamples) * 0.01f;
         int delaySamples = static_cast<int>(smoothedDelaySamples);
         float fraction = smoothedDelaySamples - static_cast<float>(delaySamples);
@@ -74,23 +74,23 @@ public:
         float feedback = amount * 0.4f;
         
         float feedbackSignal = feedbackDcBlocker.process(delayedSample * feedback);
-        feedbackSignal = std::clamp(feedbackSignal, -2.0f, 2.0f);
+        feedbackSignal = std::clamp(feedbackSignal, -TWO, TWO);
         
         buffer[writeIndex] = input + feedbackSignal;
         writeIndex = (writeIndex + 1) % maxDelaySamples;
-        return input * (1.0f - amount) + delayedSample * amount;
+        return input * (ONE - amount) + delayedSample * amount;
     }
     
     bool isClockConnected() const {
-        return static_cast<float>(samplesSinceLastClock) < sampleRate * 2.0f && lastClockInterval > 0.0f;
+        return static_cast<float>(samplesSinceLastClock) < sampleRate * TWO && lastClockInterval > ZERO;
     }
     
     void clear() {
-        std::fill(buffer.begin(), buffer.end(), 0.0f);
-        lastClockTrigger = 0.0f;
+        std::fill(buffer.begin(), buffer.end(), ZERO);
+        lastClockTrigger = ZERO;
         samplesSinceLastClock = 0;
-        lastClockInterval = 0.0f;
-        smoothedDelaySamples = 1.0f;
+        lastClockInterval = ZERO;
+        smoothedDelaySamples = ONE;
         feedbackDcBlocker.reset();
     }
     
@@ -98,12 +98,12 @@ private:
     std::vector<float> buffer;
     int maxDelaySamples = 0;
     int writeIndex = 0;
-    float maxDelayTime = 2.0f;
+    float maxDelayTime = TWO;
     float sampleRate = 44100.0f;
-    float lastClockTrigger = 0.0f;
+    float lastClockTrigger = ZERO;
     int samplesSinceLastClock = 0;
-    float lastClockInterval = 0.0f;
-    float smoothedDelaySamples = 1.0f;
+    float lastClockInterval = ZERO;
+    float smoothedDelaySamples = ONE;
     DcBlocker feedbackDcBlocker;
 };
 

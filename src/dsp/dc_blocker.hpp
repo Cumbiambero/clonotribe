@@ -16,7 +16,7 @@ public:
     }
     
     void setCutoff(float fcHz) noexcept {
-        cutoff = std::clamp(fcHz, 1.0f, 100.0f);
+        cutoff = std::clamp(fcHz, ONE, 100.0f);
         updateCoefficients();
     }
     
@@ -36,64 +36,64 @@ public:
     }
     
     void reset() noexcept { 
-        x1 = x2 = x3 = 0.0f;
-        y1 = y2 = y3 = 0.0f;
-        dcEstimate = 0.0f;
+        x1 = x2 = x3 = ZERO;
+        y1 = y2 = y3 = ZERO;
+        dcEstimate = ZERO;
     }
     
 private:
     float sampleRate = 44100.0f;
     float cutoff = 20.0f;
     float R1 = 0.995f, R2 = 0.998f, R3 = 0.9995f;
-    float x1 = 0.0f, x2 = 0.0f, x3 = 0.0f;
-    float y1 = 0.0f, y2 = 0.0f, y3 = 0.0f;
-    float dcEstimate = 0.0f;
+    float x1 = ZERO, x2 = ZERO, x3 = ZERO;
+    float y1 = ZERO, y2 = ZERO, y3 = ZERO;
+    float dcEstimate = ZERO;
 
     void updateCoefficients() noexcept {
-        const float invSampleRate = 1.0f / sampleRate;
+        const float invSampleRate = ONE / sampleRate;
         
         const float w1 = FastMath::TWO_PI * cutoff * invSampleRate;
-        R1 = (1.0f - w1) / (1.0f + w1);
+        R1 = (ONE - w1) / (ONE + w1);
         R1 = std::clamp(R1, 0.9f, 0.998f);
         
         const float w2 = FastMath::TWO_PI * (cutoff * 0.5f) * invSampleRate;
-        R2 = (1.0f - w2) / (1.0f + w2);
+        R2 = (ONE - w2) / (ONE + w2);
         R2 = std::clamp(R2, 0.95f, 0.999f);
         
         const float w3 = FastMath::TWO_PI * (cutoff * 0.25f) * invSampleRate;
-        R3 = (1.0f - w3) / (1.0f + w3);
+        R3 = (ONE - w3) / (ONE + w3);
         R3 = std::clamp(R3, 0.98f, 0.9999f);
     }
     
     [[nodiscard]] float processStage1(float x) noexcept {
-        if (std::abs(x) < 1e-30f) x = 0.0f;
+        if (std::abs(x) < 1e-30f) x = ZERO;
         x = std::clamp(x, -100.0f, 100.0f);
         
         const float y = x - x1 + R1 * y1;
         x1 = x;
-        y1 = (std::abs(y) < 1e-30f) ? 0.0f : y;
+        y1 = (std::abs(y) < 1e-30f) ? ZERO : y;
         return y1;
     }
     
     [[nodiscard]] float processStage2(float x) noexcept {
-        if (std::abs(x) < 1e-30f) x = 0.0f;
+        if (std::abs(x) < 1e-30f) x = ZERO;
         
         const float y = x - x2 + R2 * y2;
         x2 = x;
-        y2 = (std::abs(y) < 1e-30f) ? 0.0f : y;
+        y2 = (std::abs(y) < 1e-30f) ? ZERO : y;
         return y2;
     }
     
     [[nodiscard]] float processStage3(float x) noexcept {
-        if (std::abs(x) < 1e-30f) x = 0.0f;
+        if (std::abs(x) < 1e-30f) x = ZERO;
         
         const float dcAlpha = 0.0001f;
-        dcEstimate = dcEstimate * (1.0f - dcAlpha) + x * dcAlpha;
+        dcEstimate = dcEstimate * (ONE - dcAlpha) + x * dcAlpha;
         x -= dcEstimate;
         
         const float y = x - x3 + R3 * y3;
         x3 = x;
-        y3 = (std::abs(y) < 1e-30f) ? 0.0f : y;
+        y3 = (std::abs(y) < 1e-30f) ? ZERO : y;
         return y3;
     }
 };

@@ -4,19 +4,19 @@ void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOut
     if (sequencer.playing) {
         int currentStep = seqOutput.step;
         if (sequencer.isStepMuted(currentStep)) {
-            seqOutput.gate = 0.0f;
-            seqOutput.pitch = 0.0f;
+            seqOutput.gate = OFF;
+            seqOutput.pitch = OFF;
         }
     }
 
     if (sequencer.recording) {
         if (sequencer.fluxMode) {
-            if (finalGate > 1.0f) {
+            if (finalGate > ONE) {
                 sequencer.recordFlux(finalInputPitch);
             }
         } else if(gateTriggered) {
             if (sequencer.playing) {
-                sequencer.recordNote(finalInputPitch, finalGate > 1.0f ? finalGate : 5.0f, 0.8f);
+                sequencer.recordNote(finalInputPitch, finalGate > ONE ? finalGate : 5.0f, 0.8f);
             } else {
                 int stepCount = sequencer.getStepCount();
                 int nextStep = sequencer.recordingStep;
@@ -32,11 +32,11 @@ void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOut
                     sequencer.setStepSkipped(0, false);
                     nextStep = 0;
                 }
-                sequencer.recordNoteToStep(nextStep, finalInputPitch, finalGate > 1.0f ? finalGate : 5.0f, 0.8f);
+                sequencer.recordNoteToStep(nextStep, finalInputPitch, finalGate > ONE ? finalGate : 5.0f, 0.8f);
                 sequencer.recordingStep = (nextStep + 1) % stepCount;
             }
         } else if (sequencer.playing && ribbon.touching && seqOutput.stepChanged) {
-            sequencer.recordNote(finalInputPitch, finalGate > 1.0f ? finalGate : 5.0f, 0.8f);
+            sequencer.recordNote(finalInputPitch, finalGate > ONE ? finalGate : 5.0f, 0.8f);
         }
     }
 
