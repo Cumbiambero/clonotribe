@@ -19,6 +19,7 @@ The monotribe is a great little box and I hope that this tribute will bring some
 - **Distortion**: Add some overdrive to the synth voice
 - **CV controlable**: Most params can be set by CV
 - **Delay**: Simple delay can be applied to the synth voice
+- **Accent**: Simple accent implementation that combines accent and glide
 - **Keyboard shortcuts**: The sequencer keys are mapped to the computer keyboard. Hover over them to see the mapping.
 
 
@@ -62,6 +63,7 @@ The monotribe is a great little box and I hope that this tribute will bring some
 - Individual Active Step control per part
 - Gate Time adjustment per step
 - Tempo control (60-180 BPM up to 10 - 600 BPM) or external sync
+- Accent, glide and both can additionally set per step
 
 ### Ribbon Controller (Firmware 2.1 Features)
 - Three modes: Key (chromatic), Narrow (±0.5 oct), Wide (±3 oct)
