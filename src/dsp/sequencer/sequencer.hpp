@@ -19,9 +19,9 @@ enum class DrumPart {
 };
 
 struct Sequencer final {
-    static constexpr int kMaxSteps = 16;
-    static constexpr int kDefaultSteps = 8;
-    static constexpr int kFluxBufferSize = 1600;
+    static constexpr int MAX_STEPS = 16;
+    static constexpr int DEFAULT_STEPS = 8;
+    static constexpr int BUFFER_SIZE = 1600;
 
     struct Step {
         bool skipped = false;
@@ -48,8 +48,8 @@ struct Sequencer final {
         return false;
     }
 
-    std::array<Step, kMaxSteps> steps{};
-    std::array<float, kFluxBufferSize> fluxBuffer{};
+    std::array<Step, MAX_STEPS> steps{};
+    std::array<float, BUFFER_SIZE> fluxBuffer{};
 
     int currentStep = 0;
     int fluxRecordingStep = 0;
@@ -65,7 +65,7 @@ struct Sequencer final {
     bool playing = false;
     bool recording = false;
     bool sixteenStepMode = false;
-    bool hasGlideState = false;
+    bool glidePitchActive = false;
 
     DrumPart selectedDrumPart = DrumPart::SYNTH;
 
@@ -178,14 +178,14 @@ struct Sequencer final {
             if (playing) {
                 int stepSampleIndex = currentStep * 100 + (int)((stepTimer / stepDuration) * 100);
                 int maxSamples = getStepCount() * 100;
-                if (stepSampleIndex >= 0 && stepSampleIndex < maxSamples && stepSampleIndex < kFluxBufferSize) {
-                    if (fluxSampleCount < kFluxBufferSize) {
+                if (stepSampleIndex >= 0 && stepSampleIndex < maxSamples && stepSampleIndex < BUFFER_SIZE) {
+                    if (fluxSampleCount < BUFFER_SIZE) {
                         fluxBuffer[stepSampleIndex] = pitch;
                         fluxSampleCount = std::max(fluxSampleCount, stepSampleIndex + 1);
                     }
                 }
             } else {
-                if (fluxSampleCount < kFluxBufferSize) {
+                if (fluxSampleCount < BUFFER_SIZE) {
                     fluxBuffer[fluxSampleCount++] = pitch;
                 }
             }
@@ -257,9 +257,9 @@ struct Sequencer final {
                 }
                 
                 if (output.glide && accentGlideAmount > 0.0f) {
-                    if (!hasGlideState) {
+                    if (!glidePitchActive) {
                         glideStatePitch = output.pitch;
-                        hasGlideState = true;
+                        glidePitchActive = true;
                     } else {
                         float glideSpeed = std::clamp(accentGlideAmount, 0.0f, 1.0f);
                         glideStatePitch += (output.pitch - glideStatePitch) * glideSpeed;
@@ -268,7 +268,7 @@ struct Sequencer final {
                     output.pitch = glideStatePitch;
                 } else {
                     glideStatePitch = output.pitch;
-                    hasGlideState = true;
+                    glidePitchActive = true;
                 }
                 
                 float effectiveGateTime = std::clamp(steps[currentStep].gateTime * ribbonGateTimeMod, 0.1f, 1.0f);
