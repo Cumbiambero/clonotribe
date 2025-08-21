@@ -313,15 +313,29 @@ void Clonotribe::process(const ProcessArgs& args) {
     
     float noise = noiseGenerator.process() * noiseLevel;
     float mixedSignal = vcoOutput + noise;
-    
+
+    float audioIn = inputs[INPUT_AUDIO_CONNECTOR].getVoltage();
+    if (inputs[INPUT_AUDIO_CONNECTOR].isConnected()) {
+        mixedSignal += audioIn * 1.5f;
+    }
+
+    bool audioGateActive = false;
+    if (inputs[INPUT_AUDIO_CONNECTOR].isConnected() && std::abs(audioIn) > 0.1f) {
+        audioGateActive = true;
+        if (envelope.stage == Envelope::Stage::OFF || std::abs(audioIn) > 0.01f) {
+            envelope.trigger();
+        }
+    }
+
     float filteredSignal = filterProcessor.process(
-        mixedSignal, 
-        std::clamp(effectiveCutoff + lfoToVCF, ZERO, ONE), 
+        mixedSignal,
+        std::clamp(effectiveCutoff + lfoToVCF, ZERO, ONE),
         resonance
     );
-    
+
     filteredSignal = dcBlockerPostFilter.process(filteredSignal);
-    float envValue = processEnvelope(envelopeType, envelope, args.sampleTime, finalGate);
+    float effectiveGate = audioGateActive ? 5.0f : finalGate;
+    float envValue = processEnvelope(envelopeType, envelope, args.sampleTime, effectiveGate);
     float delayClock = inputs[INPUT_DELAY_TIME_CONNECTOR].isConnected() ? inputs[INPUT_DELAY_TIME_CONNECTOR].getVoltage() : ZERO;
     float finalOutput = processOutput(
         filteredSignal, volume, envValue, ribbon.getVolumeAutomation(),
