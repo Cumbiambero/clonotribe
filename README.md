@@ -2,6 +2,8 @@
 
 A module heavily inspired by the KORG monotribe analog synthesizer, including relevant firmware 2.1 features.
 
+![Clonotribe Screenshot](screenshot.png?raw=true "Clonotribe Screenshot")
+
 Please be aware that this is still work in progress. Specially in achieving the authentical sound there are improvements needed. Everyone is invited to contribute and bring this to perfection.
 
 The monotribe is a great little box and I hope that this tribute will bring some fun to the community.
