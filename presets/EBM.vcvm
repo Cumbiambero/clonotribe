@@ -4,11 +4,11 @@
   "version": "2.1.0",
   "params": [
     {
-      "value": 3.0,
+      "value": 1.0,
       "id": 0
     },
     {
-      "value": 0.96747004985809326,
+      "value": 0.55060255527496338,
       "id": 1
     },
     {
@@ -16,7 +16,7 @@
       "id": 2
     },
     {
-      "value": 0.72048228979110718,
+      "value": 0.38795188069343567,
       "id": 3
     },
     {
@@ -32,7 +32,7 @@
       "id": 6
     },
     {
-      "value": 0.64458185434341431,
+      "value": 0.0,
       "id": 7
     },
     {
@@ -44,23 +44,23 @@
       "id": 9
     },
     {
-      "value": 0.0,
+      "value": 0.61445796489715576,
       "id": 10
     },
     {
-      "value": 1.0,
+      "value": 0.09277111291885376,
       "id": 11
     },
     {
-      "value": 2.0,
+      "value": 1.0,
       "id": 12
     },
     {
-      "value": 1.0,
+      "value": 0.078313469886779785,
       "id": 13
     },
     {
-      "value": 2.0,
+      "value": 0.33132535219192505,
       "id": 14
     },
     {
@@ -72,7 +72,7 @@
       "id": 16
     },
     {
-      "value": 0.13132530450820923,
+      "value": 0.0,
       "id": 17
     },
     {
@@ -84,7 +84,7 @@
       "id": 19
     },
     {
-      "value": 0.0,
+      "value": 0.10722889751195908,
       "id": 20
     },
     {
@@ -130,70 +130,102 @@
     {
       "value": 0.0,
       "id": 31
+    },
+    {
+      "value": 0.0,
+      "id": 32
+    },
+    {
+      "value": 0.0,
+      "id": 33
+    },
+    {
+      "value": 0.0,
+      "id": 34
+    },
+    {
+      "value": 0.24939754605293274,
+      "id": 35
     }
   ],
   "data": {
     "sequencer": {
       "sixteenStepMode": false,
-      "currentStep": 3,
+      "currentStep": 0,
       "recordingStep": 0,
-      "fluxMode": false,
+      "fluxMode": true,
       "steps": [
         {
           "pitch": -2.0250415802001953,
           "gate": 10.0,
           "gateTime": 0.80000001192092896,
           "skipped": false,
-          "muted": false
+          "muted": false,
+          "accent": false,
+          "glide": true
         },
         {
           "pitch": -2.0250415802001953,
           "gate": 10.0,
           "gateTime": 0.80000001192092896,
           "skipped": false,
-          "muted": true
+          "muted": true,
+          "accent": true,
+          "glide": false
         },
         {
           "pitch": -1.7310464382171631,
           "gate": 10.0,
           "gateTime": 0.80000001192092896,
           "skipped": false,
-          "muted": false
+          "muted": false,
+          "accent": true,
+          "glide": true
         },
         {
-          "pitch": 0.28273558616638184,
+          "pitch": -2.652902364730835,
           "gate": 10.0,
           "gateTime": 0.80000001192092896,
           "skipped": false,
-          "muted": false
+          "muted": false,
+          "accent": false,
+          "glide": true
         },
         {
-          "pitch": 0.28273558616638184,
+          "pitch": -2.652902364730835,
           "gate": 10.0,
           "gateTime": 0.80000001192092896,
           "skipped": false,
-          "muted": true
+          "muted": false,
+          "accent": true,
+          "glide": true
         },
         {
-          "pitch": 1.8261146545410156,
+          "pitch": -2.652902364730835,
           "gate": 10.0,
           "gateTime": 0.80000001192092896,
           "skipped": false,
-          "muted": false
+          "muted": true,
+          "accent": true,
+          "glide": false
         },
         {
-          "pitch": 1.8261146545410156,
+          "pitch": -1.5610320568084717,
           "gate": 10.0,
           "gateTime": 0.80000001192092896,
           "skipped": false,
-          "muted": false
+          "muted": true,
+          "accent": false,
+          "glide": true
         },
         {
-          "pitch": -2.0250415802001953,
+          "pitch": -1.5610320568084717,
           "gate": 10.0,
           "gateTime": 0.80000001192092896,
           "skipped": false,
-          "muted": false
+          "muted": false,
+          "accent": false,
+          "glide": true
         }
       ],
       "drumPatterns": [
@@ -230,11 +262,12 @@
       ]
     },
     "selectedDrumPart": 0,
-    "selectedStepForEditing": 0,
+    "selectedStepForEditing": 4,
     "gateTimesLocked": false,
     "lfoSampleAndHoldMode": false,
     "syncHalfTempo": false,
     "selectedDrumKit": 1,
-    "selectedTempoRange": 2
+    "selectedTempoRange": 2,
+    "selectedNoiseType": 0
   }
 }

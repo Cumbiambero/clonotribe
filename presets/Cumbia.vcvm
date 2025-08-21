@@ -4,19 +4,19 @@
   "version": "2.1.0",
   "params": [
     {
-      "value": 5.0,
+      "value": 1.0,
       "id": 0
     },
     {
-      "value": 0.70602375268936157,
+      "value": 0.43855437636375427,
       "id": 1
     },
     {
-      "value": 2.0,
+      "value": 1.0,
       "id": 2
     },
     {
-      "value": 1.0,
+      "value": 0.045783132314682007,
       "id": 3
     },
     {
@@ -24,31 +24,31 @@
       "id": 4
     },
     {
-      "value": 0.0,
+      "value": 0.19518077373504639,
       "id": 5
     },
     {
-      "value": 0.0,
+      "value": 0.14939744770526886,
       "id": 6
     },
     {
-      "value": 0.55060333013534546,
+      "value": 0.0,
       "id": 7
     },
     {
-      "value": 0.15542206168174744,
+      "value": 0.0,
       "id": 8
     },
     {
-      "value": 0.27590373158454895,
+      "value": 0.0,
       "id": 9
     },
     {
-      "value": 0.0,
+      "value": 0.59036129713058472,
       "id": 10
     },
     {
-      "value": 0.42771095037460327,
+      "value": 0.0,
       "id": 11
     },
     {
@@ -56,15 +56,15 @@
       "id": 12
     },
     {
-      "value": 2.0,
+      "value": 0.0,
       "id": 13
     },
     {
-      "value": 2.0,
+      "value": 0.81566309928894043,
       "id": 14
     },
     {
-      "value": 1.0,
+      "value": 2.0,
       "id": 15
     },
     {
@@ -72,19 +72,19 @@
       "id": 16
     },
     {
-      "value": 0.28072217106819153,
+      "value": 2.0,
       "id": 17
     },
     {
-      "value": 0.0,
+      "value": 1.0,
       "id": 18
     },
     {
-      "value": 0.0,
+      "value": 2.0,
       "id": 19
     },
     {
-      "value": 0.0,
+      "value": 0.31686747074127197,
       "id": 20
     },
     {
@@ -130,6 +130,22 @@
     {
       "value": 0.0,
       "id": 31
+    },
+    {
+      "value": 0.0,
+      "id": 32
+    },
+    {
+      "value": 0.0,
+      "id": 33
+    },
+    {
+      "value": 0.0,
+      "id": 34
+    },
+    {
+      "value": 0.20361444354057312,
+      "id": 35
     }
   ],
   "data": {
@@ -137,63 +153,79 @@
       "sixteenStepMode": false,
       "currentStep": 1,
       "recordingStep": 0,
-      "fluxMode": false,
+      "fluxMode": true,
       "steps": [
         {
-          "pitch": -1.5,
+          "pitch": -1.1666666269302368,
           "gate": 10.0,
           "gateTime": 0.80000001192092896,
           "skipped": false,
-          "muted": false
+          "muted": false,
+          "accent": true,
+          "glide": false
         },
         {
-          "pitch": -1.25,
+          "pitch": -1.1666666269302368,
           "gate": 10.0,
           "gateTime": 0.80000001192092896,
           "skipped": false,
-          "muted": false
+          "muted": false,
+          "accent": true,
+          "glide": false
         },
         {
-          "pitch": -1.5,
+          "pitch": -1.1666666269302368,
           "gate": 10.0,
           "gateTime": 0.80000001192092896,
           "skipped": false,
-          "muted": false
-        },
-        {
-          "pitch": -1.6666666269302368,
-          "gate": 10.0,
-          "gateTime": 0.80000001192092896,
-          "skipped": false,
-          "muted": false
-        },
-        {
-          "pitch": -1.9166666269302368,
-          "gate": 10.0,
-          "gateTime": 0.80000001192092896,
-          "skipped": false,
-          "muted": false
-        },
-        {
-          "pitch": -1.9166666269302368,
-          "gate": 10.0,
-          "gateTime": 0.80000001192092896,
-          "skipped": false,
-          "muted": false
+          "muted": false,
+          "accent": false,
+          "glide": true
         },
         {
           "pitch": -1.3333332538604736,
           "gate": 10.0,
           "gateTime": 0.80000001192092896,
           "skipped": false,
-          "muted": false
+          "muted": false,
+          "accent": false,
+          "glide": false
         },
         {
           "pitch": -1.5833332538604736,
           "gate": 10.0,
           "gateTime": 0.80000001192092896,
           "skipped": false,
-          "muted": false
+          "muted": false,
+          "accent": true,
+          "glide": false
+        },
+        {
+          "pitch": -1.5833332538604736,
+          "gate": 10.0,
+          "gateTime": 0.80000001192092896,
+          "skipped": false,
+          "muted": true,
+          "accent": true,
+          "glide": false
+        },
+        {
+          "pitch": -1.5833332538604736,
+          "gate": 10.0,
+          "gateTime": 0.80000001192092896,
+          "skipped": false,
+          "muted": false,
+          "accent": false,
+          "glide": true
+        },
+        {
+          "pitch": -1.1666666269302368,
+          "gate": 10.0,
+          "gateTime": 0.80000001192092896,
+          "skipped": false,
+          "muted": false,
+          "accent": false,
+          "glide": false
         }
       ],
       "drumPatterns": [
@@ -219,22 +251,23 @@
         ],
         [
           true,
+          false,
           true,
           true,
           true,
-          true,
-          true,
+          false,
           true,
           true
         ]
       ]
     },
-    "selectedDrumPart": 3,
-    "selectedStepForEditing": 0,
+    "selectedDrumPart": 0,
+    "selectedStepForEditing": 5,
     "gateTimesLocked": false,
     "lfoSampleAndHoldMode": false,
     "syncHalfTempo": false,
     "selectedDrumKit": 2,
-    "selectedTempoRange": 2
+    "selectedTempoRange": 2,
+    "selectedNoiseType": 0
   }
 }
