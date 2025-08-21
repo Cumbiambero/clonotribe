@@ -6,19 +6,13 @@ build/
 *.so
 *.dylib
 
-# IDE files
 .vscode/
 *.code-workspace
 
-# Distribution
 dist/
 
-# Temporary files
 *~
 .DS_Store
 Thumbs.db
 
-# Plugin binaries (keep plugin.json but not built plugins)
-plugin.dll
-plugin.so
-plugin.dylib
+doctest.h
