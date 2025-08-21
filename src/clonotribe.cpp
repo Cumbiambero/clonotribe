@@ -699,6 +699,12 @@ void Clonotribe::processBypass(const ProcessArgs& args) {
     } else {
         outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(ZERO);
     }
+
+    if (inputs[INPUT_LFO_RATE_CONNECTOR].isConnected()) {
+        outputs[OUTPUT_LFO_RATE_CONNECTOR].setVoltage(inputs[INPUT_LFO_RATE_CONNECTOR].getVoltage());
+    } else {
+        outputs[OUTPUT_LFO_RATE_CONNECTOR].setVoltage(ZERO);
+    }
     
     for (int i = 0; i < LIGHTS_LEN; i++) {
         lights[i].setBrightness(LIGHT_OFF);
@@ -719,7 +725,6 @@ void Clonotribe::onRandomize(const RandomizeEvent& e) {
         sequencer.steps[i].muted = chance;
         sequencer.steps[i].accent = chance;
         sequencer.steps[i].glide = chance;
-
         sequencer.steps[i].skipped = false;
     }
     

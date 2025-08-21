@@ -239,6 +239,7 @@ struct Clonotribe : rack::Module {
     void onReset() override {
         Module::onReset();
         delayProcessor.clear();
+        clearAllSequences();
     }
 
     auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, Envelope::Type, LFO::Mode, LFO::Target, LFO::Waveform, Ribbon::Mode, VCO::Waveform>;

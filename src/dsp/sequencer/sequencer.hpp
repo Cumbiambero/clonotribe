@@ -143,6 +143,11 @@ struct Sequencer final {
             steps[i].accent = false;
             steps[i].glide = false;
         }
+        fluxSampleCount = 0;
+        fluxRecordingStep = 0;
+        fluxMode = false;
+        fluxStepTimer = ZERO;
+        std::fill(std::begin(fluxBuffer), std::end(fluxBuffer), ZERO);
     }
     
     void enableAllSteps() noexcept {
