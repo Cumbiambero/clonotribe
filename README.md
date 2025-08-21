@@ -1,4 +1,4 @@
-# Clonotribe - KORG monotribe VCV Rack Module
+# Clonotribe
 
 A module heavily inspired by the KORG monotribe analog synthesizer, including relevant firmware 2.1 features.
 
@@ -11,7 +11,7 @@ The monotribe is a great little box and I hope that this tribute will bring some
 ## Features
 
 - **Analog-style VCO**: Square, Triangle, and Sawtooth waveforms with octave control
-- **VCF**: Classic Korg low-pass filter with cutoff and resonance (peak) controls
+- **VCF**: Classic filter(s) with cutoff and resonance (peak) controls
 - **LFO**: Multi-waveform LFO with  multiple targets and modes
 - **Envelope Generator**: Very simple implementation like on the monotribe itself
 - **Simple Drum Machine**: Kick, Snare and Hi-hat
@@ -34,9 +34,9 @@ The monotribe is a great little box and I hope that this tribute will bring some
 - Noise generator with level control. Also it can be switched between white and pink noise (from context menu)
 
 ### VCF (Voltage Controlled Filter) 
-- MS-20 style low-pass filter
+- Selectable filters: MS-20, Ladder and Moog
 - Cutoff frequency control (80Hz - 8kHz)
-- Resonance (peak) control up to self-oscillation
+- Resonance (peak) control up to self-oscillation depending on selection
 - LFO modulation support
 
 ### LFO (Low Frequency Oscillator)
@@ -88,6 +88,9 @@ The monotribe is a great little box and I hope that this tribute will bring some
 ### Delay
 - Time and amount can be controlled
 
+### Accent
+- Amount controls glide and accent together for the sequencer steps that have those properties set
+
 ## Usage
 
 ### Basic Operation
@@ -108,6 +111,7 @@ The monotribe is a great little box and I hope that this tribute will bring some
 - **Gate Time**: In synth mode, use GATE TIME to cycle through gate lengths
 - **Recording**: Works with CV/Gate input, ribbon controller, or both
 - **External Sync**: Connect clock to SYNC IN for external timing
+- **Accent/Glide**: Cycle with Ctrl-Key pressed thru the different options (accent, glide, accent+glide, none) when pressing on individual steps
 - Use the numers 1 to 8 to de/acrivate individual steps
 
 ## Building
@@ -116,9 +120,7 @@ This module requires VCV Rack SDK v2.
 
 ```bash
 cd Clonotribe
-make clean
-make
-make install
+make clean && make install
 ```
 
 ## Dependencies
@@ -131,7 +133,6 @@ make install
 
 - VCV Rack 2.x
 - Linux, Windows, macOS
-- All common sample rates (44.1kHz - 192kHz)
 
 ## License
 
