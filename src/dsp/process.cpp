@@ -132,15 +132,21 @@ void Clonotribe::handleActiveStep() {
 
 void Clonotribe::handleDrumRolls(const ProcessArgs& args, bool gateTimeHeld) {
     static float rollTimer = ZERO;
-    
-    if (gateTimeHeld && ribbon.touching && sequencer.getSelectedDrumPart() != DrumPart::SYNTH) {
+
+    DrumPart selectedPart = sequencer.getSelectedDrumPart();
+    bool isDrumPart = (selectedPart != DrumPart::SYNTH);
+    bool sequencerRunning = sequencer.playing;
+    int currentStep = sequencer.currentStep;
+    bool stepActive = isDrumPart && isStepActiveInCurrentMode(currentStep);
+
+    if (gateTimeHeld && ribbon.touching && isDrumPart && sequencerRunning && stepActive) {
         float rollIntensity = ribbon.getDrumRollIntensity();
-        float rollRate = rollIntensity * 50.0f + ONE;        
+        float rollRate = rollIntensity * 50.0f + ONE;
         rollTimer += args.sampleTime * rollRate;
         
         if (rollTimer >= ONE) {
             rollTimer -= ONE;
-            switch (sequencer.getSelectedDrumPart()) {
+            switch (selectedPart) {
                 case DrumPart::KICK: triggerKick(); break;
                 case DrumPart::SNARE: triggerSnare(); break;
                 case DrumPart::HIHAT: triggerHihat(); break;

@@ -246,7 +246,9 @@ void Clonotribe::process(const ProcessArgs& args) {
     float cvVoltage = inputs[INPUT_CV_CONNECTOR].getVoltage();
     float inputPitch = cvVoltage + octave;
     float gate = inputs[INPUT_GATE_CONNECTOR].getVoltage();
-    if (ribbon.touching) {
+
+    bool ribbonOverride = ribbon.touching && !gateTimeHeld;
+    if (ribbonOverride) {
         inputPitch = ribbon.getCV();
         gate = ribbon.getGate();
     }
@@ -256,7 +258,6 @@ void Clonotribe::process(const ProcessArgs& args) {
     auto seqOutput = sequencer.process(args.sampleTime, inputPitch, gate, syncSignal, ribbonGateTimeMod, paramCache.accentGlideAmount);
     handleSequencerAndDrumState(seqOutput, inputPitch, gate, cvGateTriggered);
 
-    const bool ribbonOverride = ribbon.touching;
     float finalPitch = ribbonOverride ? inputPitch : (sequencer.playing ? seqOutput.pitch : inputPitch);
     float finalGate = ribbonOverride ? gate : (sequencer.playing ? seqOutput.gate : gate);
 
