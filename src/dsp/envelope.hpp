@@ -24,7 +24,7 @@ struct Envelope final {
     float attack = 0.1f;
     float decay = 0.1f;
     float sustain = 0.7f;
-    float releaseTime = 0.5f;
+    float releaseTime = HALF;
 
     void setAttack(float a) noexcept { attack = std::clamp(a, 0.001f, 10.0f); }
     void setDecay(float d) noexcept { decay = std::clamp(d, 0.001f, 10.0f); }

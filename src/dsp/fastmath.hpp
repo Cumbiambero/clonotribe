@@ -24,7 +24,7 @@ struct FastMath final {
     }
 
     [[nodiscard]] static inline float fastCos(float x) noexcept {
-        return fastSin(x + PI * 0.5f);
+        return fastSin(x + PI * HALF);
     }
 
     [[nodiscard]] static inline float fastTanh(float x) noexcept {

@@ -39,7 +39,7 @@ TEST_CASE("MS20Filter resonance self-oscillation") {
     for (int i = 0; i < 2000; ++i) {
         maxVal = std::max(maxVal, std::abs(filter.process(ZERO)));
     }
-    CHECK(maxVal > 0.01f);
+    CHECK(maxVal > MIN);
 }
 
 TEST_CASE("MS20Filter cutoff sweep") {

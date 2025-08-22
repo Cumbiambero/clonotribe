@@ -51,7 +51,7 @@ public:
         
         float metallic1 = clonotribe::FastMath::fastSin(phase1) * env;
         float metallic2 = clonotribe::FastMath::fastSin(phase2) * env * 0.7f;
-        float shimmer = clonotribe::FastMath::fastSin(phase3) * shimmerEnv * 0.5f;
+        float shimmer = clonotribe::FastMath::fastSin(phase3) * shimmerEnv * HALF;
         float metallicSum = metallic1 + metallic2 + shimmer;
         float rawNoise = noise.process();
         

@@ -2,6 +2,7 @@
 #include <rack.hpp>
 #include <numbers>
 #include <array>
+#include <algorithm>
 #include "fastmath.hpp"
 
 namespace clonotribe {
@@ -11,6 +12,7 @@ class LFO final {
     static constexpr float SLOW_MAX_HZ = 18.0f;
     static constexpr float FAST_MIN_HZ = 1.0f;
     static constexpr float FAST_MAX_HZ = 5000.0f;
+
 public:
     enum class Waveform {
         SQUARE = 0,
@@ -40,13 +42,13 @@ public:
 
     [[nodiscard]] float process(Mode mode, float rate, bool externalCV, bool rising, Waveform waveform, float intensity, float sampleTime) {
         update(mode, rate, externalCV, rising);
-        return processInternal(sampleTime, waveform) * intensity * 10.0f;
+        return processInternal(sampleTime, waveform) * intensity;
     }
 
     void setSampleAndHold(bool sh) noexcept {
         sampleAndHold = sh;
         if (sh) {
-            sampleHoldValue = (rack::random::uniform() - 0.5f) * TWO;
+            sampleHoldValue = (rack::random::uniform() - HALF) * TWO;
         }
     }
 
@@ -59,11 +61,11 @@ public:
 
     void reset(float gate) {
         static bool prevGate = false;
-        bool noteOn = (gate > 0.5f) && !prevGate;
+        bool noteOn = (gate > HALF) && !prevGate;
         if (noteOn) {
             trigger();
         }
-        prevGate = (gate > 0.5f);
+        prevGate = (gate > HALF);
     }
 
      [[nodiscard]] bool phaseWrapped() noexcept {
@@ -110,7 +112,7 @@ private:
                     oneShot = true;
                     break;
             }
-            freq = minHz * std::pow(maxHz / minHz, rate);
+            freq = minHz * std::pow(maxHz / minHz, std::clamp(rate, ZERO, ONE));
         }
         if (gateRising && (mode == Mode::FAST || mode == Mode::ONE_SHOT)) {
             trigger();
@@ -123,7 +125,7 @@ private:
         }
 
         phase += freq * sampleTime;
-        if (oneShot && phase >= 0.5f) {
+        if (oneShot && phase >= HALF) {
             triggered = false;
             return ZERO;
         }
@@ -138,16 +140,16 @@ private:
 
         if (sampleAndHold) {
             if (phase < lastPhase) {
-                sampleHoldValue = (rack::random::uniform() - 0.5f) * TWO;
+                sampleHoldValue = (rack::random::uniform() - HALF) * TWO;
             }
             output = sampleHoldValue;
         } else {
             switch (waveform) {
                 case Waveform::SQUARE:
-                    output = (phase < 0.5f) ? ONE : -ONE;
+                    output = (phase < HALF) ? ONE : -ONE;
                     break;
                 case Waveform::TRIANGLE:
-                    if (phase < 0.5f) {
+                    if (phase < HALF) {
                         output = 4.0f * phase - ONE;
                     } else {
                         output = 3.0f - 4.0f * phase;
@@ -158,13 +160,12 @@ private:
                     break;
                 case Waveform::SAMPLE_HOLD:
                     if (phase < lastPhase) {
-                        sampleHoldValue = (rack::random::uniform() - 0.5f) * TWO;
+                        sampleHoldValue = (rack::random::uniform() - HALF) * TWO;
                     }
                     output = sampleHoldValue;
                     break;
             }
         }
-
         lastPhase = phase;
         return output;
     }

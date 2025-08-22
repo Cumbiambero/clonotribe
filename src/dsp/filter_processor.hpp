@@ -8,19 +8,24 @@ namespace clonotribe {
 
 class FilterProcessor final {
 public:
-    explicit FilterProcessor(MS20Filter& vcf) noexcept : vcf(&vcf), ladder(nullptr), moog(nullptr), filterType(FilterType::MS20) {}
-    explicit FilterProcessor(LadderFilter& ladder) noexcept : vcf(nullptr), ladder(&ladder), moog(nullptr), filterType(FilterType::LADDER) {}
-    explicit FilterProcessor(MoogFilter& moog) noexcept : vcf(nullptr), ladder(nullptr), moog(&moog), filterType(FilterType::MOOG) {}
+    explicit FilterProcessor(MS20Filter& ms20) noexcept : ms20(&ms20), ladder(nullptr), moog(nullptr), filterType(FilterType::MS20) {}
+    explicit FilterProcessor(LadderFilter& ladder) noexcept : ms20(nullptr), ladder(&ladder), moog(nullptr), filterType(FilterType::LADDER) {}
+    explicit FilterProcessor(MoogFilter& moog) noexcept : ms20(nullptr), ladder(nullptr), moog(&moog), filterType(FilterType::MOOG) {}
 
-    void setFilterType(FilterType type, MS20Filter* vcfPtr, LadderFilter* ladderPtr, MoogFilter* moogPtr) noexcept {
+    void setFilterType(FilterType type, MS20Filter* ms20Ptr, LadderFilter* ladderPtr, MoogFilter* moogPtr) noexcept {
         filterType = type;
-        vcf = vcfPtr;
+        ms20 = ms20Ptr;
         ladder = ladderPtr;
         moog = moogPtr;
     }
 
     [[nodiscard]] float process(float input, float cutoff, float resonance) noexcept {
-        if (std::abs(input) < 1e-30f) input = ZERO;
+        if(!active) {
+            return ZERO;
+        }
+        if (std::abs(input) < 1e-30f) {
+            input = ZERO;
+        }
         
         float smoothedCutoff = cutoff;
         float smoothedResonance = resonance;
@@ -46,10 +51,10 @@ public:
         
         switch (filterType) {
             case FilterType::MS20:
-                if (vcf) {
-                    vcf->setCutoff(smoothedCutoff);
-                    vcf->setResonance(smoothedResonance);
-                    float output = vcf->process(input);
+                if (ms20) {
+                    ms20->setCutoff(smoothedCutoff);
+                    ms20->setResonance(smoothedResonance);
+                    float output = ms20->process(input);
                     if (std::abs(output) < 1e-30f) output = ZERO;
                     return output;
                 }
@@ -81,9 +86,9 @@ public:
     void forceUpdate(float cutoff, float resonance) noexcept {
         switch (filterType) {
             case FilterType::MS20:
-                if (vcf) {
-                    vcf->setCutoff(cutoff);
-                    vcf->setResonance(resonance);
+                if (ms20) {
+                    ms20->setCutoff(cutoff);
+                    ms20->setResonance(resonance);
                 }
                 break;
             case FilterType::LADDER:
@@ -111,7 +116,7 @@ public:
     }
 
     void setPointers(MS20Filter* vcfPtr, LadderFilter* ladderPtr, MoogFilter* moogPtr) noexcept {
-        vcf = vcfPtr;
+        ms20 = vcfPtr;
         ladder = ladderPtr;
         moog = moogPtr;
     }
@@ -120,14 +125,20 @@ public:
 
     FilterType getType() const noexcept { return filterType; }
 
+    void setActive(bool active) noexcept {
+        this->active = active;
+    }
+
 private:
-    static constexpr float CUTOFF_THRESHOLD = 0.01f;
-    static constexpr float RESONANCE_THRESHOLD = 0.01f;
-    MS20Filter* vcf;
+    static constexpr float CUTOFF_THRESHOLD = MIN;
+    static constexpr float RESONANCE_THRESHOLD = MIN;
+
+    MS20Filter* ms20;
     LadderFilter* ladder;
     MoogFilter* moog;
     FilterType filterType;
     float lastCutoff = -ONE;
     float lastResonance = -ONE;
+    bool active;
 };
 }

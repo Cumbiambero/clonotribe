@@ -28,7 +28,7 @@ struct Sequencer final {
         bool muted = false;
         float pitch = ZERO;
         float gate = ZERO;
-        float gateTime = 0.5f;
+        float gateTime = HALF;
         bool accent = false;
         bool glide = false;
     };
@@ -118,7 +118,7 @@ struct Sequencer final {
     }
     float getStepGateTime(int step) const noexcept {
         if (step >= 0 && step < getStepCount()) return steps[step].gateTime;
-        return 0.5f;
+        return HALF;
     }
     void play() noexcept { playing = true; currentStep = 0; stepTimer = ZERO; }
     void stop() noexcept { playing = false; currentStep = 0; stepTimer = ZERO; }
@@ -157,7 +157,7 @@ struct Sequencer final {
         }
     }
     
-    void recordNote(float pitch, float gate, float gateTime = 0.5f) noexcept {
+    void recordNote(float pitch, float gate, float gateTime = HALF) noexcept {
         if (recording && !fluxMode) {
             int targetStep = playing ? currentStep : recordingStep;
             if (targetStep >= 0 && targetStep < getStepCount()) {
@@ -169,7 +169,7 @@ struct Sequencer final {
             }
         }
     }
-    void recordNoteToStep(int step, float pitch, float gate, float gateTime = 0.5f) noexcept {
+    void recordNoteToStep(int step, float pitch, float gate, float gateTime = HALF) noexcept {
         if (recording && !fluxMode && step >= 0 && step < getStepCount()) {
             steps[step].pitch = pitch;
             steps[step].gate = gate;
@@ -204,7 +204,7 @@ struct Sequencer final {
         bool accent = false;
         bool glide = false;
     };
-    SequencerOutput process(float sampleTime, float inputPitch = ZERO, float inputGate = ZERO, float syncSignal = ZERO, float ribbonGateTimeMod = 0.5f, float accentGlideAmount = ZERO) {
+    SequencerOutput process(float sampleTime, float inputPitch = ZERO, float inputGate = ZERO, float syncSignal = ZERO, float ribbonGateTimeMod = HALF, float accentGlideAmount = ZERO) {
         SequencerOutput output;
         if (!playing) return output;
         bool wasNewStep = false;

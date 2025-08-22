@@ -11,7 +11,7 @@ struct TransparentButton final : rack::app::ParamWidget {
     }
 
     void draw(const DrawArgs& args) override {
-        if (getParamQuantity() && getParamQuantity()->getValue() > 0.5f) {
+        if (getParamQuantity() && getParamQuantity()->getValue() > HALF) {
             nvgBeginPath(args.vg);
             nvgRect(args.vg, 0, 0, box.size.x, box.size.y);
             nvgStrokeColor(args.vg, nvgRGBA(255, 255, 255, 50));

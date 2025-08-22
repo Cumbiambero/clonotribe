@@ -44,7 +44,7 @@ public:
         return position;
     }
     [[nodiscard]] float getVolumeAutomation() const noexcept {
-        return (position - 0.5f) * TWO;
+        return (position - HALF) * TWO;
     }
     [[nodiscard]] float getDrumRollIntensity() const noexcept {
         return position;

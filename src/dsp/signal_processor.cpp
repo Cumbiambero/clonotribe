@@ -33,7 +33,7 @@ float Clonotribe::processEnvelope(Envelope::Type envelopeType, Envelope& envelop
     float rhythmVolume, float sampleTime, NoiseGenerator& noiseGenerator, int currentStep, float distortion,
     float delayClock, float delayTime, float delayAmount
 ) {
-    float volumeModulation = ONE + (ribbonVolumeAutomation * 0.5f);
+    float volumeModulation = ONE + (ribbonVolumeAutomation * HALF);
     volumeModulation = std::clamp(volumeModulation, 0.1f, TWO);
     
     float synthOutput = filteredSignal * volume * envValue * volumeModulation;
@@ -47,7 +47,7 @@ float Clonotribe::processEnvelope(Envelope::Type envelopeType, Envelope& envelop
         
         if (outputLevel > 0.0001f && distortedLevel > outputLevel * 3.0f) {
             float excessGain = distortedLevel / (outputLevel * 2.5f);
-            float compressionFactor = ONE + std::sqrt(excessGain - ONE) * 0.5f;
+            float compressionFactor = ONE + std::sqrt(excessGain - ONE) * HALF;
             distortedSignal /= compressionFactor;
         }
         
@@ -64,7 +64,7 @@ float Clonotribe::processEnvelope(Envelope::Type envelopeType, Envelope& envelop
         float snareOut = drumProcessor.processSnare(0.0f, ZERO, noiseGenerator);
         float hihatOut = drumProcessor.processHihat(0.0f, ZERO, noiseGenerator);
         
-        drumMix = (kickOut * 0.7f + snareOut * 0.6f + hihatOut * 0.5f) * rhythmVolume;
+        drumMix = (kickOut * 0.7f + snareOut * 0.6f + hihatOut * HALF) * rhythmVolume;
         
         outputs[OUTPUT_BASSDRUM_CONNECTOR].setVoltage(std::clamp(kickOut * rhythmVolume * 4.0f, -10.0f, 10.0f));
         outputs[OUTPUT_SNARE_CONNECTOR].setVoltage(std::clamp(snareOut * rhythmVolume * 4.0f, -10.0f, 10.0f));

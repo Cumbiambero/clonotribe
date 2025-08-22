@@ -13,11 +13,11 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
     };
 
     if (paramCache.needsUpdate()) {
-    paramCache.cutoff = getParamWithCV(PARAM_VCF_CUTOFF_KNOB, INPUT_VCF_CUTOFF_CONNECTOR);
-    paramCache.lfoIntensity = getParamWithCV(PARAM_LFO_INTENSITY_KNOB, INPUT_LFO_INTENSITY_CONNECTOR);
-    paramCache.lfoRate = getParamWithCV(PARAM_LFO_RATE_KNOB, INPUT_LFO_RATE_CONNECTOR);
-    paramCache.noiseLevel = getParamWithCV(PARAM_NOISE_KNOB, INPUT_NOISE_CONNECTOR);
-    paramCache.resonance = getParamWithCV(PARAM_VCF_PEAK_KNOB, INPUT_VCF_PEAK_CONNECTOR);
+        paramCache.cutoff = getParamWithCV(PARAM_VCF_CUTOFF_KNOB, INPUT_VCF_CUTOFF_CONNECTOR);
+        paramCache.lfoIntensity = getParamWithCV(PARAM_LFO_INTENSITY_KNOB, INPUT_LFO_INTENSITY_CONNECTOR) * 10.f;
+        paramCache.lfoRate = getParamWithCV(PARAM_LFO_RATE_KNOB, INPUT_LFO_RATE_CONNECTOR);
+        paramCache.noiseLevel = getParamWithCV(PARAM_NOISE_KNOB, INPUT_NOISE_CONNECTOR);
+        paramCache.resonance = getParamWithCV(PARAM_VCF_PEAK_KNOB, INPUT_VCF_PEAK_CONNECTOR);
         paramCache.rhythmVolume = params[PARAM_RHYTHM_VOLUME_KNOB].getValue();
         paramCache.tempo = params[PARAM_SEQUENCER_TEMPO_KNOB].getValue();
         paramCache.volume = getParamWithCV(PARAM_VCA_LEVEL_KNOB, INPUT_VCA_CONNECTOR);
@@ -29,7 +29,7 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
         float octaveSwitch = params[PARAM_VCO_OCTAVE_KNOB].getValue();
         if (inputs[INPUT_VCO_OCTAVE_CONNECTOR].isConnected()) {
             float cvVoltage = inputs[INPUT_VCO_OCTAVE_CONNECTOR].getVoltage();
-            octaveSwitch = std::clamp((cvVoltage + 5.0f) * 0.5f, ZERO, 5.0f);
+            octaveSwitch = std::clamp((cvVoltage + 5.0f) * HALF, ZERO, 5.0f);
             getParamQuantity(PARAM_VCO_OCTAVE_KNOB)->setDisplayValue(octaveSwitch);
         }
         paramCache.octave = octaveSwitch - 3.0f;
@@ -48,17 +48,18 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
             paramCache.lfoWaveform, paramCache.ribbonMode, paramCache.vcoWaveform};
 }
 
-void Clonotribe::updateDSPState(float volume, float rhythmVolume, float lfoIntensity, Ribbon::Mode ribbonMode, float octave) {
-    lfo.setActive(lfoIntensity > 0.01f);
-    vcf.setActive(volume > 0.01f);
+void Clonotribe::updateDSPState(float volume, float rhythmVolume, float lfoIntensity, Ribbon::Mode ribbonMode, float octave, float cutoff) {
+    bool vcfActive = volume > MIN && cutoff > MIN;
+    filterProcessor.setActive(vcfActive);
+    lfo.setActive(vcfActive && lfoIntensity > MIN);
     ribbon.setMode(static_cast<int>(ribbonMode));
     ribbon.setOctave(octave);    
 }
 
 void Clonotribe::handleMainTriggers() {
-    bool playPressed = playTrigger.process(params[PARAM_PLAY_BUTTON].getValue() > 0.5f);
-    bool recPressed = recTrigger.process(params[PARAM_REC_BUTTON].getValue() > 0.5f);
-    bool fluxPressed = fluxTrigger.process(params[PARAM_FLUX_BUTTON].getValue() > 0.5f);
+    bool playPressed = playTrigger.process(params[PARAM_PLAY_BUTTON].getValue() > HALF);
+    bool recPressed = recTrigger.process(params[PARAM_REC_BUTTON].getValue() > HALF);
+    bool fluxPressed = fluxTrigger.process(params[PARAM_FLUX_BUTTON].getValue() > HALF);
     if (playPressed) {
         if (sequencer.playing) {
             sequencer.stop();
@@ -69,7 +70,7 @@ void Clonotribe::handleMainTriggers() {
         }
     }
     if (recPressed) {
-        if (params[PARAM_PLAY_BUTTON].getValue() > 0.5f) {
+        if (params[PARAM_PLAY_BUTTON].getValue() > HALF) {
             if (!sequencer.recording) {
                 sequencer.startRecording();
                 if (!sequencer.playing) {
@@ -90,10 +91,10 @@ void Clonotribe::handleMainTriggers() {
 }
 
 void Clonotribe::handleDrumSelectionAndTempo(float tempo) {
-    bool synthPressed = drumTriggers[0].process(params[PARAM_SYNTH_BUTTON].getValue() > 0.5f);
-    bool kickPressed = drumTriggers[1].process(params[PARAM_BASSDRUM_BUTTON].getValue() > 0.5f);
-    bool snarePressed = drumTriggers[2].process(params[PARAM_SNARE_BUTTON].getValue() > 0.5f);
-    bool hihatPressed = drumTriggers[3].process(params[PARAM_HIGHHAT_BUTTON].getValue() > 0.5f);
+    bool synthPressed = drumTriggers[0].process(params[PARAM_SYNTH_BUTTON].getValue() > HALF);
+    bool kickPressed = drumTriggers[1].process(params[PARAM_BASSDRUM_BUTTON].getValue() > HALF);
+    bool snarePressed = drumTriggers[2].process(params[PARAM_SNARE_BUTTON].getValue() > HALF);
+    bool hihatPressed = drumTriggers[3].process(params[PARAM_HIGHHAT_BUTTON].getValue() > HALF);
     if (synthPressed) {
         sequencer.setSelectedDrumPart(DrumPart::SYNTH);
     }
@@ -118,7 +119,7 @@ void Clonotribe::handleDrumSelectionAndTempo(float tempo) {
 }
 
 void Clonotribe::handleActiveStep() {
-    bool activeStepHeld = params[PARAM_ACTIVE_STEP_BUTTON].getValue() > 0.5f;
+    bool activeStepHeld = params[PARAM_ACTIVE_STEP_BUTTON].getValue() > HALF;
 
     if (activeStepHeld && !activeStepWasPressed) {
         activeStepWasPressed = true;

@@ -10,16 +10,16 @@ public:
 
     void setSampleRate(float sr) noexcept {
         sampleRate = std::max(8000.f, sr);
-        invSampleRate = 1.f / sampleRate;
+        invSampleRate = ONE / sampleRate;
         noiseGen.setSeed(static_cast<uint32_t>(sr));
     }
 
     void setCutoff(float param) noexcept {
-        cutoffParam = std::clamp(param, 0.f, 1.f);
+        cutoffParam = std::clamp(param, 0.f, ONE);
     }
 
     void setResonance(float param) noexcept {
-        resonanceParam = std::clamp(param, 0.f, 1.f);
+        resonanceParam = std::clamp(param, 0.f, ONE);
     }
 
     void setActive(bool isActive) noexcept {
@@ -28,22 +28,30 @@ public:
     }
 
     [[nodiscard]] float process(float input) noexcept {
-        if (!active) return 0.f;
+        if (!active) {
+            return ZERO;
+        }
 
-        if (std::abs(input) < 1e-30f) input = 0.f;
-        if (std::abs(s1) < 1e-30f) s1 = 0.f;
-        if (std::abs(s2) < 1e-30f) s2 = 0.f;
+        if (std::abs(input) < 1e-30f) {
+            input = ZERO;
+        }
+        if (std::abs(s1) < 1e-30f) {
+            s1 = ZERO;
+        }
+        if (std::abs(s2) < 1e-30f) {
+            s2 = ZERO;
+        }
 
         if (!std::isfinite(input)) {
             reset();
-            return 0.f;
+            return ZERO;
         }
 
         float cutoff = calculateCutoff(cutoffParam);
         cutoff = std::clamp(cutoff, 20.f, sampleRate * 0.35f);
 
         float resonance = calculateResonance(resonanceParam);
-        float f = 2.f * FastMath::fastSin(FastMath::PI * cutoff * invSampleRate);
+        float f = TWO * FastMath::fastSin(FastMath::PI * cutoff * invSampleRate);
         f = std::clamp(f, 0.f, 0.9f);
 
         float drive = ONE + resonanceParam * 1.2f;
@@ -65,7 +73,7 @@ public:
                 float fadeRange = cutoffParam - 0.3f;
                 float fadeAmount = fadeRange * 10.0f;
                 fadeAmount = fadeAmount * fadeAmount;
-                output *= 0.01f + fadeAmount * 0.99f;
+                output *= MIN + fadeAmount * 0.99f;
             }
         }
 
@@ -77,13 +85,13 @@ public:
             float oscSig = FastMath::fastSin(oscPhase) * oscGain * 0.15f;
 
             if (cutoff > sampleRate * 0.25f) {
-                oscSig *= 0.5f;
+                oscSig *= HALF;
             }
             
             output = output * (ONE - oscGain * 0.3f) + oscSig;
         }
 
-        if (std::abs(output) < 1e-30f) output = 0.f;
+        if (std::abs(output) < 1e-30f) output = ZERO;
 
         float finalGain = 1.1f + resonanceParam * 0.3f;
         output = saturate(output * finalGain);
@@ -92,28 +100,28 @@ public:
     }
 
     void reset() noexcept {
-        s1 = s2 = 0.f;
-        oscPhase = 0.f;
+        s1 = s2 = ZERO;
+        oscPhase = ZERO;
     }
     
 private:
-    float s1 = 0.f, s2 = 0.f;
-    float cutoffParam = 0.5f;
-    float resonanceParam = 0.f;
+    float s1 = 0.f, s2 = ZERO;
+    float cutoffParam = HALF;
+    float resonanceParam = ZERO;
     float sampleRate = 44100.f;
-    float invSampleRate = 1.f/44100.f;
-    float oscPhase = 0.f;
+    float invSampleRate = ONE/44100.f;
+    float oscPhase = ZERO;
     bool active = true;
 
     NoiseGenerator noiseGen;
 
     [[nodiscard]] inline float calculateCutoff(float param) const noexcept {
-        param = std::clamp(param, 0.001f, 1.f);
+        param = std::clamp(param, 0.001f, ONE);
         return 20.f * std::exp(7.0f * param);
     }
 
     [[nodiscard]] inline float calculateResonance(float param) const noexcept {
-        param = std::clamp(param, 0.f, 1.f);
+        param = std::clamp(param, 0.f, ONE);
         return param * param * 6.0f + param * 1.5f;
     }
 
@@ -122,7 +130,7 @@ private:
         if (x > ZERO) {
             return x / (ONE + x * 0.4f);
         } else {
-            return x / (ONE + std::abs(x) * 0.5f);
+            return x / (ONE + std::abs(x) * HALF);
         }
     }    
 };

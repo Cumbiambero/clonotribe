@@ -37,7 +37,7 @@ public:
             phase -= TWO * clonotribe::FastMath::PI;
         }
         
-        subPhase += (freq * 0.5f) * invSampleRate * TWO * clonotribe::FastMath::PI;
+        subPhase += (freq * HALF) * invSampleRate * TWO * clonotribe::FastMath::PI;
         if (subPhase >= TWO * clonotribe::FastMath::PI) {
             subPhase -= TWO * clonotribe::FastMath::PI;
         }

@@ -55,7 +55,7 @@ public:
     }
 
     void setPulseWidth(float pw) noexcept {
-        pulseWidth = std::clamp(pw, 0.01f, 0.99f);
+        pulseWidth = std::clamp(pw, MIN, 0.99f);
     }
 
 private:
@@ -120,7 +120,7 @@ private:
         if (phase >= ONE) phase -= ONE;
 
         float triangle;
-        if (phase < 0.5f) {
+        if (phase < HALF) {
             triangle = 4.0f * phase - ONE;
         } else {
             triangle = 3.0f - 4.0f * phase;
@@ -146,10 +146,10 @@ private:
         phase += dt;
         if (phase >= ONE) phase -= ONE;
 
-        float square = (phase < 0.5f) ? ONE : -ONE;
+        float square = (phase < HALF) ? ONE : -ONE;
 
         constexpr float transition = 0.005f;
-        if (phase > 0.5f - transition && phase < 0.5f + transition) {
+        if (phase > HALF - transition && phase < HALF + transition) {
             float t = (phase - (0.5f - transition)) / (TWO * transition);
             square = ONE - TWO * t;
         } else if (phase < transition) {

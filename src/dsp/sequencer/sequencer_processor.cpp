@@ -46,7 +46,7 @@ void Clonotribe::handleSequencerAndDrumState(clonotribe::Sequencer::SequencerOut
         int drumStepIndex = currentStep;
         if (sequencer.isInSixteenStepMode()) {
             if (currentStep % 2 == 0 && currentStep < 16) {
-                drumStepIndex = currentStep / 2;
+                drumStepIndex = currentStep >> 1;
             } else {
                 drumStepIndex = -1;
             }

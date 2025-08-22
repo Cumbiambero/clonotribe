@@ -42,7 +42,7 @@ void RibbonController::draw(const DrawArgs& args) {
         float pos = margin + (module->ribbon.getPosition() * effectiveWidth);
 
         nvgBeginPath(args.vg);
-        nvgCircle(args.vg, pos, box.size.y * 0.5f, 6);
+        nvgCircle(args.vg, pos, box.size.y * HALF, 6);
         nvgFillColor(args.vg, nvgRGBA(255, 100, 100, 200));
         nvgFill(args.vg);
     }

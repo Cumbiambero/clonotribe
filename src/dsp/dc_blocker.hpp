@@ -56,7 +56,7 @@ private:
         R1 = (ONE - w1) / (ONE + w1);
         R1 = std::clamp(R1, 0.9f, 0.998f);
         
-        const float w2 = FastMath::TWO_PI * (cutoff * 0.5f) * invSampleRate;
+        const float w2 = FastMath::TWO_PI * (cutoff * HALF) * invSampleRate;
         R2 = (ONE - w2) / (ONE + w2);
         R2 = std::clamp(R2, 0.95f, 0.999f);
         

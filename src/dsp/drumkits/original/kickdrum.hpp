@@ -29,7 +29,7 @@ public:
         }
         
         float invSampleRate = ONE / sampleRate;
-        float accentGain = 0.75f + accent * 0.5f;
+        float accentGain = 0.75f + accent * HALF;
         
         float pitchMod = 110.0f * pitchEnv * pitchEnv;
         float freq = 58.0f + pitchMod;
@@ -40,7 +40,7 @@ public:
             phase -= TWO * clonotribe::FastMath::PI;
         }
         
-        subPhase += (freq * 0.5f) * invSampleRate * TWO * clonotribe::FastMath::PI;
+        subPhase += (freq * HALF) * invSampleRate * TWO * clonotribe::FastMath::PI;
         if (subPhase >= TWO * clonotribe::FastMath::PI) {
             subPhase -= TWO * clonotribe::FastMath::PI;
         }

@@ -44,7 +44,7 @@ public:
         
         if (clockTriggered) {
             float measuredTime = static_cast<float>(samplesSinceLastClock) / sampleRate;
-            if (measuredTime > 0.01f && measuredTime < 4.0f) {
+            if (measuredTime > MIN && measuredTime < 4.0f) {
                 lastClockInterval = measuredTime;
             }
             samplesSinceLastClock = 0;
@@ -55,13 +55,13 @@ public:
         if (clockTrigger > 0.1f && static_cast<float>(samplesSinceLastClock) < sampleRate * TWO && lastClockInterval > ZERO) {
             delayTime = lastClockInterval;
         } else {
-            delayTime = 0.01f + time * 1.99f;
+            delayTime = MIN + time * 1.99f;
         }
         
         delayTime = std::clamp(delayTime, 0.001f, maxDelayTime);
         float targetDelaySamples = delayTime * sampleRate;
         targetDelaySamples = std::clamp(targetDelaySamples, ONE, static_cast<float>(maxDelaySamples - 1));
-        smoothedDelaySamples += (targetDelaySamples - smoothedDelaySamples) * 0.01f;
+        smoothedDelaySamples += (targetDelaySamples - smoothedDelaySamples) * MIN;
         int delaySamples = static_cast<int>(smoothedDelaySamples);
         float fraction = smoothedDelaySamples - static_cast<float>(delaySamples);
         int readIndex1 = writeIndex - delaySamples;

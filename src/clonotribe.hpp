@@ -130,7 +130,6 @@ struct Clonotribe : rack::Module {
     };
 
     VCO vco;
-    MS20Filter vcf;
     LFO lfo;
     Envelope envelope;
     Sequencer sequencer;
@@ -159,11 +158,12 @@ struct Clonotribe : rack::Module {
     FilterProcessor filterProcessor;
     LadderFilter ladderFilter;
     MoogFilter moogFilter;
+    MS20Filter ms20Filter;
     FilterType selectedFilterType = FilterType::MS20;
     void setFilterType(FilterType type) {
         selectedFilterType = type;
         filterProcessor.setType(type);
-        filterProcessor.setPointers(&vcf, &ladderFilter, &moogFilter);
+        filterProcessor.setPointers(&ms20Filter, &ladderFilter, &moogFilter);
     }
     RibbonController ribbonController;
     
@@ -241,7 +241,7 @@ struct Clonotribe : rack::Module {
     }
 
     auto readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, Envelope::Type, LFO::Mode, LFO::Target, LFO::Waveform, Ribbon::Mode, VCO::Waveform>;
-    void updateDSPState(float volume, float rhythmVolume, float lfoIntensity, Ribbon::Mode ribbonMode, float octave);
+    void updateDSPState(float volume, float rhythmVolume, float lfoIntensity, Ribbon::Mode ribbonMode, float octave, float cutoff);
     void handleMainTriggers();
     void handleDrumSelectionAndTempo(float tempo);
     void handleSpecialGateTimeButtons(bool gateTimeHeld);

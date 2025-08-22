@@ -32,7 +32,7 @@ public:
         }
         
         float invSampleRate = ONE / sampleRate;
-        float accentGain = 0.75f + accent * 0.5f;
+        float accentGain = 0.75f + accent * HALF;
         
         tonePhase1 += FREQ1 * invSampleRate * TWO * clonotribe::FastMath::PI;
         if (tonePhase1 >= TWO * clonotribe::FastMath::PI) {
