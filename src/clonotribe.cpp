@@ -167,7 +167,7 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
     configParam(PARAM_VCF_PEAK_KNOB, ZERO, ONE, 0.1f, "VCF Peak (Resonance)");
     configParam(PARAM_VCA_LEVEL_KNOB, ZERO, ONE, 0.8f, "VCA Level");
     configParam(PARAM_LFO_RATE_KNOB, ZERO, ONE, ZERO, "LFO Rate");
-    configParam(PARAM_LFO_INTERVAL_KNOB, ZERO, ONE, ZERO, "LFO Intensity");
+    configParam(PARAM_LFO_INTENSITY_KNOB, ZERO, ONE, ZERO, "LFO Intensity");
     configParam(PARAM_RHYTHM_VOLUME_KNOB, ZERO, ONE, ZERO, "Rhythm Volume");
     configParam(PARAM_SEQUENCER_TEMPO_KNOB, ZERO, ONE, 0.5f, "Sequencer Tempo", " BPM", ZERO, 600.0f, 10.0f);
     configParam(PARAM_DISTORTION_KNOB, ZERO, ONE, ZERO, "Distortion");
@@ -229,7 +229,7 @@ Clonotribe::Clonotribe() : filterProcessor(vcf), ribbonController(this) {
 
 void Clonotribe::process(const ProcessArgs& args) {
     auto [cutoff, lfoIntensity, lfoRate, noiseLevel, resonance, rhythmVolume, tempo, volume, octave, distortion, envelopeType, lfoMode, lfoTarget, lfoWaveform, ribbonMode, waveform] = readParameters();
-    
+
     updateDSPState(volume, rhythmVolume, lfoIntensity, ribbonMode, octave);
     handleMainTriggers();
     handleDrumSelectionAndTempo(tempo);
@@ -287,23 +287,30 @@ void Clonotribe::process(const ProcessArgs& args) {
     }
     float effectiveCutoff = std::clamp(cutoff + accentBoost, ZERO, ONE);
 
-    float lfoFreq = rack::math::rescale(lfoRate, ZERO, ONE, LFO::MIN_FREQ, LFO::MAX_FREQ);
-    lfo.setRate(lfoFreq);
-    LFO::Waveform wf = LFO::Waveform::SQUARE;
-    switch (lfoWaveform) {
-        case LFO::Waveform::SQUARE: wf = LFO::Waveform::SQUARE; break;
-        case LFO::Waveform::TRIANGLE: wf = LFO::Waveform::TRIANGLE; break;
-        case LFO::Waveform::SAW: wf = LFO::Waveform::SAW; break;
-        default: wf = LFO::Waveform::SQUARE; break;
-    }
-    float lfoOut = lfo.process(args.sampleTime, wf) * lfoIntensity;
-
-    float lfoToVCO = ZERO, lfoToVCF = ZERO;
+    static bool prevGate = false;
+    float lfoOut = lfo.process(
+        lfoMode,
+        lfoRate,
+        inputs[INPUT_LFO_RATE_CONNECTOR].isConnected(),
+        (finalGate > 0.5f) && !prevGate,
+        static_cast<LFO::Waveform>(lfoWaveform),
+        lfoIntensity,
+        args.sampleTime
+    );
+    float lfoToVCO = 0.0f, lfoToVCF = 0.0f;
     switch (lfoTarget) {
-        case LFO::Target::VCF: lfoToVCF = lfoOut; break;
-        case LFO::Target::VCO_VCF: lfoToVCO = lfoOut * 0.5f; lfoToVCF = lfoOut; break;
-        case LFO::Target::VCO: lfoToVCO = lfoOut * 0.5f; break;
+        case LFO::Target::VCF:
+            lfoToVCF = lfoOut;
+            break;
+        case LFO::Target::VCO_VCF:
+            lfoToVCO = lfoOut * 0.5f;
+            lfoToVCF = lfoOut;
+            break;
+        case LFO::Target::VCO:
+            lfoToVCO = lfoOut * 0.5f;
+            break;
     }
+    prevGate = (finalGate > 0.5f);
 
     vco.setPitch(finalPitch + lfoToVCO);
     vco.setWaveform(waveform);
@@ -344,11 +351,9 @@ void Clonotribe::process(const ProcessArgs& args) {
     );
 
     if (outputs[OUTPUT_LFO_RATE_CONNECTOR].isConnected()) {
-        static float prevPhase = ZERO;
-        if (lfo.phase < prevPhase) {
+        if (lfo.phaseWrapped()) {
             lfoRatePulse.trigger(1e-3f);
         }
-        prevPhase = lfo.phase;
         bool lfoClk = lfoRatePulse.process(args.sampleTime);
         outputs[OUTPUT_LFO_RATE_CONNECTOR].setVoltage(lfoClk ? 5.0f : ZERO);
     } else {

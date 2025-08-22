@@ -13,17 +13,11 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
     };
 
     if (paramCache.needsUpdate()) {
-        paramCache.cutoff = getParamWithCV(PARAM_VCF_CUTOFF_KNOB, INPUT_VCF_CUTOFF_CONNECTOR);
-        paramCache.lfoIntensity = getParamWithCV(PARAM_LFO_INTERVAL_KNOB, INPUT_LFO_INTENSITY_CONNECTOR);
-        
-        if (!inputs[INPUT_LFO_RATE_CONNECTOR].isConnected()) {
-            paramCache.lfoRate = params[PARAM_LFO_RATE_KNOB].getValue();
-        } else {
-            paramCache.lfoRate = params[PARAM_LFO_RATE_KNOB].getValue();
-        }
-
-        paramCache.noiseLevel = getParamWithCV(PARAM_NOISE_KNOB, INPUT_NOISE_CONNECTOR);
-        paramCache.resonance = getParamWithCV(PARAM_VCF_PEAK_KNOB, INPUT_VCF_PEAK_CONNECTOR);
+    paramCache.cutoff = getParamWithCV(PARAM_VCF_CUTOFF_KNOB, INPUT_VCF_CUTOFF_CONNECTOR);
+    paramCache.lfoIntensity = getParamWithCV(PARAM_LFO_INTENSITY_KNOB, INPUT_LFO_INTENSITY_CONNECTOR);
+    paramCache.lfoRate = getParamWithCV(PARAM_LFO_RATE_KNOB, INPUT_LFO_RATE_CONNECTOR);
+    paramCache.noiseLevel = getParamWithCV(PARAM_NOISE_KNOB, INPUT_NOISE_CONNECTOR);
+    paramCache.resonance = getParamWithCV(PARAM_VCF_PEAK_KNOB, INPUT_VCF_PEAK_CONNECTOR);
         paramCache.rhythmVolume = params[PARAM_RHYTHM_VOLUME_KNOB].getValue();
         paramCache.tempo = params[PARAM_SEQUENCER_TEMPO_KNOB].getValue();
         paramCache.volume = getParamWithCV(PARAM_VCA_LEVEL_KNOB, INPUT_VCA_CONNECTOR);
@@ -55,7 +49,7 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
 }
 
 void Clonotribe::updateDSPState(float volume, float rhythmVolume, float lfoIntensity, Ribbon::Mode ribbonMode, float octave) {
-    lfo.active = lfoIntensity > 0.01f;
+    lfo.setActive(lfoIntensity > 0.01f);
     vcf.setActive(volume > 0.01f);
     ribbon.setMode(static_cast<int>(ribbonMode));
     ribbon.setOctave(octave);    

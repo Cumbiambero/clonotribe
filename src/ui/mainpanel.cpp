@@ -44,7 +44,7 @@ struct MainPanel : ModuleWidget {
         
         lfoRateKnob = createParamCentered<RoundBlackKnob>(mm2px(Vec(98.0f, 42.0f)), module, Clonotribe::PARAM_LFO_RATE_KNOB);
         addParam(lfoRateKnob);
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(119.0f, 42.0f)), module, Clonotribe::PARAM_LFO_INTERVAL_KNOB));        
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(119.0f, 42.0f)), module, Clonotribe::PARAM_LFO_INTENSITY_KNOB));        
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(140.0f, 42.0f)), module, Clonotribe::PARAM_RHYTHM_VOLUME_KNOB));
 
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.0f, 62.5f)), module, Clonotribe::PARAM_NOISE_KNOB));

@@ -1,7 +1,5 @@
-
 #pragma once
 #include <rack.hpp>
-
 #include "plugin.hpp"
 #include "dsp/dsp.hpp"
 #include "dsp/parameter_cache.hpp"
@@ -37,7 +35,7 @@ struct Clonotribe : rack::Module {
         PARAM_REC_BUTTON,
         PARAM_VCF_CUTOFF_KNOB,
         PARAM_LFO_RATE_KNOB,
-        PARAM_LFO_INTERVAL_KNOB,
+        PARAM_LFO_INTENSITY_KNOB,
         PARAM_NOISE_KNOB,
         PARAM_VCF_PEAK_KNOB,
         PARAM_RIBBON_RANGE_SWITCH,
@@ -202,7 +200,7 @@ struct Clonotribe : rack::Module {
     int selectedStepForEditing = 0;
     int syncDivideCounter = 0;
 
-    bool drumPatterns[3][8] = {{false}}; // [drum][step] - 0=kick, 1=snare, 2=hihat
+    bool drumPatterns[3][8] = {{false}};
 
     bool activeStepActive = false;    
     bool activeStepWasPressed = false;
