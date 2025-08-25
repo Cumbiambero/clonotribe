@@ -726,7 +726,7 @@ void Clonotribe::onRandomize(const RandomizeEvent& e) {
         sequencer.steps[i].pitch = rack::random::uniform() * 4.0f - TWO;
         sequencer.steps[i].gate = (rack::random::uniform() > 0.3f) ? 5.0f : ZERO;
         sequencer.steps[i].gateTime = 0.1f + rack::random::uniform() * 0.8f;
--       sequencer.steps[i].muted = (rack::random::uniform() < 0.2f);
+        sequencer.steps[i].muted = (rack::random::uniform() < 0.2f);
         sequencer.steps[i].accent = (rack::random::uniform() < 0.2f);
         sequencer.steps[i].glide = (rack::random::uniform() < 0.2f);
         sequencer.steps[i].skipped = false;
