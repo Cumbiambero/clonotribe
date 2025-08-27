@@ -3,36 +3,42 @@
 
 auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, float, float, float, float, float, float, Envelope::Type, LFO::Mode, LFO::Target, LFO::Waveform, Ribbon::Mode, VCO::Waveform> {
     auto getParamWithCV = [this](int paramId, int inputId) -> float {
-        float value = params[paramId].getValue();
-        if (inputs[inputId].isConnected()) {
+        if (paramCache.inputConnected[inputId]) {
             float cvVoltage = inputs[inputId].getVoltage();
-            value = std::clamp((cvVoltage + 5.0f) * 0.1f, ZERO, ONE);
+            float value = std::clamp((cvVoltage + 5.0f) * 0.1f, ZERO, ONE);
             getParamQuantity(paramId)->setDisplayValue(value);
+            return value;
+        } else {
+            return params[paramId].getValue();
         }
-        return value;
     };
+    
+    paramCache.cutoff = getParamWithCV(PARAM_VCF_CUTOFF_KNOB, INPUT_VCF_CUTOFF_CONNECTOR);
+    paramCache.lfoIntensity = getParamWithCV(PARAM_LFO_INTENSITY_KNOB, INPUT_LFO_INTENSITY_CONNECTOR) * 10.f;
+    paramCache.lfoRate = getParamWithCV(PARAM_LFO_RATE_KNOB, INPUT_LFO_RATE_CONNECTOR);
+    paramCache.noiseLevel = getParamWithCV(PARAM_NOISE_KNOB, INPUT_NOISE_CONNECTOR);
+    paramCache.resonance = getParamWithCV(PARAM_VCF_PEAK_KNOB, INPUT_VCF_PEAK_CONNECTOR);
+    paramCache.volume = getParamWithCV(PARAM_VCA_LEVEL_KNOB, INPUT_VCA_CONNECTOR);
+    paramCache.distortion = getParamWithCV(PARAM_DISTORTION_KNOB, INPUT_DISTORTION_CONNECTOR);
+    paramCache.delayAmount = getParamWithCV(PARAM_DELAY_AMOUNT_KNOB, INPUT_DELAY_AMOUNT_CONNECTOR);
+    paramCache.accentGlideAmount = getParamWithCV(PARAM_ACCENT_GLIDE_KNOB, INPUT_ACCENT_GLIDE_CONNECTOR);
 
     if (paramCache.needsUpdate()) {
-        paramCache.cutoff = getParamWithCV(PARAM_VCF_CUTOFF_KNOB, INPUT_VCF_CUTOFF_CONNECTOR);
-        paramCache.lfoIntensity = getParamWithCV(PARAM_LFO_INTENSITY_KNOB, INPUT_LFO_INTENSITY_CONNECTOR) * 10.f;
-        paramCache.lfoRate = getParamWithCV(PARAM_LFO_RATE_KNOB, INPUT_LFO_RATE_CONNECTOR);
-        paramCache.noiseLevel = getParamWithCV(PARAM_NOISE_KNOB, INPUT_NOISE_CONNECTOR);
-        paramCache.resonance = getParamWithCV(PARAM_VCF_PEAK_KNOB, INPUT_VCF_PEAK_CONNECTOR);
-        paramCache.rhythmVolume = params[PARAM_RHYTHM_VOLUME_KNOB].getValue();
-        paramCache.tempo = params[PARAM_SEQUENCER_TEMPO_KNOB].getValue();
-        paramCache.volume = getParamWithCV(PARAM_VCA_LEVEL_KNOB, INPUT_VCA_CONNECTOR);
-        paramCache.distortion = getParamWithCV(PARAM_DISTORTION_KNOB, INPUT_DISTORTION_CONNECTOR);
-        paramCache.delayTime = params[PARAM_DELAY_TIME_KNOB].getValue();
-        paramCache.delayAmount = getParamWithCV(PARAM_DELAY_AMOUNT_KNOB, INPUT_DELAY_AMOUNT_CONNECTOR);
-        paramCache.accentGlideAmount = getParamWithCV(PARAM_ACCENT_GLIDE_KNOB, INPUT_ACCENT_GLIDE_CONNECTOR);
-        
+        for (int i = 0; i < INPUTS_LEN; ++i) {
+            paramCache.inputConnected[i] = inputs[i].isConnected();
+        }
+
         float octaveSwitch = params[PARAM_VCO_OCTAVE_KNOB].getValue();
-        if (inputs[INPUT_VCO_OCTAVE_CONNECTOR].isConnected()) {
+        if (paramCache.inputConnected[INPUT_VCO_OCTAVE_CONNECTOR]) {
             float cvVoltage = inputs[INPUT_VCO_OCTAVE_CONNECTOR].getVoltage();
             octaveSwitch = std::clamp((cvVoltage + 5.0f) * HALF, ZERO, 5.0f);
             getParamQuantity(PARAM_VCO_OCTAVE_KNOB)->setDisplayValue(octaveSwitch);
         }
+
         paramCache.octave = octaveSwitch - 3.0f;
+        paramCache.rhythmVolume = params[PARAM_RHYTHM_VOLUME_KNOB].getValue();
+        paramCache.tempo = params[PARAM_SEQUENCER_TEMPO_KNOB].getValue();
+        paramCache.delayTime = params[PARAM_DELAY_TIME_KNOB].getValue();
         paramCache.envelopeType = static_cast<Envelope::Type>(params[PARAM_ENVELOPE_FORM_SWITCH].getValue());
         paramCache.lfoMode = static_cast<LFO::Mode>(params[PARAM_LFO_MODE_SWITCH].getValue());
         paramCache.lfoTarget = static_cast<LFO::Target>(params[PARAM_LFO_TARGET_SWITCH].getValue());
@@ -41,7 +47,7 @@ auto Clonotribe::readParameters() -> std::tuple<float, float, float, float, floa
         paramCache.vcoWaveform = static_cast<VCO::Waveform>(params[PARAM_VCO_WAVEFORM_SWITCH].getValue());
         paramCache.resetUpdateCounter();
     }
-    
+
     return {paramCache.cutoff, paramCache.lfoIntensity, paramCache.lfoRate, paramCache.noiseLevel, 
             paramCache.resonance, paramCache.rhythmVolume, paramCache.tempo, paramCache.volume, 
             paramCache.octave, paramCache.distortion, paramCache.envelopeType, paramCache.lfoMode, paramCache.lfoTarget, 

@@ -391,7 +391,7 @@ struct TempoRangeItem : rack::MenuItem {
         module->selectedTempoRange = range;
         float min, max;
         module->getTempoRange(min, max);
-        auto* q = module->getParamQuantity(Clonotribe::PARAM_SEQUENCER_TEMPO_KNOB);
+        auto* q = module->getParamQuantity(PARAM_SEQUENCER_TEMPO_KNOB);
         if (q) {
             q->name = "Sequencer Tempo";
             q->unit = " BPM";

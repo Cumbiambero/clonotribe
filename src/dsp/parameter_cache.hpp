@@ -1,7 +1,7 @@
 #pragma once
-
-
+#include <bitset>
 #include "envelope.hpp"
+#include "../constants.hpp"
 
 namespace clonotribe {
 
@@ -24,6 +24,7 @@ struct ParameterCache {
     LFO::Mode lfoMode;
     LFO::Target lfoTarget;
     LFO::Waveform lfoWaveform;
+    std::bitset<InputId::INPUTS_LEN> inputConnected;
 
     Ribbon::Mode ribbonMode;
     VCO::Waveform vcoWaveform;
