@@ -1,6 +1,5 @@
 #pragma once
 #include <rack.hpp>
-#include <numbers>
 #include <array>
 #include <algorithm>
 #include "fastmath.hpp"

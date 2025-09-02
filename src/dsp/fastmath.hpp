@@ -1,12 +1,11 @@
 #pragma once
 #include "../constants.hpp"
-#include <numbers>
 #include <cmath>
 
 namespace clonotribe {
 
 struct FastMath final {
-    static constexpr float PI = std::numbers::pi_v<float>;
+    static constexpr float PI = 3.14159265358979323846f;
     static constexpr float TWO_PI = TWO * PI;
     static constexpr float INV_PI = ONE / PI;
 

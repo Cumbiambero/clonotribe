@@ -1,6 +1,5 @@
 #pragma once
 #include <array>
-#include <numbers>
 
 namespace clonotribe {
 

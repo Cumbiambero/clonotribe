@@ -1,8 +1,8 @@
+BRAND ?= Instrumentalist
 RACK_DIR ?= ../..
 
 FLAGS += -isystem $(RACK_DIR)/include
 FLAGS += -Wpedantic -Wconversion -Wno-psabi
-CXXFLAGS += -std=c++23
 
 SOURCES += $(wildcard src/*.cpp)
 SOURCES += $(wildcard src/ui/*.cpp)
