@@ -65,6 +65,7 @@ struct Sequencer final {
     bool recording = false;
     bool sixteenStepMode = false;
     bool glidePitchActive = false;
+    bool matchSteps = true;
 
     DrumPart selectedDrumPart = DrumPart::SYNTH;
 
@@ -82,6 +83,8 @@ struct Sequencer final {
     void setExternalSync(bool external) noexcept { externalSync = external; }
     void setSixteenStepMode(bool sixteenStep) noexcept { sixteenStepMode = sixteenStep; }
     [[nodiscard]] bool isInSixteenStepMode() const noexcept { return sixteenStepMode; }
+    void setMatchSteps(bool v) noexcept { matchSteps = v; }
+    [[nodiscard]] bool isMatchSteps() const noexcept { return matchSteps; }
     
     void setSelectedDrumPart(DrumPart part) noexcept { selectedDrumPart = part; }
     [[nodiscard]] DrumPart getSelectedDrumPart() const noexcept { return selectedDrumPart; }
@@ -119,8 +122,8 @@ struct Sequencer final {
         if (step >= 0 && step < getStepCount()) return steps[step].gateTime;
         return HALF;
     }
-    void play() noexcept { playing = true; currentStep = 0; stepTimer = ZERO; }
-    void stop() noexcept { playing = false; currentStep = 0; stepTimer = ZERO; }
+    void play() noexcept { playing = true; stepTimer = ZERO; }
+    void stop() noexcept { playing = false; stepTimer = ZERO; }
     void startRecording() noexcept {
         recording = true; recordingStep = 0;
         if (fluxMode) {
@@ -219,10 +222,24 @@ struct Sequencer final {
         if (externalSync) {
             bool syncTriggered = syncTrigger.process(syncSignal > ONE);
             if (syncTriggered) {
-                int nextStep = advanceToNextActiveStep(currentStep);
-                wasNewStep = (nextStep != currentStep);
-                currentStep = nextStep;
-                stepTimer = ZERO;
+                int prev = currentStep;
+                bool applied = false;
+                if (matchSteps) {
+                    float base = syncSignal - 5.0f;
+                    int enc = static_cast<int>(base * 100.0f + 0.5f) - 1;
+                    if (enc >= 0 && enc < 16 && enc < getStepCount()) {
+                        currentStep = enc;
+                        wasNewStep = (currentStep != prev);
+                        stepTimer = ZERO;
+                        applied = true;
+                    }
+                }
+                if (!applied) {
+                    int nextStep = advanceToNextActiveStep(currentStep);
+                    wasNewStep = (nextStep != currentStep);
+                    currentStep = nextStep;
+                    stepTimer = ZERO;
+                }
             }
             stepTimer += sampleTime;
         } else {

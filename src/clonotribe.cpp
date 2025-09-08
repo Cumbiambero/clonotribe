@@ -371,7 +371,11 @@ void Clonotribe::process(const ProcessArgs& args) {
     outputs[OUTPUT_CV_CONNECTOR].setVoltage(finalPitch);
     outputs[OUTPUT_GATE_CONNECTOR].setVoltage(finalGate);
     bool syncOut = syncPulse.process(args.sampleTime);
-    outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(syncOut ? 5.0f : ZERO);
+    if (syncOut) {
+        outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(5.01f + static_cast<float>(sequencer.currentStep) * 0.01f);
+    } else {
+        outputs[OUTPUT_SYNC_CONNECTOR].setVoltage(ZERO);
+    }
 
     lights[LIGHT_PLAY].setBrightness(sequencer.playing ? LIGHT_ON : LIGHT_OFF);
     lights[LIGHT_REC].setBrightness(sequencer.recording ? LIGHT_ON : LIGHT_OFF);
@@ -520,6 +524,12 @@ void Clonotribe::appendContextMenu(rack::ui::Menu* menu) {
     t16->module = this;
     t16->text = "16-step Mode";
     menu->addChild(t16);
+
+    struct MatchSteps : rack::MenuItem { Clonotribe* module; void onAction(const rack::event::Action& e) override { module->sequencer.setMatchSteps(!module->sequencer.isMatchSteps()); } void step() override { rightText = module->sequencer.isMatchSteps()?"✔":""; MenuItem::step(); } };
+    auto* ms = new MatchSteps();
+    ms->module = this;
+    ms->text = "Match Steps";
+    menu->addChild(ms);
 }
 
 json_t* Clonotribe::dataToJson() {
@@ -567,6 +577,7 @@ json_t* Clonotribe::dataToJson() {
     json_object_set_new(rootJ, "selectedDrumKit", json_integer(static_cast<int>(selectedDrumKit)));
     json_object_set_new(rootJ, "selectedTempoRange", json_integer(static_cast<int>(selectedTempoRange)));
     json_object_set_new(rootJ, "selectedNoiseType", json_integer(static_cast<int>(selectedNoiseType)));
+    json_object_set_new(rootJ, "matchSteps", json_boolean(sequencer.isMatchSteps()));
     
     return rootJ;
 }
@@ -678,6 +689,10 @@ void Clonotribe::dataFromJson(json_t* rootJ) {
     json_t* selectedNoiseTypeJ = json_object_get(rootJ, "selectedNoiseType");
     if (selectedNoiseTypeJ) {
         setNoiseType(static_cast<NoiseType>(json_integer_value(selectedNoiseTypeJ)));
+    }
+    json_t* matchStepsJ = json_object_get(rootJ, "matchSteps");
+    if (matchStepsJ) {
+        sequencer.setMatchSteps(json_boolean_value(matchStepsJ));
     }
 }
 
