@@ -16,3 +16,4 @@ DISTRIBUTABLES += $(wildcard presets)
 include $(RACK_DIR)/plugin.mk
 
 CXXFLAGS := $(filter-out -std=c++11,$(CXXFLAGS))
+CXXFLAGS += -std=c++20
