@@ -1,5 +1,6 @@
 #pragma once
 #include "vcf/ms20.hpp"
+#include "vcf/ms20_previous.hpp"
 #include "vcf/ladder.hpp"
 #include "vcf/moog.hpp"
 #include "vcf/filter_type.hpp"
@@ -8,13 +9,14 @@ namespace clonotribe {
 
 class FilterProcessor final {
 public:
-    explicit FilterProcessor(MS20Filter& ms20) noexcept : ms20(&ms20), ladder(nullptr), moog(nullptr), filterType(FilterType::MS20) {}
-    explicit FilterProcessor(LadderFilter& ladder) noexcept : ms20(nullptr), ladder(&ladder), moog(nullptr), filterType(FilterType::LADDER) {}
-    explicit FilterProcessor(MoogFilter& moog) noexcept : ms20(nullptr), ladder(nullptr), moog(&moog), filterType(FilterType::MOOG) {}
+    explicit FilterProcessor(MS20Filter& ms20) noexcept : ms20(&ms20), ms20Previous(nullptr), ladder(nullptr), moog(nullptr), filterType(FilterType::MS20) {}
+    explicit FilterProcessor(LadderFilter& ladder) noexcept : ms20(nullptr), ms20Previous(nullptr), ladder(&ladder), moog(nullptr), filterType(FilterType::LADDER) {}
+    explicit FilterProcessor(MoogFilter& moog) noexcept : ms20(nullptr), ms20Previous(nullptr), ladder(nullptr), moog(&moog), filterType(FilterType::MOOG) {}
 
-    void setFilterType(FilterType type, MS20Filter* ms20Ptr, LadderFilter* ladderPtr, MoogFilter* moogPtr) noexcept {
+    void setFilterType(FilterType type, MS20Filter* ms20Ptr, LadderFilter* ladderPtr, MoogFilter* moogPtr, MS20FilterPrevious* ms20PrevPtr = nullptr) noexcept {
         filterType = type;
         ms20 = ms20Ptr;
+        ms20Previous = ms20PrevPtr;
         ladder = ladderPtr;
         moog = moogPtr;
     }
@@ -77,6 +79,15 @@ public:
                     return output;
                 }
                 break;
+            case FilterType::MS20_PREVIOUS:
+                if (ms20Previous) {
+                    ms20Previous->setCutoff(smoothedCutoff);
+                    ms20Previous->setResonance(smoothedResonance);
+                    float output = ms20Previous->process(input);
+                    if (std::abs(output) < 1e-30f) output = ZERO;
+                    return output;
+                }
+                break;
             default:
                 break;
         }
@@ -103,6 +114,12 @@ public:
                     moog->setResonance(resonance);
                 }
                 break;
+            case FilterType::MS20_PREVIOUS:
+                if (ms20Previous) {
+                    ms20Previous->setCutoff(cutoff);
+                    ms20Previous->setResonance(resonance);
+                }
+                break;
             default:
                 break;
         }
@@ -115,8 +132,9 @@ public:
         lastResonance = -ONE;
     }
 
-    void setPointers(MS20Filter* vcfPtr, LadderFilter* ladderPtr, MoogFilter* moogPtr) noexcept {
+    void setPointers(MS20Filter* vcfPtr, LadderFilter* ladderPtr, MoogFilter* moogPtr, MS20FilterPrevious* ms20PrevPtr = nullptr) noexcept {
         ms20 = vcfPtr;
+        ms20Previous = ms20PrevPtr;
         ladder = ladderPtr;
         moog = moogPtr;
     }
@@ -134,6 +152,7 @@ private:
     static constexpr float RESONANCE_THRESHOLD = MIN;
 
     MS20Filter* ms20;
+    MS20FilterPrevious* ms20Previous;
     LadderFilter* ladder;
     MoogFilter* moog;
     FilterType filterType;

@@ -222,7 +222,7 @@ Clonotribe::Clonotribe() : filterProcessor(ms20Filter), ribbonController(this) {
     configOutput(OUTPUT_HIHAT_CONNECTOR, "Hi-Hat");
     configOutput(OUTPUT_LFO_RATE_CONNECTOR, "LFO Rate (Clock)");
     noiseGenerator.setNoiseType(NoiseType::WHITE);
-    filterProcessor.setPointers(&ms20Filter, &ladderFilter, &moogFilter);
+    filterProcessor.setPointers(&ms20Filter, &ladderFilter, &moogFilter, &ms20FilterPrevious);
     filterProcessor.setType(selectedFilterType);
     delayProcessor.clear();
 }
@@ -447,7 +447,7 @@ struct FilterTypeMenuItem : rack::MenuItem {
         module->setFilterType(filterType);
     }
     void step() override {
-        static const char* filterLabels[] = {"Default (MS-20)", "Ladder (TB-303)", "Classic (Moog)"};
+        static const char* filterLabels[] = {"Default (MS-20)", "Ladder (TB-303)", "Classic (Moog)", "Previous (MS-20)"};
         text = filterLabels[static_cast<int>(filterType)];
         rightText = (module->selectedFilterType == filterType) ? "✔" : "";
         MenuItem::step();

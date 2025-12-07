@@ -54,11 +54,12 @@ struct Clonotribe : rack::Module {
     LadderFilter ladderFilter;
     MoogFilter moogFilter;
     MS20Filter ms20Filter;
+    MS20FilterPrevious ms20FilterPrevious;
     FilterType selectedFilterType = FilterType::MS20;
     void setFilterType(FilterType type) {
         selectedFilterType = type;
         filterProcessor.setType(type);
-        filterProcessor.setPointers(&ms20Filter, &ladderFilter, &moogFilter);
+        filterProcessor.setPointers(&ms20Filter, &ladderFilter, &moogFilter, &ms20FilterPrevious);
     }
     RibbonController ribbonController;
     
